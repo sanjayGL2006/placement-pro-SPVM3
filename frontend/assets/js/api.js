@@ -119,9 +119,27 @@
       if (path.includes('/notifications')) {
         return { notifications: [] };
       }
-      if (path.includes('/recycle-bin')) {
-        return { items: [] };
+      if (path.includes('/recycle-bin/reset')) {
+        return {
+          success: true,
+          students_moved: 45,
+          companies_moved: 12,
+          message: 'Soft reset completed! Moved 45 students and 12 companies to Recycle Bin.'
+        };
       }
+      if (path.includes('/recycle-bin/hard-reset')) {
+        return {
+          success: true,
+          message: 'Hard Reset completed! All database tables, documents, and Recycle Bin items emptied.'
+        };
+      }
+      if (path.includes('/recycle-bin')) {
+        return [
+          { id: 101, item_type: 'Student', name: 'Aarav Sharma (1PE23BCA001)', deleted_at: '2026-09-01 14:30:00' },
+          { id: 102, item_type: 'Company', name: 'Google (Campus Drive 2026)', deleted_at: '2026-09-01 15:45:00' }
+        ];
+      }
+
       if (path.includes('/companies')) {
         return [
           { id: 1, name: 'Google', visit_date: '2026-09-15', package_offered: 28.5, status: 'Upcoming' },
