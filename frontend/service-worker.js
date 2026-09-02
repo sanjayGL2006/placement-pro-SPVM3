@@ -1,23 +1,9 @@
 // Basic Service Worker for Placement Pro
-const CACHE_NAME = 'placement-pro-cache-v2';
-const urlsToCache = [
-  '/assets/css/style.css',
-  '/assets/js/api.js'
-];
+const CACHE_NAME = 'placement-pro-cache-v3';
 
 // Force immediate activation — replace old broken service worker
 self.addEventListener('install', event => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return Promise.allSettled(
-          urlsToCache.map(url => cache.add(url).catch(() => {
-            console.warn('SW: failed to cache', url);
-          }))
-        );
-      })
-  );
 });
 
 self.addEventListener('activate', event => {
@@ -32,7 +18,7 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Don't intercept navigation requests (PHP pages) — let them go to the server
+  // Don't intercept navigation requests — let them go to the server
   if (event.request.mode === 'navigate') {
     return;
   }
@@ -49,7 +35,6 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        // Cache successful responses
         if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));

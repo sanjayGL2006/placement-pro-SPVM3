@@ -86,7 +86,7 @@
       const errorBox = document.getElementById('error');
       errorBox.classList.add('d-none');
       try {
-        const res = await fetch('<?php echo API_BASE; ?>/auth/login', {
+        const res = await fetch('/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -40,7 +40,9 @@ for file in files:
     content = content.replace("<?php include 'partials/nav.php'; ?>", nav_html)
     
     # Replace API base & token script tags
-    content = re.sub(r"<script>window\.API_BASE = '<\?php echo API_BASE; \?>';.*?</script>", "<script>window.API_BASE = 'http://localhost:5000/api'; window.API_TOKEN = 'demo';</script>", content)
+    content = re.sub(r"<script>\s*window\.API_BASE = '<\?php echo API_BASE; \?>';.*?</script>", "<script>window.API_BASE = 'http://localhost:5500/api'; window.API_TOKEN = localStorage.getItem('token') || 'demo';</script>", content, flags=re.DOTALL)
+    content = re.sub(r"<\?php echo \$_SESSION\['token'\] \?\? \"\"; \?>", "demo", content)
+    content = re.sub(r"<\?php.*?\?>", "", content, flags=re.DOTALL)
     # Replace .php links with .html links for static GitHub Pages preview navigation
     for page_name in ['dashboard', 'students', 'companies', 'import', 'sections', 'reports', 'settings', 'login', 'logout']:
         content = content.replace(f'href="{page_name}.php"', f'href="{page_name}.html"')
