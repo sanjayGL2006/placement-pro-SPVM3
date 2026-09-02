@@ -33,9 +33,11 @@ def upload_document():
     doc_type = request.form.get("doc_type", "OTHER")
 
     # Generate random filename to prevent collisions and path traversal
-    ext = file.filename.rsplit('.', 1)[1].lower()
-    random_filename = f"{uuid.uuid4().hex}.{ext}"
-    original_name = secure_filename(file.filename)
+    filename = file.filename or "file"
+    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ""
+    random_filename = f"{uuid.uuid4().hex}.{ext}" if ext else f"{uuid.uuid4().hex}"
+    original_name = secure_filename(filename)
+
     
     # Ensure upload directory exists
     docs_dir = os.path.join(current_app.config["UPLOAD_FOLDER"], "documents")
