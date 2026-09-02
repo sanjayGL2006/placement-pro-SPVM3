@@ -1,8 +1,14 @@
 import sqlite3
 import os
+import tempfile
 from flask import g
 
-DB_PATH = os.environ.get("DATABASE_PATH") or os.path.join(os.path.dirname(__file__), "placement_pro.db")
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    default_db_dir = tempfile.gettempdir()
+else:
+    default_db_dir = os.path.dirname(__file__)
+
+DB_PATH = os.environ.get("DATABASE_PATH") or os.path.join(default_db_dir, "placement_pro.db")
 
 
 class DictCursor:
@@ -94,6 +100,8 @@ def close_db_pool(exc=None):
 
 def get_conn():
     if "db_conn" not in g:
+        if not os.path.exists(DB_PATH):
+            init_sqlite_db()
         raw_conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         raw_conn.execute("PRAGMA foreign_keys = ON;")
         raw_conn.row_factory = sqlite3.Row
