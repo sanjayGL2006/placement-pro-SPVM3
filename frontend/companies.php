@@ -145,7 +145,12 @@
                   <span>Next Hiring:</span>
                   <span class="font-weight-700 text-dark">${visitStr}</span>
                 </div>
-                <a href="company_dashboard.php?id=${c.id}" class="btn btn-pp-outline w-100 justify-content-center text-decoration-none">View Details</a>
+                <div class="d-flex gap-2">
+                  <a href="company_dashboard.php?id=${c.id}" class="btn btn-pp-outline flex-grow-1 justify-content-center text-decoration-none">View Details</a>
+                  <button class="btn btn-outline-danger px-2.5" title="Delete Company" onclick="deleteCompany(${c.id}, '${escapeJsQuotes(c.name)}')">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -167,6 +172,24 @@
       `;
 
       container.innerHTML = cardsHtml + addCardHtml;
+    }
+
+    function escapeJsQuotes(str) {
+      if (!str) return '';
+      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    async function deleteCompany(companyId, companyName) {
+      if (!companyId) return;
+      if (confirm(`Are you sure you want to delete company "${companyName || 'Record'}"? All related placement records for this drive will be moved to Recycle Bin.`)) {
+        try {
+          await API.del(`/companies/${companyId}`);
+          showToast(`Company "${companyName || 'Record'}" deleted successfully.`);
+          loadCompanies();
+        } catch (err) {
+          showToast('Delete failed: ' + err.message, 'danger');
+        }
+      }
     }
 
     loadCompanies();

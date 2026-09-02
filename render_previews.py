@@ -50,8 +50,8 @@ for file in files:
     });"""
         content = re.sub(r"document\.getElementById\('loginForm'\)\.addEventListener\('submit',[\s\S]*?\n    \}\);", login_script, content)
 
-    # Replace inline API_BASE and API_TOKEN declarations with auth.js include
-    content = re.sub(r"<script>\s*window\.API_BASE =.*?</script>", "<script src=\"assets/js/auth.js\"></script>", content, flags=re.DOTALL)
+    # Replace inline API_BASE and API_TOKEN declarations
+    content = re.sub(r"<script>\s*window\.API_BASE =.*?</script>", "", content, flags=re.DOTALL)
     content = re.sub(r"window\.API_TOKEN = '<\?php.*?\?>';", "", content)
     content = re.sub(r"<\?php echo htmlspecialchars\(\$_SESSION\['user'\]\['name'\] \?\? '.*?'\); \?>", "SPVM3 Tech Solution by Sanjay G L", content)
     content = re.sub(r"<\?php echo htmlspecialchars\(\$_SESSION\['user'\]\['email'\] \?\? '.*?'\); \?>", "admin@university.edu", content)
@@ -60,15 +60,27 @@ for file in files:
     content = re.sub(r"<\?php.*?\?>", "", content, flags=re.DOTALL)
 
     # Replace .php links with .html links for static GitHub Pages preview navigation
-    for page_name in ['dashboard', 'students', 'companies', 'import', 'sections', 'reports', 'settings', 'login', 'logout', 'push', 'skill_gap', 'ai_hub', 'documents']:
-        content = content.replace(f'href="{page_name}.php"', f'href="{page_name}.html"')
-        content = content.replace(f"href='{page_name}.php'", f"href='{page_name}.html'")
+    for page_name in ['dashboard', 'students', 'companies', 'import', 'sections', 'reports', 'settings', 'login', 'logout', 'push', 'skill_gap', 'ai_hub', 'documents', 'company_dashboard']:
+        content = content.replace(f'{page_name}.php', f'{page_name}.html')
 
     # Fix relative paths to css/js if opened in previews/
     content = content.replace('assets/css/style.css', '../assets/css/style.css')
     content = content.replace('assets/js/api.js', '../assets/js/api.js')
     content = content.replace('assets/js/auth.js', '../assets/js/auth.js')
     content = content.replace('assets/vendor/sweetalert2/sweetalert2.all.min.js', '../assets/vendor/sweetalert2/sweetalert2.all.min.js')
+
+    # Remove duplicate auth.js / api.js includes
+    # Ensure auth.js and api.js are included once cleanly
+    auth_tag = '<script src="../assets/js/auth.js"></script>'
+    api_tag = '<script src="../assets/js/api.js"></script>'
+    
+    # Keep only the last auth.js and api.js tags before body or bootstrap script
+    content = re.sub(r'<script src="\.\./assets/js/auth\.js"></script>\s*<script src="\.\./assets/js/api\.js"></script>', '', content)
+    if auth_tag not in content:
+        content = content.replace('<script src="https://cdn.jsdelivr.net/npm/bootstrap', f'{auth_tag}\n  {api_tag}\n  <script src="https://cdn.jsdelivr.net/npm/bootstrap')
+
+    # Fix PostgreSQL text
+    content = content.replace('Job drive posted successfully to PostgreSQL database.', 'Job drive posted successfully.')
 
     out_name = file.replace('.php', '.html')
     with open(os.path.join(output_dir, out_name), "w", encoding="utf-8") as f:

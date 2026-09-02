@@ -1,0 +1,32 @@
+// firebase-init.js — Initializes Firebase App, Auth & Analytics for pes-iams-placement
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+
+// Firebase JS SDK configuration for pes-iams-placement
+const firebaseConfig = {
+  apiKey: "AIzaSyCGPMY28gJtqS0hMsfyYa83Q0zFiG4W1gk",
+  authDomain: "pes-iams-placement.firebaseapp.com",
+  projectId: "pes-iams-placement",
+  storageBucket: "pes-iams-placement.firebasestorage.app",
+  messagingSenderId: "209828607611",
+  appId: "1:209828607611:web:09ed1ae1d5c88a422414de",
+  measurementId: "G-E5PWC7YQL9"
+};
+
+// Initialize Firebase App
+const app = initializeApp(firebaseConfig);
+let analytics = null;
+try {
+  analytics = getAnalytics(app);
+} catch (e) {
+  console.info("Firebase Analytics omitted in non-browser/offline environment.");
+}
+const auth = getAuth(app);
+
+// Expose on window scope for Placement Pro client modules
+window.firebaseApp = app;
+window.firebaseAnalytics = analytics;
+window.firebaseAuth = auth;
+
+console.log("Firebase initialized (pes-iams-placement).");

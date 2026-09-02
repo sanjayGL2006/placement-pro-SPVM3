@@ -77,6 +77,28 @@ def login():
     })
 
 
+import re
+
+def validate_password_policy(password, min_length=6, max_length=128, require_uppercase=True, require_lowercase=True, require_numeric=True, require_special=True):
+    """Enforce password complexity options: length, uppercase, lowercase, numeric, special char."""
+    errors = []
+    if not password:
+        return ["Password is required."]
+    if len(password) < min_length:
+        errors.append(f"Password must be at least {min_length} characters long.")
+    if len(password) > max_length:
+        errors.append(f"Password cannot exceed {max_length} characters.")
+    if require_uppercase and not re.search(r"[A-Z]", password):
+        errors.append("Password must contain at least one uppercase letter.")
+    if require_lowercase and not re.search(r"[a-z]", password):
+        errors.append("Password must contain at least one lowercase letter.")
+    if require_numeric and not re.search(r"[0-9]", password):
+        errors.append("Password must contain at least one numeric digit.")
+    if require_special and not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        errors.append("Password must contain at least one special character.")
+    return errors
+
+
 @auth_bp.route("/register", methods=["POST"])
 @token_required(roles=["admin"])
 def register():
@@ -90,6 +112,10 @@ def register():
         return jsonify({"error": "name, email, password required"}), 400
     if role not in ("hr", "faculty", "admin"):
         return jsonify({"error": "invalid role"}), 400
+
+    policy_errors = validate_password_policy(password)
+    if policy_errors:
+        return jsonify({"error": "Password policy violation", "details": policy_errors}), 400
 
     password_hash = ph.hash(password)
     cur = get_cursor()

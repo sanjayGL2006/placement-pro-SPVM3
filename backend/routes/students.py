@@ -108,12 +108,49 @@ def update_student(student_id):
     return jsonify({"updated": True})
 
 
+def _archive_student_to_recycle_bin(cur, student_id):
+    import json
+    cur.execute("SELECT * FROM students WHERE id = %s", (student_id,))
+    s = cur.fetchone()
+    if not s:
+        return None
+    cur.execute("SELECT * FROM placements WHERE student_id = %s", (student_id,))
+    placements = cur.fetchall()
+    placements_data = []
+    for p in placements:
+        cur.execute("SELECT * FROM pipeline_stages WHERE placement_id = %s", (p["id"],))
+        stages = cur.fetchall()
+        for stage in stages:
+            if stage.get("stage_date"):
+                stage["stage_date"] = str(stage["stage_date"])
+        p_copy = dict(p)
+        if p_copy.get("selection_date"):
+            p_copy["selection_date"] = str(p_copy["selection_date"])
+        if p_copy.get("offer_letter_date"):
+            p_copy["offer_letter_date"] = str(p_copy["offer_letter_date"])
+        if p_copy.get("joining_date"):
+            p_copy["joining_date"] = str(p_copy["joining_date"])
+        p_copy["stages"] = stages
+        placements_data.append(p_copy)
+    s_copy = dict(s)
+    if s_copy.get("date_of_birth"):
+        s_copy["date_of_birth"] = str(s_copy["date_of_birth"])
+    payload = {
+        "student_record": s_copy,
+        "placements": placements_data
+    }
+    cur.execute(
+        "INSERT INTO recycle_bin (entity_type, original_id, name, data) VALUES (%s, %s, %s, %s)",
+        ("student", s["id"], s["name"], json.dumps(payload))
+    )
+    return s
+
+
 @students_bp.route("/<int:student_id>", methods=["DELETE"])
 @token_required(roles=["hr", "faculty", "admin"])
 def delete_student(student_id):
     cur = get_cursor()
-    cur.execute("SELECT name, register_number FROM students WHERE id = %s", (student_id,))
-    student = cur.fetchone()
+    student = _archive_student_to_recycle_bin(cur, student_id)
     if not student:
         return jsonify({"error": "Student not found"}), 404
 
@@ -465,7 +502,7 @@ def get_eligible_students(company_id):
 
 
 @students_bp.route("/bulk-delete", methods=["POST"])
-@token_required(roles=["admin"])
+@token_required(roles=["hr", "faculty", "admin"])
 def bulk_delete():
     """Bulk delete selected student records."""
     data = request.get_json(force=True) or {}
@@ -479,9 +516,7 @@ def bulk_delete():
     
     for s_id in student_ids:
         try:
-            # Audit log details fetching
-            cur.execute("SELECT name, register_number FROM students WHERE id = %s", (s_id,))
-            student = cur.fetchone()
+            student = _archive_student_to_recycle_bin(cur, s_id)
             if not student:
                 continue
                 

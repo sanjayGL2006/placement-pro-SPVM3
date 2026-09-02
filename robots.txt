@@ -1,0 +1,5 @@
+# Placement Pro — GitHub Pages Robots File
+User-agent: *
+Allow: /
+
+Sitemap: https://sanjaygl2006.github.io/placement-pro-SPVM3/sitemap.xml

@@ -91,8 +91,8 @@ require_once __DIR__ . '/header.php';
 </div>
 
 <script src="assets/js/auth.js"></script>
-
 <script src="assets/js/api.js"></script>
+<script type="module" src="assets/js/firebase-init.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('postJobForm');
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         Swal.fire({
           title: 'Success!',
-          text: 'Job drive posted successfully to PostgreSQL database.',
+          text: 'Job drive posted successfully.',
           icon: 'success',
           confirmButtonColor: 'var(--pp-primary)'
         }).then(() => {

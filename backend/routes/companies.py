@@ -89,13 +89,60 @@ def update_company(company_id):
     return jsonify({"updated": True})
 
 
+def _archive_company_to_recycle_bin(cur, company_id):
+    import json
+    cur.execute("SELECT * FROM companies WHERE id = %s", (company_id,))
+    c = cur.fetchone()
+    if not c:
+        return None
+    cur.execute("SELECT * FROM placements WHERE company_id = %s", (company_id,))
+    placements = cur.fetchall()
+    placements_data = []
+    for p in placements:
+        cur.execute("SELECT * FROM pipeline_stages WHERE placement_id = %s", (p["id"],))
+        stages = cur.fetchall()
+        for stage in stages:
+            if stage.get("stage_date"):
+                stage["stage_date"] = str(stage["stage_date"])
+        p_copy = dict(p)
+        if p_copy.get("selection_date"):
+            p_copy["selection_date"] = str(p_copy["selection_date"])
+        if p_copy.get("offer_letter_date"):
+            p_copy["offer_letter_date"] = str(p_copy["offer_letter_date"])
+        if p_copy.get("joining_date"):
+            p_copy["joining_date"] = str(p_copy["joining_date"])
+        p_copy["stages"] = stages
+        placements_data.append(p_copy)
+    c_copy = dict(c)
+    if c_copy.get("visit_date"):
+        c_copy["visit_date"] = str(c_copy["visit_date"])
+    payload = {
+        "company_record": c_copy,
+        "placements": placements_data
+    }
+    cur.execute(
+        "INSERT INTO recycle_bin (entity_type, original_id, name, data) VALUES (%s, %s, %s, %s)",
+        ("company", c["id"], c["name"], json.dumps(payload))
+    )
+    return c
+
+
 @companies_bp.route("/<int:company_id>", methods=["DELETE"])
-@token_required(roles=["admin"])
+@token_required(roles=["hr", "faculty", "admin"])
 def delete_company(company_id):
     cur = get_cursor()
-    cur.execute("DELETE FROM companies WHERE id = %s", (company_id,))
-    if cur.rowcount == 0:
+    company = _archive_company_to_recycle_bin(cur, company_id)
+    if not company:
         return jsonify({"error": "Company not found"}), 404
+    cur.execute("DELETE FROM companies WHERE id = %s", (company_id,))
+    
+    user_id = getattr(request, "user", {}).get("user_id")
+    import json
+    cur.execute(
+        "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details) "
+        "VALUES (%s, %s, %s, %s, %s)",
+        (user_id, "delete_company", "company", company_id, json.dumps({"company_name": company["name"]})),
+    )
     commit()
     return jsonify({"deleted": True})
 
