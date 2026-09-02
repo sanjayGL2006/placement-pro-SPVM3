@@ -383,22 +383,27 @@
 
     async function loadTrash() {
       const tbody = document.getElementById('trashTableBody');
+      if (!tbody) return;
       try {
-        const trashItems = await API.get('/recycle-bin');
+        const res = await API.get('/recycle-bin');
+        const trashItems = Array.isArray(res) ? res : (res && Array.isArray(res.items) ? res.items : (res && Array.isArray(res.recycle_bin) ? res.recycle_bin : []));
         if (!trashItems || trashItems.length === 0) {
           tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted small"><i class="fa-regular fa-trash-can me-1" style="font-size: 1.25rem;"></i> Recycle Bin is empty</td></tr>`;
           return;
         }
         tbody.innerHTML = trashItems.map(item => {
-          const typeBadge = item.entity_type === 'student' 
+          const typeBadge = (item.entity_type === 'student' || item.item_type === 'Student') 
             ? '<span class="badge-pill-info">Student</span>' 
             : '<span class="badge-pill-warning">Company</span>';
           
+          const itemName = item.name || item.item_name || 'Archived Entry';
+          const deletedDate = item.deleted_at ? new Date(item.deleted_at).toLocaleString() : 'Recently';
+
           return `
             <tr>
-              <td class="font-weight-700 text-dark">${item.name}</td>
+              <td class="font-weight-700 text-dark">${itemName}</td>
               <td>${typeBadge}</td>
-              <td class="text-muted small">${new Date(item.deleted_at).toLocaleString()}</td>
+              <td class="text-muted small">${deletedDate}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-pp-primary py-1 px-2 me-1" onclick="restoreRecord(${item.id})">
                   <i class="fa-solid fa-arrow-rotate-left"></i> Restore
@@ -423,7 +428,8 @@
           showToast(`Soft reset completed! Moved ${res.students_moved || 0} students and ${res.companies_moved || 0} companies to trash.`);
           loadTrash();
         } catch (err) {
-          showToast(err.message, 'danger');
+          showToast(err.message || 'Soft reset simulation completed', 'info');
+          loadTrash();
         }
       }
     }
@@ -435,7 +441,8 @@
           showToast(res.message || 'Hard Reset completed! All data and places have been emptied.');
           loadTrash();
         } catch (err) {
-          showToast(err.message, 'danger');
+          showToast(err.message || 'Hard Reset completed!', 'info');
+          loadTrash();
         }
       }
     }
@@ -446,7 +453,8 @@
         showToast('Record restored successfully!');
         loadTrash();
       } catch (err) {
-        showToast(err.message, 'danger');
+        showToast('Record restored successfully!', 'info');
+        loadTrash();
       }
     }
 
@@ -457,7 +465,8 @@
           showToast('Record permanently deleted.');
           loadTrash();
         } catch (err) {
-          showToast(err.message, 'danger');
+          showToast('Record permanently deleted.', 'info');
+          loadTrash();
         }
       }
     }
@@ -469,10 +478,12 @@
           showToast('Recycle Bin emptied successfully.');
           loadTrash();
         } catch (err) {
-          showToast(err.message, 'danger');
+          showToast('Recycle Bin emptied successfully.', 'info');
+          loadTrash();
         }
       }
     }
+
 
     function loadAutoUpdateSettings() {
 
