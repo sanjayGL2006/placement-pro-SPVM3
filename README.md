@@ -1,15 +1,18 @@
 # Placement Pro — Smart College Placement Management System
 
-> **Developed by SPVM3 Tech Solution by Sanjay G L**
+> **Developed by SPVM3 Tech Solution by Sanjay G L**  
+> **Live GitHub Pages Preview**: [sanjaygl2006.github.io/placement-pro-SPVM3](https://sanjaygl2006.github.io/placement-pro-SPVM3/)
 
-Placement Pro is a full-stack, enterprise-grade Placement & Campus Recruitment Management System built for colleges and universities.
+Placement Pro is a full-stack, enterprise-grade Placement & Campus Recruitment Management System built for PESIAMS and modern colleges & universities.
 
 ---
 
 ## Key Features
 
-- 📅 **Dynamic Placement Calendar**: Interactive month-by-month calendar displaying scheduled company visit dates, placement drives, and drive package details.
+- 📅 **Dynamic Placement Calendar**: Interactive month-by-month calendar displaying scheduled company visit dates, recruitment drives, and compensation details.
 - ⚡ **Live Auto-Update Sync**: Real-time background sync for dashboard stat cards, repeat shortlist alerts, and drive events with configurable refresh intervals (15s, 30s, 60s, 5m).
+- 🎓 **PESIAMS Academic Department Support**: Standardized course streams including **BCA**, **BBA**, **BBA – Hospitality & Hotel Management**, **B.Com**, and **B.Sc** (Computer Science, Physics, Chemistry).
+- 🎯 **Skill Gap Analysis & AI Hub**: Recruiter-demanded skill mapping vs. student body prevalence with automated workshop suggestions and surplus skill tracking.
 - 🗑️ **System Reset & Recycle Bin**:
   - **Soft Reset**: Safely move student or company records to the Recycle Bin for easy restoration.
   - **Hard Reset**: Perform a complete data wipe across all places and empty the Recycle Bin.
@@ -21,7 +24,7 @@ Placement Pro is a full-stack, enterprise-grade Placement & Campus Recruitment M
 
 ## Tech Stack
 
-- **Frontend**: PHP 8.2 + Bootstrap 5 + Vanilla JS (AJAX API integration)
+- **Frontend**: PHP 8.2 + Bootstrap 5 + Vanilla JS (AJAX API integration & offline fallback layer)
 - **Backend API**: Python 3.12 + Flask REST API + Gunicorn WSGI
 - **Database**: SQLite (Development/Container default) / PostgreSQL / PyMySQL
 - **Containerization**: Docker, Docker Compose, Kubernetes (K8s)
@@ -33,7 +36,7 @@ Placement Pro is a full-stack, enterprise-grade Placement & Campus Recruitment M
 ```text
 placement-pro/
 ├── backend/
-│   ├── app.py                  # Flask application factory
+│   ├── app.py                  # Flask application factory & CORS middleware
 │   ├── database.py             # SQLite / database connector & schema initializer
 │   ├── import_utils.py         # File parsing, column-mapping & validation
 │   ├── requirements.txt        # Python package dependencies
@@ -57,9 +60,14 @@ placement-pro/
 │   ├── students.php            # Filterable student directory
 │   ├── companies.php           # Company management directory
 │   ├── import.php              # Smart import drag-and-drop tool
+│   ├── skill_gap.php           # Skill gap analysis & workshop planner
+│   ├── ai_hub.php              # AI-assisted candidate matching
 │   ├── settings.php            # System settings & notification hub
 │   ├── Dockerfile              # Production PHP 8.2 Apache Dockerfile
+│   ├── assets/                 # Custom CSS, JS client, auth helper, & SweetAlert2 vendor
 │   └── partials/               # Reusable headers and sidebar navigation
+├── previews/                   # Generated static HTML files for GitHub Pages deployment
+├── render_previews.py          # Static HTML builder converting PHP templates to GitHub Pages static files
 ├── k8s/                        # Kubernetes orchestration manifests
 │   ├── namespace.yaml
 │   ├── configmap.yaml
@@ -70,7 +78,8 @@ placement-pro/
 │   ├── ingress.yaml
 │   └── kustomization.yaml
 ├── docker-compose.yml          # Multi-container local/prod orchestrator
-└── requirements.txt            # Root dependencies for container builds
+├── QA_REPORT.md                # System QA inspection matrix & audit fixes
+└── mock-data.json              # Static preview fallback dataset
 ```
 
 ---
@@ -153,7 +162,6 @@ Deploy full-stack services using Koyeb Docker deployment:
    - **Exposed Port**: `80`
    - **Environment Variable**: `PLACEMENT_API_BASE` = `https://<your-koyeb-backend-app>.koyeb.app/api`
 
-
 ---
 
 ## Core API Endpoints
@@ -164,6 +172,7 @@ Deploy full-stack services using Koyeb Docker deployment:
 | `GET` | `/api/dashboard/stats` | Retrieve live dashboard statistics |
 | `GET` | `/api/students` | Get paginated student directory |
 | `GET` | `/api/companies` | Get company directory & visit dates |
+| `GET` | `/api/skill-gap/analysis` | Retrieve recruiter demand vs. student skill matrix |
 | `POST` | `/api/imports/students/preview` | Upload and preview student file |
 | `POST` | `/api/imports/students/commit` | Commit approved student records |
 | `POST` | `/api/recycle-bin/reset` | Soft reset student/company records |
