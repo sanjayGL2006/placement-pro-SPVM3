@@ -93,7 +93,7 @@
           </ol>
 
           <div class="pt-2 border-top">
-            <a href="#" class="text-decoration-none font-weight-600 small" style="color: var(--pp-primary);">
+            <a href="#" class="text-decoration-none font-weight-600 small" style="color: var(--pp-primary);" onclick="event.preventDefault(); showToast('Downloading placement_template_schema.xlsx...', 'info');">
               <i class="fa-solid fa-download me-1"></i> Download template schema (.xlsx)
             </a>
           </div>
@@ -118,8 +118,9 @@
 
           <div class="d-flex justify-content-between align-items-center text-muted small pt-2 border-top">
             <span>Imported 2 hours ago</span>
-            <a href="#" class="font-weight-600 text-decoration-none" style="color: var(--pp-primary);">View Logs</a>
+            <a href="#" class="font-weight-600 text-decoration-none" style="color: var(--pp-primary);" onclick="event.preventDefault(); showToast('Last import log: 450 records inserted cleanly on Aug 30, 2026.', 'info');">View Logs</a>
           </div>
+
         </div>
       </div>
     </div>

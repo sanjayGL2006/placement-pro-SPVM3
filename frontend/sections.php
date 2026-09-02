@@ -118,33 +118,34 @@
           <div class="d-flex flex-column gap-3" id="deptAnalyticsContainer">
             <div>
               <div class="d-flex justify-content-between mb-1">
-                <span class="font-weight-600 text-dark small">Computer Science</span>
-                <span class="font-weight-700 text-primary small" style="color: var(--pp-primary) !important;">92% Placed (368 / 400)</span>
+                <span class="font-weight-600 text-dark small">BCA</span>
+                <span class="font-weight-700 text-primary small" style="color: var(--pp-primary) !important;">84.4% Placed (38 / 45)</span>
               </div>
               <div class="progress" style="height: 8px; border-radius: 999px;">
-                <div class="progress-bar" style="width: 92%; background-color: var(--pp-primary);"></div>
+                <div class="progress-bar" style="width: 84%; background-color: var(--pp-primary);"></div>
               </div>
             </div>
 
             <div>
               <div class="d-flex justify-content-between mb-1">
-                <span class="font-weight-600 text-dark small">Electronics & Comm.</span>
-                <span class="font-weight-700 text-success small">78% Placed (195 / 250)</span>
+                <span class="font-weight-600 text-dark small">BBA</span>
+                <span class="font-weight-700 text-success small">74.2% Placed (26 / 35)</span>
               </div>
               <div class="progress" style="height: 8px; border-radius: 999px;">
-                <div class="progress-bar bg-success" style="width: 78%;"></div>
+                <div class="progress-bar bg-success" style="width: 74%;"></div>
               </div>
             </div>
 
             <div>
               <div class="d-flex justify-content-between mb-1">
-                <span class="font-weight-600 text-dark small">Information Tech</span>
-                <span class="font-weight-700 text-warning small">72% Placed (108 / 150)</span>
+                <span class="font-weight-600 text-dark small">B.Com</span>
+                <span class="font-weight-700 text-warning small">76.6% Placed (23 / 30)</span>
               </div>
               <div class="progress" style="height: 8px; border-radius: 999px;">
-                <div class="progress-bar bg-warning" style="width: 72%;"></div>
+                <div class="progress-bar bg-warning" style="width: 76%;"></div>
               </div>
             </div>
+
           </div>
         </div>
       </div>

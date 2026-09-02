@@ -22,7 +22,8 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h2 class="h3 font-weight-800 mb-1">Academic Overview</h2>
-        <p class="text-muted small mb-0">Placement Session 2023-2024</p>
+        <p class="text-muted small mb-0">Placement Session 2025-2026</p>
+
       </div>
       <div class="d-flex gap-2">
         <button class="btn btn-pp-outline">
@@ -312,8 +313,9 @@
         if(stats.total_companies) document.getElementById('valTotalCompanies').innerText = stats.total_companies;
         if(stats.students_selected) document.getElementById('valTotalSelected').innerText = stats.students_selected.toLocaleString();
         if(stats.placement_percentage) document.getElementById('valPlacementRate').innerText = stats.placement_percentage + '%';
-        if(stats.highest_package) document.getElementById('valHighestPackage').innerText = '₹' + Number(stats.highest_package).toLocaleString();
-        if(stats.average_package) document.getElementById('valAvgPackage').innerText = '₹' + Number(stats.average_package).toLocaleString();
+        if(stats.highest_package) document.getElementById('valHighestPackage').innerText = '₹' + Number(stats.highest_package).toLocaleString() + ' LPA';
+        if(stats.average_package) document.getElementById('valAvgPackage').innerText = '₹' + Number(stats.average_package).toLocaleString() + ' LPA';
+
       } catch (err) {
         console.log('Using mock dashboard specs:', err.message);
       }

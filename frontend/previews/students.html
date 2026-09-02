@@ -46,7 +46,7 @@
         </a>
       </li>
       <li>
-        <a href="push.php" class="nav-item-link ">
+        <a href="push.html" class="nav-item-link ">
           <i class="fa-solid fa-paper-plane"></i>
           <span>Push to Company</span>
         </a>
@@ -70,13 +70,13 @@
         </a>
       </li>
       <li>
-        <a href="skill_gap.php" class="nav-item-link ">
+        <a href="skill_gap.html" class="nav-item-link ">
           <i class="fa-solid fa-magnifying-glass-chart"></i>
           <span>Skill Gap</span>
         </a>
       </li>
       <li>
-        <a href="ai_hub.php" class="nav-item-link ">
+        <a href="ai_hub.html" class="nav-item-link ">
           <i class="fa-solid fa-robot"></i>
           <span>AI Hub</span>
         </a>
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 <!-- SweetAlert2 for beautiful popups with local fallback -->
-<script src="assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
+<script src="../assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" onerror="this.onerror=null;"></script>
 
 
@@ -622,10 +622,13 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="col-6">
                 <label for="addStudentDept" class="form-label font-weight-600 small text-muted">DEPARTMENT</label>
                 <select id="addStudentDept" name="dept" class="form-select-pp w-100" required>
-                  <option value="Computer Science">Computer Science</option>
-                  <option value="Information Tech">Information Tech</option>
-                  <option value="Electronics & Comm.">Electronics & Comm.</option>
+                  <option value="BCA">BCA</option>
+                  <option value="BBA">BBA</option>
+                  <option value="BBA – Hospitality & Hotel Management">BBA – Hospitality & Hotel Management</option>
+                  <option value="B.Com">B.Com</option>
+                  <option value="B.Sc">B.Sc</option>
                 </select>
+
               </div>
               <div class="col-6">
                 <label for="addStudentSection" class="form-label font-weight-600 small text-muted">SECTION</label>
@@ -754,7 +757,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper to format department nicely (e.g., "bca" -> "BCA")
     function formatDept(dept) {
-      if (!dept) return 'Computer Science';
+      if (!dept) return 'BCA';
+
       dept = dept.trim();
       const lower = dept.toLowerCase();
       if (lower === 'bca') return 'BCA';
