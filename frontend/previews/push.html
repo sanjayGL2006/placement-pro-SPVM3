@@ -429,7 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<script>window.API_BASE = 'http://localhost:5500/api'; window.API_TOKEN = localStorage.getItem('token') || 'demo';</script>
+<script>
+  window.API_BASE = '<?php echo API_BASE; ?>';
+  window.API_TOKEN = '<?php echo $_SESSION['token'] ?? ""; ?>';
+</script>
 <script src="../assets/js/api.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {

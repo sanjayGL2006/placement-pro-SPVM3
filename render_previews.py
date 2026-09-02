@@ -40,10 +40,18 @@ for file in files:
     content = re.sub(r"<\?php require_once 'config.php'; \?>", "", content)
     content = content.replace("<?php include 'partials/nav.php'; ?>", nav_html)
     
-    # Replace API base & token script tags
-    content = re.sub(r"<script>\s*window\.API_BASE = '<\?php echo API_BASE; \?>';.*?</script>", "<script>window.API_BASE = 'http://localhost:5500/api'; window.API_TOKEN = localStorage.getItem('token') || 'demo';</script>", content, flags=re.DOTALL)
-    content = re.sub(r"<\?php echo \$_SESSION\['token'\] \?\? \"\"; \?>", "demo", content)
-    content = re.sub(r"<\?php.*?\?>", "", content, flags=re.DOTALL)
+    # Replace login script block for static preview
+    if file == 'login.php':
+        login_script = """document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value || 'admin@college.edu';
+      localStorage.setItem('token', 'demo_admin_token');
+      localStorage.setItem('user', JSON.stringify({ name: 'SPVM3 Tech Solution by Sanjay G L', role: 'admin', email: email }));
+      window.location.href = 'dashboard.html';
+    });"""
+        content = re.sub(r"document\.getElementById\('loginForm'\)\.addEventListener\('submit',[\s\S]*?\n    \}\);", login_script, content)
+
+
     # Replace .php links with .html links for static GitHub Pages preview navigation
     for page_name in ['dashboard', 'students', 'companies', 'import', 'sections', 'reports', 'settings', 'login', 'logout', 'push', 'skill_gap', 'ai_hub', 'documents']:
         content = content.replace(f'href="{page_name}.php"', f'href="{page_name}.html"')

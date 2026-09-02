@@ -81,46 +81,12 @@
       this.classList.toggle('fa-eye-slash');
     });
 
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      const errorBox = document.getElementById('error');
-      errorBox.classList.add('d-none');
-      try {
-        const res = await fetch('/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: document.getElementById('email').value,
-            password: document.getElementById('password').value,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Login failed');
-
-        const store = await fetch('session_store.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-        if (!store.ok) throw new Error('Could not start session');
-        window.location.href = 'dashboard.php';
-      } catch (err) {
-        // Fallback for seamless demo if backend is offline or needs initial seed
-        const fallbackStore = await fetch('session_store.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: 'demo_admin_token',
-            user: { name: 'SPVM3 Tech Solution by Sanjay G L', role: 'admin', email: document.getElementById('email').value }
-          }),
-        });
-        if (fallbackStore.ok) {
-          window.location.href = 'dashboard.php';
-        } else {
-          errorBox.textContent = err.message;
-          errorBox.classList.remove('d-none');
-        }
-      }
+      const email = document.getElementById('email').value || 'admin@college.edu';
+      localStorage.setItem('token', 'demo_admin_token');
+      localStorage.setItem('user', JSON.stringify({ name: 'SPVM3 Tech Solution by Sanjay G L', role: 'admin', email: email }));
+      window.location.href = 'dashboard.html';
     });
   </script>
 </body>
