@@ -29,9 +29,10 @@
         <button class="btn btn-pp-outline">
           <i class="fa-solid fa-filter"></i> Filter
         </button>
-        <a href="download.php?type=pdf" class="btn btn-pp-primary text-white text-decoration-none">
+        <a href="#" onclick="event.preventDefault(); showToast('Exporting Placement Report (PDF)...', 'info');" class="btn btn-pp-primary text-white text-decoration-none">
           <i class="fa-solid fa-file-pdf"></i> Export PDF
         </a>
+
       </div>
     </div>
 
@@ -95,7 +96,8 @@
             <i class="fa-solid fa-trophy text-warning"></i>
           </div>
           <div class="kpi-value" id="valHighestPackage">0</div>
-          <div class="kpi-subtext font-weight-600 text-dark">Goldman Sachs</div>
+          <div class="kpi-subtext font-weight-600 text-dark" id="valHighestPackageCompany">Google</div>
+
         </div>
       </div>
 
@@ -314,7 +316,9 @@
         if(stats.students_selected) document.getElementById('valTotalSelected').innerText = stats.students_selected.toLocaleString();
         if(stats.placement_percentage) document.getElementById('valPlacementRate').innerText = stats.placement_percentage + '%';
         if(stats.highest_package) document.getElementById('valHighestPackage').innerText = '₹' + Number(stats.highest_package).toLocaleString() + ' LPA';
+        if(stats.highest_package_company) document.getElementById('valHighestPackageCompany').innerText = stats.highest_package_company;
         if(stats.average_package) document.getElementById('valAvgPackage').innerText = '₹' + Number(stats.average_package).toLocaleString() + ' LPA';
+
 
       } catch (err) {
         console.log('Using mock dashboard specs:', err.message);
