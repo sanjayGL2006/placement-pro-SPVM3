@@ -299,8 +299,10 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 
-<!-- SweetAlert2 for beautiful popups -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- SweetAlert2 for beautiful popups with local fallback -->
+<script src="assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" onerror="this.onerror=null;"></script>
+
 
 <!-- Global Post New Job Modal -->
 <div class="modal fade" id="postJobModal" tabindex="-1" aria-labelledby="postJobModalLabel" aria-hidden="true">
