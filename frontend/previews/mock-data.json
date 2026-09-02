@@ -1,0 +1,40 @@
+{
+  "session": "2025-2026",
+  "stats": {
+    "total_students": 150,
+    "placed_students": 118,
+    "companies_visited": 32,
+    "average_package": 14.5,
+    "highest_package": 42.0,
+    "placement_rate": 78.67
+  },
+  "departments": [
+    { "code": "BCA", "name": "BCA", "total": 45, "placed": 38, "rate": 84.44, "avg_package": 15.2 },
+    { "code": "BBA", "name": "BBA", "total": 35, "placed": 26, "rate": 74.28, "avg_package": 12.8 },
+    { "code": "BBA-HM", "name": "BBA – Hospitality & Hotel Management", "total": 20, "placed": 15, "rate": 75.0, "avg_package": 11.5 },
+    { "code": "BCOM", "name": "B.Com", "total": 30, "placed": 23, "rate": 76.66, "avg_package": 13.0 },
+    { "code": "BSC", "name": "B.Sc", "total": 20, "placed": 16, "rate": 80.0, "avg_package": 14.0 }
+  ],
+  "companies": [
+    { "id": 1, "name": "Google", "job_role": "Software Development Engineer", "visit_date": "2026-09-15", "package_offered": 28.5, "min_cgpa": 7.5, "allowed_backlogs": 0, "status": "Upcoming", "application_count": 42 },
+    { "id": 2, "name": "Microsoft", "job_role": "Cloud Solutions Architect", "visit_date": "2026-09-20", "package_offered": 26.0, "min_cgpa": 7.0, "allowed_backlogs": 0, "status": "Upcoming", "application_count": 38 },
+    { "id": 3, "name": "Infosys", "job_role": "Systems Engineer", "visit_date": "2026-08-10", "package_offered": 9.5, "min_cgpa": 6.0, "allowed_backlogs": 1, "status": "Completed", "application_count": 85 },
+    { "id": 4, "name": "Wipro", "job_role": "Project Engineer", "visit_date": "2026-08-18", "package_offered": 8.8, "min_cgpa": 6.0, "allowed_backlogs": 1, "status": "Completed", "application_count": 72 },
+    { "id": 5, "name": "TCS", "job_role": "Digital Associate", "visit_date": "2026-09-05", "package_offered": 11.0, "min_cgpa": 6.5, "allowed_backlogs": 0, "status": "Ongoing", "application_count": 64 }
+  ],
+  "students": [
+    { "id": 1, "usn": "1PE23BCA001", "name": "Aarav Sharma", "email": "aarav.bca@pesiams.edu", "department": "BCA", "cgpa": 8.9, "backlogs": 0, "placement_status": "Placed", "company": "Google", "package_lpa": 28.5 },
+    { "id": 2, "usn": "1PE23BBA014", "name": "Ananya Rao", "email": "ananya.bba@pesiams.edu", "department": "BBA", "cgpa": 8.2, "backlogs": 0, "placement_status": "Placed", "company": "Microsoft", "package_lpa": 26.0 },
+    { "id": 3, "usn": "1PE23BHM008", "name": "Rohan Verma", "email": "rohan.bhm@pesiams.edu", "department": "BBA – Hospitality & Hotel Management", "cgpa": 7.8, "backlogs": 0, "placement_status": "Placed", "company": "Taj Group", "package_lpa": 12.0 },
+    { "id": 4, "usn": "1PE23BCM022", "name": "Priya Nair", "email": "priya.bcom@pesiams.edu", "department": "B.Com", "cgpa": 8.1, "backlogs": 0, "placement_status": "Placed", "company": "Infosys", "package_lpa": 9.5 },
+    { "id": 5, "usn": "1PE23BSC005", "name": "Karthik Gowda", "email": "karthik.bsc@pesiams.edu", "department": "B.Sc", "cgpa": 7.6, "backlogs": 0, "placement_status": "Eligible", "company": null, "package_lpa": 0.0 }
+
+  ],
+  "recycle_bin": [
+    { "id": 101, "item_type": "Student", "item_name": "Archived Draft Entry (2024)", "deleted_at": "2026-08-25 14:30:00" }
+  ],
+  "notifications": [
+    { "id": 1, "title": "Google Campus Drive Scheduled", "message": "Google drive visit date confirmed for Sep 15, 2026.", "created_at": "2026-09-01 10:00:00" },
+    { "id": 2, "title": "New Import Completed", "message": "45 BCA student records imported successfully.", "created_at": "2026-08-30 16:20:00" }
+  ]
+}

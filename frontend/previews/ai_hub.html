@@ -1,0 +1,1267 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Hub — Placement Pro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="../assets/css/style.css" rel="stylesheet">
+  <style>
+    /* Premium style additions for AI Hub */
+    .ai-bubble-bot {
+      background-color: var(--pp-primary-light);
+      color: #312E81;
+      border-radius: 16px 16px 16px 4px;
+      max-width: 80%;
+      padding: 0.85rem 1.15rem;
+      align-self: flex-start;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .ai-bubble-user {
+      background-color: var(--pp-primary);
+      color: #FFFFFF;
+      border-radius: 16px 16px 4px 16px;
+      max-width: 80%;
+      padding: 0.85rem 1.15rem;
+      align-self: flex-end;
+      box-shadow: 0 4px 6px rgba(79, 70, 229, 0.15);
+    }
+    .chat-container {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 1.25rem;
+      background: #FAFAFA;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .chat-suggestion-chip {
+      background: #FFFFFF;
+      border: 1px solid var(--pp-primary);
+      color: var(--pp-primary);
+      font-size: 0.775rem;
+      font-weight: 600;
+      border-radius: 20px;
+      padding: 0.35rem 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .chat-suggestion-chip:hover {
+      background: var(--pp-primary);
+      color: #FFFFFF;
+      box-shadow: 0 2px 4px rgba(79, 70, 229, 0.15);
+    }
+    .score-gauge-ring {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(var(--pp-primary) calc(var(--gauge-value) * 1%), #E2E8F0 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .score-gauge-ring::after {
+      content: '';
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background: #FFFFFF;
+      border-radius: 50%;
+    }
+    .score-gauge-text {
+      position: relative;
+      z-index: 5;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--pp-primary-dark);
+    }
+  </style>
+</head>
+<body>
+
+  
+<aside id="sidebar">
+  <div>
+    <!-- Logo Area -->
+    <div class="sidebar-logo">
+      <div class="brand-title">
+        <i class="fa-solid fa-graduation-cap text-primary" style="color: var(--pp-primary) !important;"></i>
+        Placement Pro
+      </div>
+      <div class="brand-subtitle">Admin Portal</div>
+    </div>
+
+    <!-- Navigation Links -->
+    <ul class="sidebar-nav">
+      <li>
+        <a href="dashboard.html" class="nav-item-link ">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="students.html" class="nav-item-link ">
+          <i class="fa-solid fa-user-graduate"></i>
+          <span>Students</span>
+        </a>
+      </li>
+      <li>
+        <a href="companies.html" class="nav-item-link ">
+          <i class="fa-solid fa-building"></i>
+          <span>Companies</span>
+        </a>
+      </li>
+      <li>
+        <a href="push.html" class="nav-item-link ">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Push to Company</span>
+        </a>
+      </li>
+      <li>
+        <a href="import.html" class="nav-item-link ">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Import</span>
+        </a>
+      </li>
+      <li>
+        <a href="sections.html" class="nav-item-link ">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Sections</span>
+        </a>
+      </li>
+      <li>
+        <a href="reports.html" class="nav-item-link ">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Reports</span>
+        </a>
+      </li>
+      <li>
+        <a href="skill_gap.html" class="nav-item-link ">
+          <i class="fa-solid fa-magnifying-glass-chart"></i>
+          <span>Skill Gap</span>
+        </a>
+      </li>
+      <li>
+        <a href="ai_hub.html" class="nav-item-link ">
+          <i class="fa-solid fa-robot"></i>
+          <span>AI Hub</span>
+        </a>
+      </li>
+      <li>
+        <a href="settings.html" class="nav-item-link ">
+          <i class="fa-solid fa-gear"></i>
+          <span>Settings</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Sidebar Footer CTA -->
+  <div class="sidebar-footer">
+    <button class="btn-post-job" data-bs-toggle="modal" data-bs-target="#postJobModal">
+      <i class="fa-solid fa-plus"></i>
+      <span>+ Post New Job</span>
+    </button>
+  </div>
+</aside>
+
+
+<header id="top-header">
+  <!-- Search Bar -->
+  <div class="header-search-container">
+    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+    <input type="text" placeholder="Search students, companies, records..." id="globalSearchInput">
+  </div>
+
+  <!-- Header Right Actions -->
+  <div class="header-actions">
+    <!-- Help / Question Mark -->
+    <button class="header-icon-btn" title="Help & Documentation">
+      <i class="fa-regular fa-circle-question"></i>
+    </button>
+
+    <!-- Notification Bell -->
+    <div class="dropdown">
+      <button class="header-icon-btn position-relative" title="Notifications" data-bs-toggle="dropdown" aria-expanded="false" id="notifDropdownBtn">
+        <i class="fa-regular fa-bell"></i>
+        <span class="notification-dot d-none" id="notifBadge" style="width: 8px; height: 8px; background-color: var(--pp-danger-dot) !important; border-radius: 50%; position: absolute; top: 8px; right: 8px;"></span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-0" style="width: 320px; max-height: 400px; overflow-y: auto;" id="notifDropdownMenu">
+        <li class="p-3 border-bottom d-flex justify-content-between align-items-center">
+          <span class="font-weight-700 text-dark">Notifications</span>
+          <a href="#" class="small text-decoration-none" style="color: var(--pp-primary);" id="notifMarkAllRead">Mark all read</a>
+        </li>
+        <div id="notifListContainer">
+          <li class="p-3 text-center text-muted small">No new notifications</li>
+        </div>
+      </ul>
+    </div>
+
+    <!-- User Profile Component -->
+    <div class="dropdown">
+      <div class="user-profile-badge cursor-pointer" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120" alt="Avatar" class="user-avatar">
+        <div class="user-info">
+          <div class="user-name"></div>
+          <div class="user-role"></div>
+        </div>
+        <i class="fa-solid fa-chevron-down ms-1 text-muted" style="font-size: 0.75rem;"></i>
+      </div>
+      <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2">
+        <li><a class="dropdown-item py-2" href="settings.html"><i class="fa-solid fa-user me-2 text-muted"></i> Edit Profile</a></li>
+        <li><a class="dropdown-item py-2" href="settings.html"><i class="fa-solid fa-gear me-2 text-muted"></i> Account Settings</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item py-2 text-danger" href="logout.html"><i class="fa-solid fa-right-from-bracket me-2"></i> Sign Out</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const badge = document.getElementById('notifBadge');
+  const container = document.getElementById('notifListContainer');
+  const markAllBtn = document.getElementById('notifMarkAllRead');
+
+  async function loadNotifications() {
+    try {
+      if (typeof API === 'undefined') return;
+      const data = await API.get('/notifications');
+      if (data && data.notifications) {
+        if (data.unread_count > 0) {
+          badge.classList.remove('d-none');
+        } else {
+          badge.classList.add('d-none');
+        }
+
+        if (data.notifications.length === 0) {
+          container.innerHTML = `<li class="p-3 text-center text-muted small">No notifications</li>`;
+        } else {
+          container.innerHTML = data.notifications.map(n => {
+            const timeStr = new Date(n.created_at).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'});
+            const dateStr = new Date(n.created_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+            
+            let icon = '<i class="fa-solid fa-circle-info text-info"></i>';
+            if (n.type === 'success') icon = '<i class="fa-solid fa-circle-check text-success"></i>';
+            else if (n.type === 'warning') icon = '<i class="fa-solid fa-circle-exclamation text-warning"></i>';
+            else if (n.type === 'danger') icon = '<i class="fa-solid fa-triangle-exclamation text-danger"></i>';
+            
+            const bgClass = n.is_read ? '' : 'bg-light';
+            
+            return `
+              <li class="p-3 border-bottom ${bgClass} d-flex align-items-start gap-3">
+                <div style="font-size: 1.15rem; margin-top: 0.15rem;">${icon}</div>
+                <div class="flex-grow-1">
+                  <div class="font-weight-700 text-dark small" style="line-height: 1.25;">${n.title}</div>
+                  <div class="text-muted small mt-1" style="font-size: 0.775rem; line-height: 1.35;">${n.message}</div>
+                  <div class="text-muted mt-1" style="font-size: 0.7rem;">${dateStr} at ${timeStr}</div>
+                </div>
+              </li>
+            `;
+          }).join('');
+        }
+      }
+    } catch (err) {
+      console.log('Failed to fetch notifications:', err.message);
+    }
+  }
+
+  markAllBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      await API.post('/notifications/mark-read');
+      badge.classList.add('d-none');
+      loadNotifications();
+      showToast('All notifications marked as read.');
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+    // Load once
+  loadNotifications();
+  // Poll every 30 seconds
+  setInterval(loadNotifications, 30000);
+});
+
+// --- PWA Installation Logic ---
+(function() {
+  // Inject manifest dynamically
+  const manifestLink = document.createElement('link');
+  manifestLink.rel = 'manifest';
+  manifestLink.href = 'manifest.json';
+  document.head.appendChild(manifestLink);
+
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('Service Worker registered', reg))
+        .catch(err => console.error('Service Worker registration failed', err));
+    });
+  }
+
+  // Handle Install Prompt
+  let deferredPrompt;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const pwaBanner = document.createElement('div');
+    pwaBanner.id = 'pwaInstallBanner';
+    pwaBanner.className = 'fixed-bottom bg-primary text-white p-3 shadow d-none d-flex justify-content-between align-items-center';
+    pwaBanner.style.zIndex = '9999';
+    pwaBanner.innerHTML = `
+      <div>
+        <strong>Install Placement Pro App</strong>
+        <p class="mb-0 small" id="pwaInstruction">Add to your home screen for a better experience.</p>
+      </div>
+      <div>
+        <button id="pwaInstallBtn" class="btn btn-light btn-sm font-weight-bold me-2">Install</button>
+        <button id="pwaDismissBtn" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-times"></i></button>
+      </div>
+    `;
+    document.body.appendChild(pwaBanner);
+
+    const btnInstall = document.getElementById('pwaInstallBtn');
+    const btnDismiss = document.getElementById('pwaDismissBtn');
+
+    btnDismiss.addEventListener('click', () => {
+      pwaBanner.classList.add('d-none');
+      localStorage.setItem('pwaDismissed', 'true');
+    });
+
+    if (localStorage.getItem('pwaDismissed') !== 'true') {
+      if (isIOS) {
+        // iOS doesn't support beforeinstallprompt, show instructional banner
+        const isStandalone = window.navigator.standalone === true;
+        if (!isStandalone) {
+          pwaBanner.classList.remove('d-none');
+          btnInstall.style.display = 'none';
+          document.getElementById('pwaInstruction').innerText = 'Tap Share button below, then "Add to Home Screen".';
+        }
+      } else {
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          if (pwaBanner) pwaBanner.classList.remove('d-none');
+        });
+
+
+        btnInstall.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+              console.log('User accepted PWA install');
+            }
+            deferredPrompt = null;
+            pwaBanner.classList.add('d-none');
+          }
+        });
+      }
+    }
+  });
+})();
+</script>
+
+
+<!-- SweetAlert2 for beautiful popups with local fallback -->
+<script src="../assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" onerror="this.onerror=null;"></script>
+
+
+<!-- Global Post New Job Modal -->
+<div class="modal fade" id="postJobModal" tabindex="-1" aria-labelledby="postJobModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+      <div class="modal-header border-0 pb-0 px-4 pt-4">
+        <h5 class="modal-title font-weight-bold" id="postJobModalLabel">
+          <i class="fa-solid fa-briefcase text-primary me-2" style="color: var(--pp-primary) !important;"></i> Post New Job Drive
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="postJobForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="jobCompName" class="form-label font-weight-600 text-muted small">COMPANY NAME</label>
+              <input type="text" class="form-control form-control-pp" id="jobCompName" name="company_name" placeholder="e.g. Wipro" required>
+            </div>
+            <div class="col-md-6">
+              <label for="jobRole" class="form-label font-weight-600 text-muted small">ROLE / POSITION</label>
+              <input type="text" class="form-control form-control-pp" id="jobRole" name="role" placeholder="e.g. Software Development Engineer" required>
+            </div>
+            <div class="col-md-6">
+              <label for="jobPackage" class="form-label font-weight-600 text-muted small">PACKAGE (LPA)</label>
+              <input type="number" step="0.01" class="form-control form-control-pp" id="jobPackage" name="package_lpa" placeholder="e.g. 14.5" required>
+            </div>
+            <div class="col-md-6">
+              <label for="jobDate" class="form-label font-weight-600 text-muted small">DRIVE DATE (INTERVIEW DATE)</label>
+              <input type="date" class="form-control form-control-pp" id="jobDate" name="drive_date" required>
+            </div>
+            <div class="col-md-4">
+              <label for="jobMinCgpa" class="form-label font-weight-600 text-muted small">MINIMUM CGPA</label>
+              <input type="number" step="0.1" min="0" max="10" class="form-control form-control-pp" id="jobMinCgpa" name="min_cgpa" value="6.0" required>
+            </div>
+            <div class="col-md-4">
+              <label for="jobMaxBacklogs" class="form-label font-weight-600 text-muted small">MAX ALLOWED BACKLOGS</label>
+              <input type="number" min="0" class="form-control form-control-pp" id="jobMaxBacklogs" name="max_backlogs" value="0" required>
+            </div>
+            <div class="col-md-4">
+              <label for="jobDeadline" class="form-label font-weight-600 text-muted small">REGISTRATION DEADLINE</label>
+              <input type="date" class="form-control form-control-pp" id="jobDeadline" name="registration_deadline" required>
+            </div>
+            <div class="col-md-12">
+              <label for="deptBCA" class="form-label font-weight-600 text-muted small">ELIGIBLE DEPARTMENTS</label>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" checked id="deptBCA" name="dept_bca">
+                  <label class="form-check-label" for="deptBCA">BCA</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" checked id="deptBSc" name="dept_bsc">
+                  <label class="form-check-label" for="deptBSc">B.Sc</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deptBCom" name="dept_bcom">
+                  <label class="form-check-label" for="deptBCom">B.Com</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deptBBA" name="dept_bba">
+                  <label class="form-check-label" for="deptBBA">BBA</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deptBBAH" name="dept_bbah">
+                  <label class="form-check-label" for="deptBBAH">BBA - Hospitality</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <label for="jobDesc" class="form-label font-weight-600 text-muted small">JOB DESCRIPTION & REQUIREMENTS</label>
+              <textarea class="form-control form-control-pp" id="jobDesc" name="job_description" rows="3" placeholder="Enter drive details..."></textarea>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-4 pt-2 border-top">
+            <button type="button" class="btn btn-pp-outline" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-pp-primary"><i class="fa-solid fa-paper-plane me-1"></i> Publish Drive</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>window.API_BASE = 'http://localhost:5500/api'; window.API_TOKEN = localStorage.getItem('token') || 'demo';</script>
+<script src="../assets/js/api.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('postJobForm');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const selectedDepts = [];
+      if (document.getElementById('deptBCA').checked) selectedDepts.push('BCA');
+      if (document.getElementById('deptBSc').checked) selectedDepts.push('B.Sc');
+      if (document.getElementById('deptBCom').checked) selectedDepts.push('B.Com');
+      if (document.getElementById('deptBBA').checked) selectedDepts.push('BBA');
+      if (document.getElementById('deptBBAH').checked) selectedDepts.push('BBA - Hospitality & Hotel Management');
+
+      const payload = {
+        name: document.getElementById('jobCompName').value,
+        job_role: document.getElementById('jobRole').value,
+        package_amount: parseFloat(document.getElementById('jobPackage').value) || 0,
+        visit_date: document.getElementById('jobDate').value || null,
+        last_date: document.getElementById('jobDeadline').value || null,
+        min_cgpa: parseFloat(document.getElementById('jobMinCgpa').value) || 0.0,
+        allowed_backlogs: parseInt(document.getElementById('jobMaxBacklogs').value) || 0,
+        eligible_departments: selectedDepts.join(','),
+        industry: 'IT Services',
+        description: document.getElementById('jobDesc').value || ''
+      };
+
+      try {
+        await API.post('/companies', payload);
+        
+        Swal.fire({
+          title: 'Success!',
+          text: 'Job drive posted successfully to PostgreSQL database.',
+          icon: 'success',
+          confirmButtonColor: 'var(--pp-primary)'
+        }).then(() => {
+          const modalEl = document.getElementById('postJobModal');
+          const modalInstance = bootstrap.Modal.getInstance(modalEl);
+          if (modalInstance) modalInstance.hide();
+          form.reset();
+          
+          if (typeof loadCompanies === 'function') {
+            loadCompanies();
+          } else {
+            window.location.reload();
+          }
+        });
+      } catch (err) {
+        Swal.fire({
+          title: 'Error!',
+          text: 'Failed to publish drive: ' + err.message,
+          icon: 'error',
+          confirmButtonColor: 'var(--pp-primary)'
+        });
+      }
+    });
+  }
+});
+</script>
+
+
+
+  <main id="main-wrapper">
+
+    <!-- Header Area -->
+    <div class="mb-4">
+      <h2 class="h3 font-weight-800 mb-1"><i class="fa-solid fa-robot text-primary me-2"></i> AI Assistant Hub</h2>
+      <p class="text-muted small mb-0">Harness natural language analysis, predictive recommendations, and intelligent scoring systems</p>
+    </div>
+
+    <!-- Hub Tabs Navigation -->
+    <div class="pp-card p-2 mb-4 bg-white">
+      <ul class="nav nav-pills nav-fill" id="aiTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active font-weight-700 py-2.5" id="chatbot-tab" data-bs-toggle="tab" data-bs-target="#chatbot-panel" type="button" role="tab"><i class="fa-solid fa-comments me-2"></i> AI Chatbot Assistant</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link font-weight-700 py-2.5" id="resume-tab" data-bs-toggle="tab" data-bs-target="#resume-panel" type="button" role="tab"><i class="fa-solid fa-file-invoice me-2"></i> Resume Analyzer & Score</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link font-weight-700 py-2.5" id="recommender-tab" data-bs-toggle="tab" data-bs-target="#recommender-panel" type="button" role="tab"><i class="fa-solid fa-star me-2"></i> Drive Recommender</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link font-weight-700 py-2.5" id="prep-tab" data-bs-toggle="tab" data-bs-target="#prep-panel" type="button" role="tab"><i class="fa-solid fa-user-tie me-2"></i> Interview Preparation</button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Hub Tabs Content Panels -->
+    <div class="tab-content" id="aiTabContent">
+
+      <!-- 1. AI Chatbot Panel -->
+      <div class="tab-pane fade show active" id="chatbot-panel" role="tabpanel">
+        <div class="row g-4">
+          <div class="col-12 col-lg-8">
+            <div class="pp-card d-flex flex-column gap-3">
+              <h5 class="h6 font-weight-800 text-dark mb-0"><i class="fa-regular fa-comments me-1"></i> Interactive Chatbot</h5>
+              <p class="text-muted small mb-0">Ask database statistics, search candidates by skills, or inquire about company drives.</p>
+              
+              <!-- Chat Box -->
+              <div class="chat-container" id="chatContainer">
+                <div class="ai-bubble-bot">
+                  Hi! I am your AI placement advisor. Ask me questions like:
+                  <div class="d-flex flex-wrap gap-2 mt-2">
+                    <span class="chat-suggestion-chip" onclick="sendSuggestion('What is the current placement percentage?')">Placement %</span>
+                    <span class="chat-suggestion-chip" onclick="sendSuggestion('Who has the highest package?')">Highest Offer</span>
+                    <span class="chat-suggestion-chip" onclick="sendSuggestion('Show me students with Python skills')">Python Students</span>
+                    <span class="chat-suggestion-chip" onclick="sendSuggestion('How many companies are registered?')">Total Companies</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Input Bar -->
+              <form id="chatForm" onsubmit="submitChat(event)" class="d-flex gap-2">
+                <input type="text" id="chatInput" name="chat_input" aria-label="Type placement query here" class="form-control form-control-pp flex-grow-1" placeholder="Type placement query here..." required>
+                <button type="submit" class="btn btn-pp-primary px-4" aria-label="Send message"><i class="fa-solid fa-paper-plane"></i></button>
+              </form>
+            </div>
+          </div>
+          
+          <div class="col-12 col-lg-4">
+            <div class="pp-card h-100">
+              <h5 class="h6 font-weight-800 text-dark mb-3">Live Capabilities</h5>
+              <ul class="small text-muted ps-3 d-flex flex-column gap-2" style="line-height: 1.5;">
+                <li><strong>Live SQL queries:</strong> Asks live table questions on highest pack, average compensation, and unplaced filters.</li>
+                <li><strong>Heuristic Skill matching:</strong> Asks for candidates by skill, mapping values dynamically.</li>
+                <li><strong>Drive Info:</strong> Asks for company eligibility requirements.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. AI Resume Analyzer Panel -->
+      <div class="tab-pane fade" id="resume-panel" role="tabpanel">
+        <!-- Input Area -->
+        <div class="pp-card mb-4">
+          <h5 class="h6 font-weight-800 text-dark mb-3"><i class="fa-solid fa-file-invoice me-1"></i> Paste Resume Content for ATS Audit</h5>
+          <form id="resumeForm" onsubmit="submitResume(event)">
+            <div class="mb-3">
+              <label for="resumeText" class="form-label font-weight-700 text-muted small visually-hidden">Resume Content</label>
+              <textarea id="resumeText" name="resume_text" aria-label="Resume Content" class="form-control form-control-pp" rows="10" placeholder="Paste full plain-text resume here... (Include Education, Projects, Skills, and Experience sections for best results)" required></textarea>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted small"><i class="fa-solid fa-circle-info me-1"></i> Paste your plain-text resume for a comprehensive ATS + AI detection audit.</span>
+              <button type="submit" class="btn btn-pp-primary px-4" id="btnAnalyze"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> Run Full Audit</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Audit Report Results (Hidden initially) -->
+        <div id="resumePlaceholder" class="pp-card text-center py-5">
+          <i class="fa-solid fa-gauge-high text-muted mb-3" style="font-size: 2.5rem;"></i>
+          <p class="text-muted small mb-0">Paste a resume above and click <strong>Run Full Audit</strong> to get your ATS Compatibility Score, AI Detection Analysis, and Recruiter Quick-Check Summary.</p>
+        </div>
+
+        <div class="d-none" id="auditReport">
+          <!-- Report Header -->
+          <div class="audit-report-container mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="h6 font-weight-800 text-dark mb-1"><i class="fa-solid fa-clipboard-check me-1 text-primary" style="color: var(--pp-primary) !important;"></i> Resume Audit Report</h5>
+                <span class="text-muted small">Comprehensive ATS, AI Detection & Recruiter Analysis</span>
+              </div>
+              <div id="auditVerdictTop"></div>
+            </div>
+
+            <!-- ===== SECTION 1: ATS COMPATIBILITY ===== -->
+            <div class="audit-section-header">
+              <span class="section-number">1</span>
+              <div>
+                <div class="section-title">ATS Compatibility Score & Analysis</div>
+                <div class="section-subtitle">Keyword optimization, formatting compliance, and critical fixes</div>
+              </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+              <!-- Gauge + Skills -->
+              <div class="col-12 col-md-4">
+                <div class="d-flex flex-column align-items-center gap-3">
+                  <div class="audit-gauge-ring" id="atsGaugeRing" style="--gauge-value: 0; --gauge-color: var(--pp-primary);">
+                    <div class="audit-gauge-text">
+                      <div class="audit-gauge-score" id="atsScoreValue">0</div>
+                      <div class="audit-gauge-label">ATS Score</div>
+                    </div>
+                  </div>
+                  <span id="atsLevelBadge" class="badge-pill-success">Calculating...</span>
+                </div>
+                <!-- Detected Skills -->
+                <div class="mt-4">
+                  <div class="font-weight-700 text-dark small mb-2"><i class="fa-solid fa-tags me-1"></i> Detected Skills</div>
+                  <div class="d-flex flex-wrap gap-1" id="atsDetectedSkills"></div>
+                </div>
+              </div>
+
+              <!-- Keyword Optimization Bars -->
+              <div class="col-12 col-md-4">
+                <div class="font-weight-700 text-dark small mb-3"><i class="fa-solid fa-key me-1"></i> Keyword Optimization</div>
+                <div id="atsKeywordBars"></div>
+              </div>
+
+              <!-- Formatting Check -->
+              <div class="col-12 col-md-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div class="font-weight-700 text-dark small"><i class="fa-solid fa-list-check me-1"></i> Formatting & Structure</div>
+                  <span id="formatOverallBadge" class="badge-pill-success">—</span>
+                </div>
+                <div id="atsFormatChecks"></div>
+              </div>
+            </div>
+
+            <!-- Critical Fixes -->
+            <div class="mb-2">
+              <div class="font-weight-700 text-dark small mb-2"><i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i> Top Critical ATS Fixes</div>
+              <div id="atsCriticalFixes"></div>
+            </div>
+
+            <!-- ===== SECTION 2: AI CONTENT DETECTION ===== -->
+            <div class="audit-section-header">
+              <span class="section-number">2</span>
+              <div>
+                <div class="section-title">AI Content Detection & Humanization Score</div>
+                <div class="section-subtitle">Cliché analysis, tone authenticity, and phrase rewrite suggestions</div>
+              </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+              <div class="col-12 col-md-6">
+                <!-- AI vs Human Bars -->
+                <div class="ai-detection-container">
+                  <div class="ai-bar-wrapper">
+                    <div class="ai-bar-label">
+                      <span style="color: var(--pp-danger-text);"><i class="fa-solid fa-robot me-1"></i> AI-Generated</span>
+                      <span id="aiPctLabel" class="font-weight-800" style="color: var(--pp-danger-text);">0%</span>
+                    </div>
+                    <div class="ai-bar-track">
+                      <div class="ai-bar-fill ai" id="aiBarFill" style="width: 0%;"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="ai-detection-container" style="margin-top: 0;">
+                  <div class="ai-bar-wrapper">
+                    <div class="ai-bar-label">
+                      <span style="color: var(--pp-success-text);"><i class="fa-solid fa-user-pen me-1"></i> Human-Written</span>
+                      <span id="humanPctLabel" class="font-weight-800" style="color: var(--pp-success-text);">0%</span>
+                    </div>
+                    <div class="ai-bar-track">
+                      <div class="ai-bar-fill human" id="humanBarFill" style="width: 0%;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tone -->
+                <div class="mt-3">
+                  <div class="font-weight-700 text-dark small mb-2"><i class="fa-solid fa-comment-dots me-1"></i> Tone & Authenticity</div>
+                  <div id="toneBadgeContainer"></div>
+                  <p class="text-muted small mt-2 mb-0" id="toneAnalysisText"></p>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <!-- Phrases to Rewrite -->
+                <div class="font-weight-700 text-dark small mb-2"><i class="fa-solid fa-pen-fancy me-1"></i> Phrases to Rewrite</div>
+                <div id="aiRewriteCards">
+                  <p class="text-muted small">No AI-sounding phrases detected.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- ===== SECTION 3: RECRUITER QUICK-CHECK ===== -->
+            <div class="audit-section-header">
+              <span class="section-number">3</span>
+              <div>
+                <div class="section-title">Recruiter Quick-Check Summary</div>
+                <div class="section-subtitle">Readability assessment and submission verdict</div>
+              </div>
+            </div>
+
+            <div class="row g-4 align-items-center">
+              <div class="col-12 col-md-8">
+                <div class="font-weight-700 text-dark small mb-2"><i class="fa-solid fa-eye me-1"></i> Readability & Impact</div>
+                <p class="text-muted small mb-0" id="readabilityText" style="line-height: 1.55;"></p>
+              </div>
+              <div class="col-12 col-md-4 text-md-end">
+                <div class="font-weight-700 text-dark small mb-2">Final Verdict</div>
+                <div id="finalVerdictBadge"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. AI Drive Recommender Panel -->
+      <div class="tab-pane fade" id="recommender-panel" role="tabpanel">
+        <div class="pp-card mb-4">
+          <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-4">
+              <label for="recommenderDriveSelect" class="form-label font-weight-700 text-muted small">SELECT RECRUITMENT DRIVE</label>
+              <select id="recommenderDriveSelect" name="recommender_drive" class="form-select-pp w-100" onchange="loadRecommendations()">
+                <option value="">Choose active drive...</option>
+                <!-- Loaded dynamically -->
+              </select>
+            </div>
+            <div class="col-12 col-md-8 text-md-end pt-3">
+              <span class="text-muted small"><i class="fa-solid fa-circle-question me-1 text-primary"></i> Ranks candidates by matching skills, academic eligibility, and backlog restrictions.</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="pp-card p-0 overflow-hidden" id="recTableContainer">
+          <div class="text-center py-5 text-muted small">
+            <i class="fa-solid fa-list-check text-muted mb-3" style="font-size: 2.5rem;"></i>
+            <p class="mb-0">Select an active campus recruitment drive from the dropdown to run recommendation scoring.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. AI Interview Prep Panel -->
+      <div class="tab-pane fade" id="prep-panel" role="tabpanel">
+        <div class="row g-4">
+          <div class="col-12 col-lg-5">
+            <div class="pp-card">
+              <h5 class="h6 font-weight-800 text-dark mb-3">Interview Generator Options</h5>
+              <form id="prepForm" onsubmit="generatePrepQuestions(event)">
+                <div class="mb-3">
+                  <label for="prepStudentSelect" class="form-label font-weight-700 text-muted small">STUDENT PROFILE</label>
+                  <select id="prepStudentSelect" name="prep_student" class="form-select-pp w-100" required>
+                    <option value="">Choose Student...</option>
+                    <!-- Loaded dynamically -->
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="prepCompanySelect" class="form-label font-weight-700 text-muted small">TARGET DRIVE / COMPANY</label>
+                  <select id="prepCompanySelect" name="prep_company" class="form-select-pp w-100" required>
+                    <option value="">Choose Company Drive...</option>
+                    <!-- Loaded dynamically -->
+                  </select>
+                </div>
+                
+                <div class="mb-4">
+                  <label for="prepJobRole" class="form-label font-weight-700 text-muted small">JOB ROLE / POSITION</label>
+                  <input type="text" id="prepJobRole" name="prep_job_role" class="form-control form-control-pp" placeholder="e.g. Software Engineer" value="Software Developer">
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                  <button type="submit" class="btn btn-pp-primary w-100 py-2.5 font-weight-600 justify-content-center" id="btnPrep"><i class="fa-solid fa-robot me-1"></i> Generate Tailored Mock Interview</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          
+          <div class="col-12 col-lg-7">
+            <div class="pp-card h-100" id="prepResultCard">
+              <div class="text-center py-5 text-muted small" id="prepPlaceholder">
+                <i class="fa-solid fa-user-tie text-muted mb-3" style="font-size: 2.5rem;"></i>
+                <p class="mb-0">Generate a custom interview guide to view tailored technical and behavioral questions.</p>
+              </div>
+              
+              <div class="d-none" id="prepResults">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                  <div>
+                    <h5 class="h6 font-weight-800 text-dark mb-0">Pre-Interview Preparation Guide</h5>
+                    <span class="text-muted small" id="prepRoleSubtitle">Software Engineer</span>
+                  </div>
+                  <span class="badge-pill-info"><i class="fa-solid fa-file-shield"></i> Prep Sheet</span>
+                </div>
+                
+                <!-- Tech section -->
+                <div class="mb-4">
+                  <div class="font-weight-800 text-primary mb-3" style="color: var(--pp-primary) !important;"><i class="fa-solid fa-code me-1"></i> Technical Round Focus</div>
+                  <div class="d-flex flex-column gap-3" id="prepTechList"></div>
+                </div>
+                
+                <!-- HR section -->
+                <div>
+                  <div class="font-weight-800 text-warning mb-3"><i class="fa-solid fa-people-arrows me-1"></i> HR & Culture Fit Focus</div>
+                  <div class="d-flex flex-column gap-3" id="prepHrList"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>window.API_BASE = 'http://localhost:5500/api'; window.API_TOKEN = localStorage.getItem('token') || 'demo';</script>
+  <script src="../assets/js/api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Load initial dropdowns for recommender and prep tabs
+    async function loadDropdowns() {
+      try {
+        const companies = await API.get('/companies');
+        
+        // 1. Recommender dropdown
+        const recSelect = document.getElementById('recommenderDriveSelect');
+        recSelect.innerHTML = '<option value="">Choose active drive...</option>';
+        companies.forEach(c => {
+          recSelect.innerHTML += `<option value="${c.id}">${c.name} (${c.job_role || c.industry || 'Drive'})</option>`;
+        });
+        
+        // 2. Prep company dropdown
+        const prepCompSelect = document.getElementById('prepCompanySelect');
+        prepCompSelect.innerHTML = '<option value="">Choose Company Drive...</option>';
+        companies.forEach(c => {
+          prepCompSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
+
+        // 3. Load students for Prep
+        const studentsData = await API.get('/students?per_page=200');
+        const prepStudSelect = document.getElementById('prepStudentSelect');
+        prepStudSelect.innerHTML = '<option value="">Choose Student...</option>';
+        if (studentsData && studentsData.students) {
+          studentsData.students.forEach(s => {
+            prepStudSelect.innerHTML += `<option value="${s.id}">${s.name} (${s.register_number})</option>`;
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load initial drives lists:', err);
+      }
+    }
+
+    // Chatbot functionality
+    async function submitChat(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      input.value = '';
+      appendChatMessage(text, 'user');
+      
+      const container = document.getElementById('chatContainer');
+      const loader = document.createElement('div');
+      loader.className = 'ai-bubble-bot';
+      loader.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Typing...';
+      container.appendChild(loader);
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const result = await API.post('/ai/chatbot', { query: text });
+        loader.remove();
+        // Replace regex formatting
+        let responseStr = result.response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        responseStr = responseStr.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        responseStr = responseStr.replace(/\n/g, '<br>');
+        appendChatMessage(responseStr, 'bot');
+      } catch (err) {
+        loader.remove();
+        appendChatMessage('Sorry, I encountered an error: ' + err.message, 'bot');
+      }
+    }
+
+    function appendChatMessage(message, sender) {
+      const container = document.getElementById('chatContainer');
+      const bubble = document.createElement('div');
+      bubble.className = sender === 'user' ? 'ai-bubble-user' : 'ai-bubble-bot';
+      bubble.innerHTML = message;
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendSuggestion(text) {
+      document.getElementById('chatInput').value = text;
+      submitChat();
+    }
+
+    // Resume Analyzer
+    async function submitResume(e) {
+      e.preventDefault();
+      const text = document.getElementById('resumeText').value.trim();
+      const btn = document.getElementById('btnAnalyze');
+      if (!text) {
+        showToast('Please paste resume text before running audit.', 'warning');
+        return;
+      }
+
+      const placeholder = document.getElementById('resumePlaceholder');
+      const auditReport = document.getElementById('auditReport');
+      
+      placeholder.classList.add('d-none');
+      auditReport.classList.add('d-none');
+
+      btn.disabled = true;
+      const originalBtnHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Running Audit...';
+
+      try {
+        const data = await API.post('/ai/analyze-resume', { resume_text: text });
+        
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
+
+        const sec1 = data.section1_ats || {};
+        const sec2 = data.section2_ai || {};
+        const sec3 = data.section3_recruiter || {};
+
+        // Section 1: ATS Compatibility
+        const score = sec1.ats_score || 0;
+        document.getElementById('atsScoreValue').innerText = score;
+        document.getElementById('atsGaugeRing').style.setProperty('--gauge-value', score);
+        
+        const scoreBadge = document.getElementById('atsLevelBadge');
+        if (score >= 75) {
+          scoreBadge.className = 'badge-pill-success';
+          scoreBadge.innerText = 'High ATS Match';
+        } else if (score >= 50) {
+          scoreBadge.className = 'badge-pill-warning';
+          scoreBadge.innerText = 'Moderate ATS Match';
+        } else {
+          scoreBadge.className = 'badge-pill-danger';
+          scoreBadge.innerText = 'Low ATS Match';
+        }
+
+        // Skills
+        const skillsDiv = document.getElementById('atsDetectedSkills');
+        const skills = sec1.detected_skills || [];
+        skillsDiv.innerHTML = skills.length > 0
+          ? skills.map(s => `<span class="badge-pill-info font-weight-700 m-1">${s}</span>`).join('')
+          : '<span class="text-muted small">No technical skills detected.</span>';
+
+        // Keyword Bars
+        const kwContainer = document.getElementById('atsKeywordBars');
+        const kwList = sec1.keyword_optimization || [];
+        if (kwList.length > 0) {
+          kwContainer.innerHTML = kwList.map(k => `
+            <div class="mb-2">
+              <div class="d-flex justify-content-between small mb-1">
+                <span class="font-weight-600 text-dark">${k.category}</span>
+                <span class="text-muted">${k.found}/${k.total}</span>
+              </div>
+              <div class="progress" style="height: 6px;">
+                <div class="progress-bar bg-primary" style="width: ${(k.found / Math.max(k.total, 1)) * 100}%;"></div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          kwContainer.innerHTML = '<p class="text-muted small">No keyword categories parsed.</p>';
+        }
+
+        // Formatting Checks
+        const formatDiv = document.getElementById('atsFormatChecks');
+        const fmt = sec1.formatting_check || {};
+        const overallText = fmt.overall ? fmt.overall.toUpperCase() : 'PASS';
+        document.getElementById('formatOverallBadge').innerText = overallText;
+        document.getElementById('formatOverallBadge').className = fmt.overall === 'pass' ? 'badge-pill-success' : 'badge-pill-danger';
+
+        const checks = fmt.checks || [];
+        if (checks.length > 0) {
+          formatDiv.innerHTML = checks.map(c => `
+            <div class="d-flex align-items-center justify-content-between small py-1 border-bottom">
+              <span class="text-dark">${c.item}</span>
+              <span class="badge-pill-${c.status === 'pass' ? 'success' : (c.status === 'warn' ? 'warning' : 'danger')}">${c.status}</span>
+            </div>
+          `).join('');
+        } else {
+          formatDiv.innerHTML = '<p class="text-muted small">Standard formatting applied.</p>';
+        }
+
+        // Critical Fixes
+        const fixesDiv = document.getElementById('atsCriticalFixes');
+        const fixes = sec1.critical_fixes || [];
+        if (fixes.length > 0) {
+          fixesDiv.innerHTML = fixes.map(f => `
+            <div class="p-2 mb-2 bg-light rounded text-danger small"><i class="fa-solid fa-triangle-exclamation me-1"></i> ${f}</div>
+          `).join('');
+        } else {
+          fixesDiv.innerHTML = '<p class="text-success small"><i class="fa-solid fa-circle-check me-1"></i> No critical ATS formatting issues detected!</p>';
+        }
+
+        // Section 2: AI Detection
+        const aiPct = sec2.ai_content_pct || 0;
+        const humanPct = sec2.human_content_pct || (100 - aiPct);
+
+        document.getElementById('aiPctLabel').innerText = `${aiPct}%`;
+        document.getElementById('aiBarFill').style.width = `${aiPct}%`;
+        document.getElementById('humanPctLabel').innerText = `${humanPct}%`;
+        document.getElementById('humanBarFill').style.width = `${humanPct}%`;
+
+        document.getElementById('toneAnalysisText').innerText = sec2.tone_analysis || 'Natural professional tone detected.';
+        const toneContainer = document.getElementById('toneBadgeContainer');
+        toneContainer.innerHTML = `<span class="badge-pill-${aiPct > 50 ? 'warning' : 'success'}">${aiPct > 50 ? 'AI-Influenced Tone' : 'Authentic Human Tone'}</span>`;
+
+        // Phrases to Rewrite
+        const rewriteDiv = document.getElementById('aiRewriteCards');
+        const rewrites = sec2.phrases_to_rewrite || [];
+        if (rewrites.length > 0) {
+          rewriteDiv.innerHTML = rewrites.map(r => `
+            <div class="p-2 mb-2 bg-light border-start border-3 border-warning rounded small">
+              <div class="text-muted text-decoration-line-through">${r.original}</div>
+              <div class="text-success font-weight-600 mt-1"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> ${r.suggested_rewrite}</div>
+            </div>
+          `).join('');
+        } else {
+          rewriteDiv.innerHTML = '<p class="text-muted small mb-0">No AI-sounding repetitive phrases detected.</p>';
+        }
+
+        // Section 3: Recruiter Quick Check
+        document.getElementById('readabilityText').innerText = sec3.readability_impact || 'Good readability.';
+        const verdict = sec3.final_verdict || 'Ready to submit';
+        const verdictBadgeHtml = `<span class="badge-pill-${verdict.includes('Ready') ? 'success' : (verdict.includes('tweaks') ? 'warning' : 'danger')} px-3 py-2 h6 mb-0">${verdict}</span>`;
+        document.getElementById('finalVerdictBadge').innerHTML = verdictBadgeHtml;
+        document.getElementById('auditVerdictTop').innerHTML = verdictBadgeHtml;
+
+        // Show audit report
+        auditReport.classList.remove('d-none');
+
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
+        showToast('Analysis failed: ' + err.message, 'danger');
+        placeholder.classList.remove('d-none');
+      }
+    }
+
+    // Drive Recommender
+    async function loadRecommendations() {
+      const select = document.getElementById('recommenderDriveSelect');
+      const companyId = select.value;
+      const container = document.getElementById('recTableContainer');
+      
+      if (!companyId) {
+        container.innerHTML = `
+          <div class="text-center py-5 text-muted small">
+            <i class="fa-solid fa-list-check text-muted mb-3" style="font-size: 2.5rem;"></i>
+            <p class="mb-0">Select an active campus recruitment drive from the dropdown to run recommendation scoring.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = `
+        <div class="text-center py-5 text-muted small">
+          <i class="fa-solid fa-rotate fa-spin text-primary mb-3" style="font-size: 2.5rem;"></i>
+          <p class="mb-0">Running CGPA & backlog sorting with skill-matching algorithms...</p>
+        </div>
+      `;
+      
+      try {
+        const data = await API.get(`/ai/eligibility-recommendation?company_id=${companyId}`);
+        
+        let tableHtml = `
+          <div class="table-responsive">
+            <table class="pp-table">
+              <thead>
+                <tr>
+                  <th>RANK & CANDIDATE</th>
+                  <th>DEPARTMENT</th>
+                  <th>ELIGIBILITY</th>
+                  <th>MATCH SCORE</th>
+                  <th>SKILL MATCH / GAP</th>
+                  <th class="text-end">ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        if (data.recommendations.length === 0) {
+          tableHtml += `<tr><td colspan="6" class="text-center py-4 text-muted small">No students found.</td></tr>`;
+        } else {
+          data.recommendations.forEach((r, idx) => {
+            const eligibilityBadge = r.is_eligible 
+              ? '<span class="badge-pill-success"><i class="fa-solid fa-circle-check"></i> Eligible</span>'
+              : '<span class="badge-pill-danger"><i class="fa-solid fa-circle-xmark"></i> Ineligible</span>';
+              
+            const scoreClass = r.fit_score >= 80 ? 'text-success' : (r.fit_score >= 50 ? 'text-warning' : 'text-danger');
+            
+            // Skill chips
+            const matchedHtml = r.matched_skills.map(s => `<span class="badge bg-success-subtle text-success small px-1.5 py-0.5 rounded border border-success-subtle me-1" style="font-size: 0.7rem;">${s}</span>`).join('');
+            const missingHtml = r.missing_skills.map(s => `<span class="badge bg-danger-subtle text-danger small px-1.5 py-0.5 rounded border border-danger-subtle me-1" style="font-size: 0.7rem;">${s}</span>`).join('');
+            
+            const btnHtml = r.is_eligible 
+              ? `<button class="btn btn-sm btn-pp-primary py-1 px-2" onclick="registerSingleRecommend(${r.student_id}, ${companyId}, '${r.name}')"><i class="fa-solid fa-paper-plane"></i> Push</button>`
+              : `<button class="btn btn-sm btn-pp-outline py-1 px-2" disabled title="Ineligible"><i class="fa-solid fa-ban"></i> Skip</button>`;
+
+            tableHtml += `
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-3">
+                    <span class="font-weight-800 text-muted" style="font-size: 0.85rem;">#${idx + 1}</span>
+                    <div>
+                      <div class="font-weight-700 text-dark">${r.name}</div>
+                      <div class="text-muted small">${r.register_number} • CGPA: ${r.cgpa}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="font-weight-600 text-dark">${r.department}</div>
+                  <div class="text-muted small">Section ${r.section}</div>
+                </td>
+                <td>${eligibilityBadge}</td>
+                <td>
+                  <span class="font-weight-800 ${scoreClass}" style="font-size: 1.1rem;">${r.fit_score}%</span>
+                </td>
+                <td>
+                  <div class="mb-1">${matchedHtml || '<span class="text-muted small" style="font-size: 0.7rem;">No matching skills</span>'}</div>
+                  <div>${missingHtml}</div>
+                </td>
+                <td class="text-end">${btnHtml}</td>
+              </tr>
+            `;
+          });
+        }
+        
+        tableHtml += `
+              </tbody>
+            </table>
+          </div>
+        `;
+        
+        container.innerHTML = tableHtml;
+        
+      } catch (err) {
+        showToast('Recommendations query failed: ' + err.message, 'danger');
+        container.innerHTML = `
+          <div class="text-center py-5 text-muted small">
+            <i class="fa-solid fa-triangle-exclamation text-danger mb-3" style="font-size: 2.5rem;"></i>
+            <p class="mb-0">Failed to generate drive recommendations. Check developer logs.</p>
+          </div>
+        `;
+      }
+    }
+
+    async function registerSingleRecommend(studentId, companyId, studentName) {
+      if (confirm(`Do you want to register ${studentName} for this company drive?`)) {
+        try {
+          await API.post('/students/bulk-push', {
+            student_ids: [studentId],
+            company_id: companyId,
+            stage: 'applied'
+          });
+          showToast(`${studentName} registered successfully!`);
+          loadRecommendations();
+        } catch (err) {
+          showToast('Failed to register student: ' + err.message, 'danger');
+        }
+      }
+    }
+
+    // Interview Prep Questions Generator
+    async function generatePrepQuestions(e) {
+      e.preventDefault();
+      const sId = document.getElementById('prepStudentSelect').value;
+      const cId = document.getElementById('prepCompanySelect').value;
+      const role = document.getElementById('prepJobRole').value;
+      const btn = document.getElementById('btnPrep');
+      
+      document.getElementById('prepPlaceholder').classList.add('d-none');
+      document.getElementById('prepResults').classList.add('d-none');
+      
+      const loader = document.createElement('div');
+      loader.className = 'text-center py-5';
+      loader.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary" style="font-size: 2.5rem;"></i><p class="mt-3 text-muted">Generating customized questions based on profile skills...</p>';
+      document.getElementById('prepResultCard').appendChild(loader);
+      
+      btn.disabled = true;
+      
+      try {
+        const result = await API.post('/ai/interview-prep', {
+          student_id: sId ? parseInt(sId) : null,
+          company_id: cId ? parseInt(cId) : null,
+          job_role: role
+        });
+        
+        loader.remove();
+        btn.disabled = false;
+        
+        document.getElementById('prepResults').classList.remove('d-none');
+        document.getElementById('prepRoleSubtitle').innerText = result.role;
+        
+        // Render Tech Questions
+        const techList = document.getElementById('prepTechList');
+        techList.innerHTML = result.technical_questions.map((q, idx) => `
+          <div class="p-3 bg-light rounded-3">
+            <div class="font-weight-700 text-dark small mb-1">Q${idx + 1}: ${q.question}</div>
+            <div class="text-muted small mt-1" style="line-height: 1.4;"><strong class="text-success">Suggested Answer:</strong> ${q.suggested_answer}</div>
+          </div>
+        `).join('');
+        
+        // Render HR Questions
+        const hrList = document.getElementById('prepHrList');
+        hrList.innerHTML = result.hr_questions.map((q, idx) => `
+          <div class="p-3 bg-light rounded-3">
+            <div class="font-weight-700 text-dark small mb-1">Q${idx + 1}: ${q.question}</div>
+            <div class="text-muted small mt-1" style="line-height: 1.4;"><strong class="text-warning">Behavioral Tip:</strong> ${q.tip}</div>
+          </div>
+        `).join('');
+        
+      } catch (err) {
+        loader.remove();
+        btn.disabled = false;
+        showToast('Failed to generate interview prep: ' + err.message, 'danger');
+        document.getElementById('prepPlaceholder').classList.remove('d-none');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDropdowns();
+    });
+  </script>
+</body>
+</html>

@@ -1,18 +1,20 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Academic Overview — Placement Pro</title>
+  <title>Skill Gap Analysis — Placement Pro</title>
+  <meta name="description"
+    content="Skill Gap Analysis report showing recruiter-demanded skills versus student body skills to design targeted training workshops.">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="../assets/css/style.css" rel="stylesheet">
 </head>
+
 <body>
 
-  <!-- Navigation Partial (Sidebar + Top Header) -->
   
 <aside id="sidebar">
   <div>
@@ -449,242 +451,242 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-  <!-- Main Content Wrapper -->
   <main id="main-wrapper">
 
-    <!-- Header Area -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
       <div>
-        <h2 class="h3 font-weight-800 mb-1">Academic Overview</h2>
-        <p class="text-muted small mb-0">Placement Session 2025-2026</p>
-
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="sg-page-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></span>
+          <h2 class="h3 font-weight-800 mb-0">Skill Gap Analysis</h2>
+        </div>
+        <p class="text-muted small mb-0">Recruiter-demanded skills vs. student body prevalence — identify gaps and plan
+          targeted workshops</p>
       </div>
-      <div class="d-flex gap-2">
-        <button class="btn btn-pp-outline">
-          <i class="fa-solid fa-filter"></i> Filter
+
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <select class="form-select-pp py-1 px-3 small" id="sgDeptFilter">
+          <option value="">All Departments</option>
+        </select>
+        <button class="btn btn-pp-outline btn-sm" onclick="exportSkillGap('pdf')">
+          <i class="fa-solid fa-file-pdf text-danger"></i> PDF
         </button>
-        <a href="download.php?type=pdf" class="btn btn-pp-primary text-white text-decoration-none">
-          <i class="fa-solid fa-file-pdf"></i> Export PDF
-        </a>
+        <button class="btn btn-pp-outline btn-sm" onclick="exportSkillGap('excel')">
+          <i class="fa-solid fa-file-excel text-success"></i> Excel
+        </button>
       </div>
     </div>
 
-    <!-- Top KPI Cards (Row of 6) -->
-    <div class="row g-3 mb-4">
-      <!-- Total Students -->
-      <div class="col-12 col-sm-6 col-lg-2">
-        <div class="pp-card kpi-card">
+    <!-- Summary KPI Cards -->
+    <div class="row g-4 mb-4" id="sgKpiRow">
+      <!-- 1. Total Skills Tracked -->
+      <div class="col-6 col-lg-3">
+        <div class="pp-card kpi-card sg-kpi-card">
           <div class="kpi-header">
-            <span class="kpi-title">Total Students</span>
-            <span class="badge-pill-success">0</span>
+            <span class="kpi-title">Student Skills</span>
+            <span class="sg-kpi-icon sg-kpi-icon--indigo"><i class="fa-solid fa-layer-group"></i></span>
           </div>
-          <div class="kpi-value" id="valTotalStudents">0</div>
-          <div class="kpi-subtext">Registered for session</div>
+          <div class="kpi-value" id="sgTotalStudentSkills">—</div>
+          <div class="kpi-subtext">unique skills in student pool</div>
         </div>
       </div>
-
-      <!-- Total Companies -->
-      <div class="col-12 col-sm-6 col-lg-2">
-        <div class="pp-card kpi-card">
+      <!-- 2. Recruiter Demand -->
+      <div class="col-6 col-lg-3">
+        <div class="pp-card kpi-card sg-kpi-card">
           <div class="kpi-header">
-            <span class="kpi-title">Total Companies</span>
-            <span class="badge-pill-info">New</span>
+            <span class="kpi-title">Recruiter Demand</span>
+            <span class="sg-kpi-icon sg-kpi-icon--purple"><i class="fa-solid fa-bullseye"></i></span>
           </div>
-          <div class="kpi-value" id="valTotalCompanies">0</div>
-          <div class="kpi-subtext">Participating drives</div>
+          <div class="kpi-value" id="sgTotalDemandSkills">—</div>
+          <div class="kpi-subtext">skills recruiters are hiring for</div>
         </div>
       </div>
-
-      <!-- Total Selected -->
-      <div class="col-12 col-sm-6 col-lg-2">
-        <div class="pp-card kpi-card">
+      <!-- 3. Coverage Rate -->
+      <div class="col-6 col-lg-3">
+        <div class="pp-card kpi-card sg-kpi-card">
           <div class="kpi-header">
-            <span class="kpi-title">Total Selected</span>
-            <span class="text-muted small font-weight-600">0%</span>
+            <span class="kpi-title">Coverage Rate</span>
+            <span class="sg-kpi-icon sg-kpi-icon--emerald"><i class="fa-solid fa-shield-halved"></i></span>
           </div>
-          <div class="kpi-value" id="valTotalSelected">0</div>
-          <div class="progress mt-2" style="height: 6px; border-radius: 999px;">
-            <div class="progress-bar bg-success" style="width: 0%;"></div>
+          <div class="d-flex align-items-end gap-2">
+            <div class="kpi-value" id="sgCoveragePct">—</div>
+            <span class="text-muted small mb-1">%</span>
+          </div>
+          <div class="progress mt-1" style="height: 6px; border-radius: 999px; background: #E5E7EB;">
+            <div class="progress-bar" id="sgCoverageBar"
+              style="width: 0%; background: #10B981; border-radius: 999px; transition: width 1s ease;"></div>
           </div>
         </div>
       </div>
-
-      <!-- Placement % -->
-      <div class="col-12 col-sm-6 col-lg-2">
-        <div class="pp-card kpi-card">
+      <!-- 4. Critical Gaps -->
+      <div class="col-6 col-lg-3">
+        <div class="pp-card kpi-card sg-kpi-card sg-kpi-card--danger">
           <div class="kpi-header">
-            <span class="kpi-title">Placement %</span>
-            <i class="fa-solid fa-chart-line text-primary" style="color: var(--pp-primary) !important;"></i>
+            <span class="kpi-title">Critical Gaps</span>
+            <span class="sg-kpi-icon sg-kpi-icon--red"><i class="fa-solid fa-triangle-exclamation"></i></span>
           </div>
-          <div class="kpi-value" id="valPlacementRate">0%</div>
-          <div class="kpi-subtext">Batch conversion rate</div>
-        </div>
-      </div>
-
-      <!-- Highest Package -->
-      <div class="col-12 col-sm-6 col-lg-2">
-        <div class="pp-card kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-title">Highest Package</span>
-            <i class="fa-solid fa-trophy text-warning"></i>
-          </div>
-          <div class="kpi-value" id="valHighestPackage">0</div>
-          <div class="kpi-subtext font-weight-600 text-dark">Goldman Sachs</div>
-        </div>
-      </div>
-
-      <!-- Average Package -->
-      <div class="col-12 col-sm-6 col-lg-2">
-        <div class="pp-card kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-title">Avg Package</span>
-            <span class="badge-pill-success">0</span>
-          </div>
-          <div class="kpi-value" id="valAvgPackage">0</div>
-          <div class="kpi-subtext">Overall batch average</div>
+          <div class="kpi-value" id="sgCriticalGaps">—</div>
+          <div class="kpi-subtext">skills with &gt;70% gap</div>
         </div>
       </div>
     </div>
 
-    <!-- Main Content - Middle Row -->
+    <!-- Demand vs Supply Bar Chart + Top Skills Lists -->
     <div class="row g-4 mb-4">
-      <!-- Left: Company-wise Hiring Bar Chart -->
-      <div class="col-12 col-lg-8">
+      <!-- Dual Horizontal Bar Chart -->
+      <div class="col-12 col-xl-8">
         <div class="pp-card h-100">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h5 class="h6 font-weight-700 mb-0">Company-wise Hiring</h5>
-              <p class="text-muted small mb-0">Hiring offers distribution by top recruiters</p>
+              <h5 class="h6 font-weight-800 text-dark mb-0">Demand vs. Supply</h5>
+              <p class="text-muted small mb-0">Top skills comparison — recruiter need vs. student availability</p>
             </div>
-            <select class="form-select-pp py-1 px-3 small" id="companyHiringTimeframe" name="company_hiring_timeframe">
-              <option>Last 6 Months</option>
-              <option>Last 3 Months</option>
-              <option>Full Academic Year</option>
-            </select>
+            <div class="d-flex gap-3 align-items-center">
+              <span class="sg-legend-dot" style="--dot-color: var(--pp-primary);"></span>
+              <span class="small font-weight-600 text-muted">Demand</span>
+              <span class="sg-legend-dot" style="--dot-color: #10B981;"></span>
+              <span class="small font-weight-600 text-muted">Supply</span>
+            </div>
           </div>
-          <div style="height: 280px;">
-            <canvas id="companyHiringChart"></canvas>
+          <div id="sgBarChart" class="sg-bar-chart">
+            <div class="text-center text-muted py-5"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading chart...
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Right: Section-wise Donut Chart -->
-      <div class="col-12 col-lg-4">
-        <div class="pp-card h-100">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="h6 font-weight-700 mb-0">Section-wise</h5>
-            <span class="badge-pill-info">1.8k Placed</span>
+      <!-- Right: Info Summary Panel -->
+      <div class="col-12 col-xl-4">
+        <div class="pp-card h-100 d-flex flex-column gap-3">
+          <div>
+            <h5 class="h6 font-weight-800 text-dark mb-2">Analysis Overview</h5>
+            <p class="text-muted small mb-0">How the gap score is calculated</p>
           </div>
-          <div class="position-relative d-flex justify-content-center align-items-center" style="height: 200px;">
-            <canvas id="sectionDonutChart"></canvas>
-            <div class="position-absolute text-center">
-              <div class="h4 font-weight-800 mb-0">1.8k</div>
-              <div class="text-muted small">Placed</div>
+          <div class="sg-info-block">
+            <div class="sg-info-formula">
+              <span class="font-weight-700" style="color: var(--pp-primary);">Gap %</span> =
+              <span class="font-weight-600">(Demand − Supply) / Demand × 100</span>
             </div>
           </div>
-          <div class="mt-3 pt-3 border-top d-flex justify-content-around text-center">
-            <div>
-              <div class="small text-muted mb-1"><i class="fa-solid fa-circle me-1" style="color: #4F46E5;"></i> CS/IT</div>
-              <div class="font-weight-700">950</div>
+          <div class="sg-status-legend">
+            <div class="sg-status-row">
+              <span class="sg-status-dot sg-status-dot--critical"></span>
+              <span class="small"><strong>Critical</strong> — Gap &gt; 70%</span>
             </div>
-            <div>
-              <div class="small text-muted mb-1"><i class="fa-solid fa-circle me-1" style="color: #10B981;"></i> Electronics</div>
-              <div class="font-weight-700">520</div>
+            <div class="sg-status-row">
+              <span class="sg-status-dot sg-status-dot--moderate"></span>
+              <span class="small"><strong>Moderate</strong> — Gap 30–70%</span>
             </div>
-            <div>
-              <div class="small text-muted mb-1"><i class="fa-solid fa-circle me-1" style="color: #F59E0B;"></i> Mechanical</div>
-              <div class="font-weight-700">380</div>
+            <div class="sg-status-row">
+              <span class="sg-status-dot sg-status-dot--covered"></span>
+              <span class="small"><strong>Covered</strong> — Gap &lt; 30%</span>
+            </div>
+          </div>
+          <div class="mt-auto pt-3 border-top">
+            <div class="d-flex justify-content-between small text-muted font-weight-600 mb-1">
+              <span>Students with skills data</span>
+              <span id="sgStudentsCount" class="font-weight-700 text-dark">—</span>
+            </div>
+            <div class="d-flex justify-content-between small text-muted font-weight-600">
+              <span>Companies analyzed</span>
+              <span id="sgCompaniesCount" class="font-weight-700 text-dark">—</span>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Main Content - Bottom Row -->
-    <div class="row g-4">
-      <!-- Left: Recent Activities Timeline -->
+    <!-- Skill Gap Table -->
+    <div class="pp-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="h6 font-weight-800 text-dark mb-0">Skill Gap Breakdown</h5>
+          <p class="text-muted small mb-0">All skills ranked by gap severity</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-pp-outline btn-sm sg-filter-btn active" data-filter="all"
+            onclick="filterGapTable('all', this)">All</button>
+          <button class="btn btn-pp-outline btn-sm sg-filter-btn" data-filter="critical"
+            onclick="filterGapTable('critical', this)">
+            <span class="sg-status-dot sg-status-dot--critical" style="width:8px;height:8px;"></span> Critical
+          </button>
+          <button class="btn btn-pp-outline btn-sm sg-filter-btn" data-filter="moderate"
+            onclick="filterGapTable('moderate', this)">
+            <span class="sg-status-dot sg-status-dot--moderate" style="width:8px;height:8px;"></span> Moderate
+          </button>
+          <button class="btn btn-pp-outline btn-sm sg-filter-btn" data-filter="covered"
+            onclick="filterGapTable('covered', this)">
+            <span class="sg-status-dot sg-status-dot--covered" style="width:8px;height:8px;"></span> Covered
+          </button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="pp-table" id="sgGapTable">
+          <thead>
+            <tr>
+              <th style="cursor:pointer;" onclick="sortGapTable('skill')">Skill <i
+                  class="fa-solid fa-sort fa-xs text-muted"></i></th>
+              <th style="cursor:pointer;width:120px;" onclick="sortGapTable('demand')">Demand <i
+                  class="fa-solid fa-sort fa-xs text-muted"></i></th>
+              <th style="cursor:pointer;width:120px;" onclick="sortGapTable('supply')">Supply <i
+                  class="fa-solid fa-sort fa-xs text-muted"></i></th>
+              <th style="cursor:pointer;width:180px;" onclick="sortGapTable('gap_percentage')">Gap <i
+                  class="fa-solid fa-sort fa-xs text-muted"></i></th>
+              <th style="width:120px;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="sgGapTableBody">
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4"><i
+                  class="fa-solid fa-spinner fa-spin me-2"></i>Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bottom Row: Department Breakdown + Training Recommendations -->
+    <div class="row g-4 mb-4">
+      <!-- Department Breakdown -->
       <div class="col-12 col-lg-7">
         <div class="pp-card h-100">
-          <h5 class="h6 font-weight-700 mb-3">Recent Activities</h5>
-          <div class="d-flex flex-column gap-3">
-            <div class="d-flex align-items-start gap-3 pb-3 border-bottom">
-              <div class="d-flex align-items-center justify-content-center rounded-circle text-white bg-primary p-2" style="width: 36px; height: 36px; background-color: var(--pp-primary) !important;">
-                <i class="fa-solid fa-building" style="font-size: 0.85rem;"></i>
-              </div>
-              <div class="flex-grow-1">
-                <div class="font-weight-600 text-dark">TCS started recruitment drive</div>
-                <div class="text-muted small">Phase 1 Online Assessment scheduled for 250 CS & IT students.</div>
-              </div>
-              <div class="text-muted small">10 mins ago</div>
-            </div>
-
-            <div class="d-flex align-items-start gap-3 pb-3 border-bottom">
-              <div class="d-flex align-items-center justify-content-center rounded-circle text-white bg-success p-2" style="width: 36px; height: 36px;">
-                <i class="fa-solid fa-check" style="font-size: 0.85rem;"></i>
-              </div>
-              <div class="flex-grow-1">
-                <div class="font-weight-600 text-dark">Goldman Sachs published 18 final selections</div>
-                <div class="text-muted small">Average package offered $42 LPA. Offer letters dispatched.</div>
-              </div>
-              <div class="text-muted small">2 hours ago</div>
-            </div>
-
-            <div class="d-flex align-items-start gap-3">
-              <div class="d-flex align-items-center justify-content-center rounded-circle text-white bg-warning p-2" style="width: 36px; height: 36px;">
-                <i class="fa-solid fa-file-invoice" style="font-size: 0.85rem;"></i>
-              </div>
-              <div class="flex-grow-1">
-                <div class="font-weight-600 text-dark">New Batch Data Imported</div>
-                <div class="text-muted small">Batch 2024 dataset imported containing 450 new eligible candidates.</div>
-              </div>
-              <div class="text-muted small">Yesterday</div>
-            </div>
+          <h5 class="h6 font-weight-800 text-dark mb-1">Department Skill Distribution</h5>
+          <p class="text-muted small mb-3">Top skills per department in the student body</p>
+          <div id="sgDeptBreakdown">
+            <div class="text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading...</div>
           </div>
         </div>
       </div>
 
-      <!-- Right: Calendar Widget & Urgent Alerts -->
-      <div class="col-12 col-lg-5 d-flex flex-column gap-3">
-        <!-- Interactive Placement Calendar Widget -->
-        <div class="pp-card">
+      <!-- Training Recommendations -->
+      <div class="col-12 col-lg-5">
+        <div class="sg-training-card h-100">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="h6 font-weight-700 mb-0">Placement Calendar</h5>
-            <div class="d-flex align-items-center gap-1">
-              <button class="btn btn-sm btn-light border py-0 px-2 text-muted" title="Previous Month" onclick="changeCalendarMonth(-1)">
-                <i class="fa-solid fa-chevron-left text-xs"></i>
-              </button>
-              <span class="text-muted small font-weight-700 mx-1" id="calendarMonthYearLabel">September 2026</span>
-              <button class="btn btn-sm btn-light border py-0 px-2 text-muted" title="Next Month" onclick="changeCalendarMonth(1)">
-                <i class="fa-solid fa-chevron-right text-xs"></i>
-              </button>
+            <div>
+              <h5 class="h6 font-weight-800 mb-1" style="color: #FFFFFF;">Suggested Workshops</h5>
+              <p class="small mb-0" style="color: rgba(255,255,255,0.6);">Based on the highest demand-supply gaps</p>
             </div>
+            <span class="badge bg-white text-dark font-weight-700 px-3 py-1 rounded-pill small">TOP 5</span>
           </div>
-          <!-- Dynamic Calendar Grid -->
-          <div id="calendarGrid" class="d-grid gap-1" style="grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.8rem;">
-            <!-- Rendered dynamically via JS -->
-          </div>
-          <!-- Upcoming / Selected Event Details Box -->
-          <div class="mt-3 pt-2 border-top d-flex align-items-start gap-2" id="calendarEventBox">
-            <i class="fa-solid fa-calendar-day text-primary mt-1"></i>
-            <div class="small w-100" id="calendarEventContent">
-              <span class="font-weight-700 text-dark">Upcoming Events:</span> Loading placement schedule...
-            </div>
+          <div id="sgTrainingList">
+            <div class="text-center py-4" style="color:rgba(255,255,255,0.5);"><i
+                class="fa-solid fa-spinner fa-spin me-2"></i>Loading...</div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Urgent Alerts Box -->
-        <div class="urgent-alert-box" id="repeatAlertsBox" style="display: none;">
-          <i class="fa-solid fa-triangle-exclamation text-danger" style="font-size: 1.25rem;"></i>
-          <div class="w-100">
-            <div class="font-weight-700 mb-0 d-flex justify-content-between align-items-center" style="font-size: 0.9rem;">
-              Repeat Shortlist Alerts
-              <span class="badge bg-danger rounded-pill" id="repeatAlertsCount">0</span>
-            </div>
-            <div class="small mt-1 text-muted" id="repeatAlertsContent">
-              <!-- Filled via JS -->
-            </div>
-          </div>
+    <!-- Surplus Skills -->
+    <div class="pp-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="h6 font-weight-800 text-dark mb-0">Surplus Skills</h5>
+          <p class="text-muted small mb-0">Skills prevalent among students but not currently demanded by recruiters</p>
         </div>
+        <span class="badge-pill-info"><i class="fa-solid fa-info-circle me-1"></i> Low Priority</span>
+      </div>
+      <div id="sgSurplusList" class="d-flex flex-wrap gap-2">
+        <span class="text-muted small"><i class="fa-solid fa-spinner fa-spin me-1"></i>Loading...</span>
       </div>
     </div>
 
@@ -695,274 +697,239 @@ document.addEventListener('DOMContentLoaded', () => {
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // Initialize Company Hiring Bar Chart
-    const ctxBar = document.getElementById('companyHiringChart').getContext('2d');
-    new Chart(ctxBar, {
-      type: 'bar',
-      data: {
-        labels: ['Goldman Sachs', 'Amazon', 'TCS Digital', 'Infosys', 'Wipro', 'Accenture'],
-        datasets: [{
-          label: 'Offers Made',
-          data: [42, 65, 120, 180, 140, 210],
-          backgroundColor: '#4F46E5',
-          borderRadius: 6,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { grid: { color: '#F3F4F6' }, ticks: { color: '#6B7280' } },
-          x: { grid: { display: false }, ticks: { color: '#6B7280' } }
-        }
-      }
-    });
+    let sgData = null;
+    let gapSortField = 'gap_percentage';
+    let gapSortAsc = false;
+    let gapFilterStatus = 'all';
 
-    // Initialize Section Donut Chart
-    const ctxDonut = document.getElementById('sectionDonutChart').getContext('2d');
-    new Chart(ctxDonut, {
-      type: 'doughnut',
-      data: {
-        labels: ['CS/IT', 'Electronics', 'Mechanical'],
-        datasets: [{
-          data: [950, 520, 380],
-          backgroundColor: ['#4F46E5', '#10B981', '#F59E0B'],
-          borderWidth: 0,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '75%',
-        plugins: { legend: { display: false } }
-      }
-    });
-
-    // Fetch API Stats if backend available
-    async function fetchStats() {
+    // ---- Load data ----
+    async function loadSkillGap() {
       try {
-        const stats = await API.get('/dashboard/stats');
-        if(stats.total_students) document.getElementById('valTotalStudents').innerText = stats.total_students.toLocaleString();
-        if(stats.total_companies) document.getElementById('valTotalCompanies').innerText = stats.total_companies;
-        if(stats.students_selected) document.getElementById('valTotalSelected').innerText = stats.students_selected.toLocaleString();
-        if(stats.placement_percentage) document.getElementById('valPlacementRate').innerText = stats.placement_percentage + '%';
-        if(stats.highest_package) document.getElementById('valHighestPackage').innerText = '₹' + Number(stats.highest_package).toLocaleString() + ' LPA';
-        if(stats.average_package) document.getElementById('valAvgPackage').innerText = '₹' + Number(stats.average_package).toLocaleString() + ' LPA';
-
+        const dept = document.getElementById('sgDeptFilter').value;
+        const qs = dept ? `?department=${encodeURIComponent(dept)}` : '';
+        sgData = await API.get('/reports/skill-gap' + qs);
+        renderAll();
       } catch (err) {
-        console.log('Using mock dashboard specs:', err.message);
-      }
-    }
-    
-    // Fetch Repeat Shortlist Alerts
-    async function fetchAlerts() {
-      try {
-        const data = await API.get('/drives/repeat-alerts');
-        if (data.alerts && data.alerts.length > 0) {
-          const box = document.getElementById('repeatAlertsBox');
-          const content = document.getElementById('repeatAlertsContent');
-          const count = document.getElementById('repeatAlertsCount');
-          
-          box.style.display = 'flex';
-          count.innerText = data.alerts.length;
-          
-          let html = '';
-          data.alerts.slice(0, 3).forEach(a => {
-            html += `<div class="mb-1 border-bottom pb-1">
-                      <strong>${a.name}</strong> (${a.department}) — Shortlisted ${a.shortlist_count} times but not placed.
-                      <br><span class="text-xs">Drives: ${a.drives.join(', ')}</span>
-                     </div>`;
-          });
-          if (data.alerts.length > 3) {
-            html += `<div class="text-center mt-2"><a href="students.html" class="text-decoration-none">View all in directory</a></div>`;
-          }
-          content.innerHTML = html;
-        }
-      } catch (err) {
-        console.log('Failed to load alerts:', err.message);
+        console.error('Failed to load skill gap data:', err);
+        Swal.fire({ title: 'Error', text: 'Could not load Skill Gap data: ' + err.message, icon: 'error' });
       }
     }
 
-    // Dynamic Placement Calendar Logic
-    let calCurrentDate = new Date();
-    let calCompanyEvents = [];
-    let calSelectedDay = null;
-
-    async function initCalendar() {
-      try {
-        calCompanyEvents = await API.get('/companies') || [];
-      } catch (err) {
-        console.warn('Failed to load company visit dates:', err.message);
-        calCompanyEvents = [];
-      }
-      renderCalendar();
+    function renderAll() {
+      if (!sgData) return;
+      renderKPIs();
+      renderBarChart();
+      renderGapTable();
+      renderDeptBreakdown();
+      renderTraining();
+      renderSurplus();
     }
 
-    function changeCalendarMonth(delta) {
-      calCurrentDate.setMonth(calCurrentDate.getMonth() + delta);
-      calSelectedDay = null;
-      renderCalendar();
+    // ---- KPI Cards ----
+    function renderKPIs() {
+      const s = sgData.summary;
+      document.getElementById('sgTotalStudentSkills').textContent = s.total_student_skills;
+      document.getElementById('sgTotalDemandSkills').textContent = s.total_demand_skills;
+      document.getElementById('sgCoveragePct').textContent = s.coverage_percentage;
+      document.getElementById('sgCoverageBar').style.width = s.coverage_percentage + '%';
+      document.getElementById('sgCriticalGaps').textContent = s.critical_gaps;
+      document.getElementById('sgStudentsCount').textContent = s.students_with_skills;
+      document.getElementById('sgCompaniesCount').textContent = s.companies_analyzed;
     }
 
-    function renderCalendar() {
-      const year = calCurrentDate.getFullYear();
-      const month = calCurrentDate.getMonth();
+    // ---- Dual Bar Chart ----
+    function renderBarChart() {
+      const demanded = sgData.top_demanded_skills || [];
+      const studentMap = {};
+      (sgData.top_student_skills || []).forEach(s => studentMap[s.skill] = s.count);
 
-      const monthNames = ["January", "February", "March", "April", "May", "June", 
-                          "July", "August", "September", "October", "November", "December"];
-
-      const label = document.getElementById('calendarMonthYearLabel');
-      if (label) label.textContent = `${monthNames[month]} ${year}`;
-
-      const grid = document.getElementById('calendarGrid');
-      if (!grid) return;
-      grid.innerHTML = '';
-
-      // Weekday headers
-      const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-      dayHeaders.forEach(dh => {
-        const headerEl = document.createElement('div');
-        headerEl.className = 'font-weight-600 text-muted py-1';
-        headerEl.style.fontSize = '0.75rem';
-        headerEl.textContent = dh;
-        grid.appendChild(headerEl);
-      });
-
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-      // Leading empty cells
-      for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'p-1 text-muted opacity-25';
-        grid.appendChild(emptyCell);
-      }
-
-      const today = new Date();
-      const isCurrentMonthYear = (today.getFullYear() === year && today.getMonth() === month);
-      const todayDate = today.getDate();
-
-      // Group events by day of month
-      const eventsByDay = {};
-      calCompanyEvents.forEach(c => {
-        if (c.visit_date) {
-          const parts = c.visit_date.split('-');
-          if (parts.length === 3) {
-            const vYear = parseInt(parts[0], 10);
-            const vMonth = parseInt(parts[1], 10) - 1;
-            const vDay = parseInt(parts[2], 10);
-
-            if (vYear === year && vMonth === month) {
-              if (!eventsByDay[vDay]) eventsByDay[vDay] = [];
-              eventsByDay[vDay].push(c);
-            }
-          }
-        }
-      });
-
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dayCell = document.createElement('div');
-        dayCell.className = 'p-1 rounded-circle position-relative font-weight-600 transition-all cursor-pointer d-flex flex-column align-items-center justify-content-center';
-        dayCell.style.height = '30px';
-        dayCell.style.width = '30px';
-        dayCell.style.margin = '0 auto';
-        dayCell.style.userSelect = 'none';
-        dayCell.style.fontSize = '0.8rem';
-        dayCell.textContent = d;
-
-        const hasEvents = eventsByDay[d] && eventsByDay[d].length > 0;
-        const isToday = isCurrentMonthYear && (d === todayDate);
-        const isSelected = calSelectedDay === d;
-
-        if (isSelected) {
-          dayCell.style.backgroundColor = '#312E81';
-          dayCell.style.color = '#ffffff';
-          dayCell.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-        } else if (isToday) {
-          dayCell.style.backgroundColor = 'var(--pp-primary)';
-          dayCell.style.color = '#ffffff';
-          dayCell.style.fontWeight = '700';
-        } else if (hasEvents) {
-          dayCell.style.backgroundColor = '#EEF2FF';
-          dayCell.style.color = '#4F46E5';
-          dayCell.style.border = '1px solid #C7D2FE';
-          dayCell.style.fontWeight = '700';
-        } else {
-          dayCell.style.color = '#374151';
-        }
-
-        if (hasEvents && !isToday && !isSelected) {
-          const dot = document.createElement('span');
-          dot.style.cssText = 'width: 4px; height: 4px; background-color: #4F46E5; border-radius: 50%; margin-top: 1px;';
-          dayCell.appendChild(dot);
-        }
-
-        dayCell.onclick = () => {
-          calSelectedDay = d;
-          renderCalendar();
-          updateEventDetails(d, eventsByDay[d], monthNames[month], year);
-        };
-
-        grid.appendChild(dayCell);
-      }
-
-      // Update details panel
-      if (calSelectedDay && eventsByDay[calSelectedDay]) {
-        updateEventDetails(calSelectedDay, eventsByDay[calSelectedDay], monthNames[month], year);
-      } else {
-        const totalEvents = Object.keys(eventsByDay).length;
-        const content = document.getElementById('calendarEventContent');
-        if (content) {
-          if (totalEvents > 0) {
-            content.innerHTML = `<span class="font-weight-700 text-dark">${totalEvents} Placement Drive(s)</span> scheduled in ${monthNames[month]} ${year}. Click a highlighted date to view details.`;
-          } else {
-            content.innerHTML = `<span class="font-weight-700 text-dark">No drives scheduled</span> for ${monthNames[month]} ${year}.`;
-          }
-        }
-      }
-    }
-
-    function updateEventDetails(day, events, monthName, year) {
-      const content = document.getElementById('calendarEventContent');
-      if (!content) return;
-
-      if (!events || events.length === 0) {
-        content.innerHTML = `<span class="font-weight-700 text-dark">${monthName} ${day}, ${year}:</span> No events scheduled for this date.`;
+      const skills = demanded.slice(0, 12);
+      if (skills.length === 0) {
+        document.getElementById('sgBarChart').innerHTML = '<div class="text-center text-muted py-5">No data available — add companies with job roles and students with skills.</div>';
         return;
       }
 
-      const listHtml = events.map(e => {
-        const role = e.job_role ? ` — ${e.job_role}` : '';
-        const pkg = e.package_amount ? ` (Package: ₹${e.package_amount} LPA)` : '';
-        return `<div><strong class="text-primary">${e.name}</strong>${role}${pkg}</div>`;
-      }).join('');
+      const maxVal = Math.max(...skills.map(s => Math.max(s.count, studentMap[s.skill] || 0)), 1);
+      let html = '';
+      skills.forEach(s => {
+        const supply = studentMap[s.skill] || 0;
+        const demandPct = Math.max((s.count / maxVal) * 100, 3);
+        const supplyPct = Math.max((supply / maxVal) * 100, 3);
+        html += `
+          <div class="sg-bar-row">
+            <div class="sg-bar-label">${s.skill}</div>
+            <div class="sg-bar-tracks">
+              <div class="sg-bar-track-pair">
+                <div class="sg-bar-fill sg-bar-demand" style="width:${demandPct}%;">
+                  <span class="sg-bar-count">${s.count}</span>
+                </div>
+                <div class="sg-bar-fill sg-bar-supply" style="width:${supplyPct}%;">
+                  <span class="sg-bar-count">${supply}</span>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      });
+      document.getElementById('sgBarChart').innerHTML = html;
 
-      content.innerHTML = `<div><span class="font-weight-700 text-dark">${monthName} ${day}, ${year}:</span></div>${listHtml}`;
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.sg-bar-fill').forEach(el => el.classList.add('sg-bar-animate'));
+      });
     }
 
-    // Configurable Auto-Update Loop from Settings
-    let autoUpdateTimer = null;
+    // ---- Gap Table ----
+    function renderGapTable() {
+      let gaps = [...(sgData.skill_gaps || [])];
 
-    function setupAutoUpdateLoop() {
-      const enabled = localStorage.getItem('setting_auto_update') !== 'false';
-      const intervalMs = parseInt(localStorage.getItem('setting_update_interval') || '30000', 10);
-
-      if (autoUpdateTimer) clearInterval(autoUpdateTimer);
-
-      if (enabled) {
-        autoUpdateTimer = setInterval(() => {
-          fetchStats();
-          fetchAlerts();
-          initCalendar();
-        }, intervalMs);
+      if (gapFilterStatus !== 'all') {
+        gaps = gaps.filter(g => g.status === gapFilterStatus);
       }
+
+      gaps.sort((a, b) => {
+        let av = a[gapSortField], bv = b[gapSortField];
+        if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+        if (av < bv) return gapSortAsc ? -1 : 1;
+        if (av > bv) return gapSortAsc ? 1 : -1;
+        return 0;
+      });
+
+      if (gaps.length === 0) {
+        document.getElementById('sgGapTableBody').innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No skills match the selected filter.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      gaps.forEach(g => {
+        const statusBadge = g.status === 'critical'
+          ? '<span class="sg-gap-badge sg-gap-badge--critical"><i class="fa-solid fa-circle-exclamation"></i> Critical</span>'
+          : g.status === 'moderate'
+            ? '<span class="sg-gap-badge sg-gap-badge--moderate"><i class="fa-solid fa-circle-minus"></i> Moderate</span>'
+            : '<span class="sg-gap-badge sg-gap-badge--covered"><i class="fa-solid fa-circle-check"></i> Covered</span>';
+
+        const barColor = g.status === 'critical' ? '#EF4444' : (g.status === 'moderate' ? '#F59E0B' : '#10B981');
+        html += `
+          <tr data-status="${g.status}">
+            <td><span class="font-weight-600">${g.skill}</span></td>
+            <td><span class="font-weight-700" style="color:var(--pp-primary);">${g.demand}</span> <span class="text-muted small">cos.</span></td>
+            <td><span class="font-weight-700" style="color:#10B981;">${g.supply}</span> <span class="text-muted small">stu.</span></td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="sg-gap-bar-track">
+                  <div class="sg-gap-bar-fill" style="width:${g.gap_percentage}%; background:${barColor};"></div>
+                </div>
+                <span class="font-weight-700 small" style="min-width:42px;">${g.gap_percentage}%</span>
+              </div>
+            </td>
+            <td>${statusBadge}</td>
+          </tr>`;
+      });
+      document.getElementById('sgGapTableBody').innerHTML = html;
     }
 
-    fetchStats();
-    fetchAlerts();
-    initCalendar();
-    setupAutoUpdateLoop();
+    function sortGapTable(field) {
+      if (gapSortField === field) { gapSortAsc = !gapSortAsc; } else { gapSortField = field; gapSortAsc = field === 'skill'; }
+      renderGapTable();
+    }
+
+    function filterGapTable(status, btn) {
+      gapFilterStatus = status;
+      document.querySelectorAll('.sg-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderGapTable();
+    }
+
+    // ---- Department Breakdown ----
+    function renderDeptBreakdown() {
+      const depts = sgData.department_breakdown || [];
+      if (depts.length === 0) {
+        document.getElementById('sgDeptBreakdown').innerHTML = '<div class="text-muted small">No department data available.</div>';
+        return;
+      }
+
+      const colors = ['#4F46E5', '#7C3AED', '#EC4899', '#F59E0B', '#10B981', '#06B6D4', '#8B5CF6', '#F97316'];
+      let html = '';
+      depts.forEach((d, di) => {
+        const color = colors[di % colors.length];
+        html += `
+          <div class="sg-dept-block">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="font-weight-700 small text-dark">${d.department}</span>
+              <span class="text-muted small font-weight-600">${d.skills.length} skills</span>
+            </div>
+            <div class="d-flex flex-wrap gap-1">
+              ${d.skills.map(s => `<span class="sg-skill-pill" style="--pill-color:${color};">${s.skill} <span class="sg-pill-count">${s.count}</span></span>`).join('')}
+            </div>
+          </div>`;
+      });
+      document.getElementById('sgDeptBreakdown').innerHTML = html;
+    }
+
+    // ---- Training Recommendations ----
+    function renderTraining() {
+      const recs = sgData.training_recommendations || [];
+      if (recs.length === 0) {
+        document.getElementById('sgTrainingList').innerHTML = '<div style="color:rgba(255,255,255,0.5);" class="small">No training recommendations available.</div>';
+        return;
+      }
+
+      let html = '';
+      recs.forEach((r, i) => {
+        html += `
+          <div class="sg-training-item">
+            <div class="sg-training-number">${i + 1}</div>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="font-weight-700 small" style="color:#FFFFFF;">${r.skill}</span>
+                <span class="sg-training-gap">${r.gap_percentage}% gap</span>
+              </div>
+              <p class="small mb-0" style="color:rgba(255,255,255,0.6); line-height:1.4;">${r.recommendation}</p>
+            </div>
+          </div>`;
+      });
+      document.getElementById('sgTrainingList').innerHTML = html;
+    }
+
+    // ---- Surplus Skills ----
+    function renderSurplus() {
+      const surplus = sgData.surplus_skills || [];
+      if (surplus.length === 0) {
+        document.getElementById('sgSurplusList').innerHTML = '<span class="text-muted small">No surplus skills detected — all student skills are in demand!</span>';
+        return;
+      }
+      let html = '';
+      surplus.forEach(s => {
+        html += `<span class="sg-surplus-pill">${s.skill} <span class="sg-pill-count">${s.count}</span></span>`;
+      });
+      document.getElementById('sgSurplusList').innerHTML = html;
+    }
+
+    // ---- Export ----
+    function exportSkillGap(format) {
+      showToast(`Generating ${format.toUpperCase()} export...`, 'info');
+      window.open(API.base + `/reports/students?format=${format}&token=${window.API_TOKEN}`, '_blank');
+    }
+
+    // ---- Load departments for filter ----
+    async function loadDeptFilter() {
+      try {
+        const data = await API.get('/dashboard/filters');
+        const sel = document.getElementById('sgDeptFilter');
+        (data.departments || []).forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          sel.appendChild(opt);
+        });
+      } catch (e) { console.warn('Could not load departments', e); }
+    }
+
+    // ---- Init ----
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadDeptFilter();
+      await loadSkillGap();
+      document.getElementById('sgDeptFilter').addEventListener('change', loadSkillGap);
+    });
   </script>
 </body>
+
 </html>

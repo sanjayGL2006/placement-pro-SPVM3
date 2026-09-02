@@ -44,7 +44,7 @@
         </a>
       </li>
       <li>
-        <a href="push.php" class="nav-item-link ">
+        <a href="push.html" class="nav-item-link ">
           <i class="fa-solid fa-paper-plane"></i>
           <span>Push to Company</span>
         </a>
@@ -68,13 +68,13 @@
         </a>
       </li>
       <li>
-        <a href="skill_gap.php" class="nav-item-link ">
+        <a href="skill_gap.html" class="nav-item-link ">
           <i class="fa-solid fa-magnifying-glass-chart"></i>
           <span>Skill Gap</span>
         </a>
       </li>
       <li>
-        <a href="ai_hub.php" class="nav-item-link ">
+        <a href="ai_hub.html" class="nav-item-link ">
           <i class="fa-solid fa-robot"></i>
           <span>AI Hub</span>
         </a>
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 <!-- SweetAlert2 for beautiful popups with local fallback -->
-<script src="assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
+<script src="../assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" onerror="this.onerror=null;"></script>
 
 
@@ -527,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </ol>
 
           <div class="pt-2 border-top">
-            <a href="#" class="text-decoration-none font-weight-600 small" style="color: var(--pp-primary);">
+            <a href="#" class="text-decoration-none font-weight-600 small" style="color: var(--pp-primary);" onclick="event.preventDefault(); showToast('Downloading placement_template_schema.xlsx...', 'info');">
               <i class="fa-solid fa-download me-1"></i> Download template schema (.xlsx)
             </a>
           </div>
@@ -552,8 +552,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
           <div class="d-flex justify-content-between align-items-center text-muted small pt-2 border-top">
             <span>Imported 2 hours ago</span>
-            <a href="#" class="font-weight-600 text-decoration-none" style="color: var(--pp-primary);">View Logs</a>
+            <a href="#" class="font-weight-600 text-decoration-none" style="color: var(--pp-primary);" onclick="event.preventDefault(); showToast('Last import log: 450 records inserted cleanly on Aug 30, 2026.', 'info');">View Logs</a>
           </div>
+
         </div>
       </div>
     </div>

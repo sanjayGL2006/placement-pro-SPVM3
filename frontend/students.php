@@ -189,10 +189,13 @@ require_login(); ?>
               <div class="col-6">
                 <label for="addStudentDept" class="form-label font-weight-600 small text-muted">DEPARTMENT</label>
                 <select id="addStudentDept" name="dept" class="form-select-pp w-100" required>
-                  <option value="Computer Science">Computer Science</option>
-                  <option value="Information Tech">Information Tech</option>
-                  <option value="Electronics & Comm.">Electronics & Comm.</option>
+                  <option value="BCA">BCA</option>
+                  <option value="BBA">BBA</option>
+                  <option value="BBA – Hospitality & Hotel Management">BBA – Hospitality & Hotel Management</option>
+                  <option value="B.Com">B.Com</option>
+                  <option value="B.Sc">B.Sc</option>
                 </select>
+
               </div>
               <div class="col-6">
                 <label for="addStudentSection" class="form-label font-weight-600 small text-muted">SECTION</label>
@@ -321,7 +324,8 @@ require_login(); ?>
 
     // Helper to format department nicely (e.g., "bca" -> "BCA")
     function formatDept(dept) {
-      if (!dept) return 'Computer Science';
+      if (!dept) return 'BCA';
+
       dept = dept.trim();
       const lower = dept.toLowerCase();
       if (lower === 'bca') return 'BCA';
