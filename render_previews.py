@@ -41,7 +41,13 @@ for file in files:
     
     # Replace API base & token script tags
     content = re.sub(r"<script>window\.API_BASE = '<\?php echo API_BASE; \?>';.*?</script>", "<script>window.API_BASE = 'http://localhost:5000/api'; window.API_TOKEN = 'demo';</script>", content)
-    content = content.replace("<?php echo htmlspecialchars($_SESSION['user']['name'] ?? 'Admin User'); ?>", "Admin User")
+    # Replace .php links with .html links for static GitHub Pages preview navigation
+    for page_name in ['dashboard', 'students', 'companies', 'import', 'sections', 'reports', 'settings', 'login', 'logout']:
+        content = content.replace(f'href="{page_name}.php"', f'href="{page_name}.html"')
+        content = content.replace(f"href='{page_name}.php'", f"href='{page_name}.html'")
+
+    content = content.replace("<?php echo htmlspecialchars($_SESSION['user']['name'] ?? 'Admin User'); ?>", "SPVM3 Tech Solution by Sanjay G L")
+    content = content.replace("<?php echo htmlspecialchars($_SESSION['user']['name'] ?? 'SPVM3 Tech Solution by Sanjay G L'); ?>", "SPVM3 Tech Solution by Sanjay G L")
     content = content.replace("<?php echo htmlspecialchars($_SESSION['user']['email'] ?? 'admin@university.edu'); ?>", "admin@university.edu")
     
     # Fix relative paths to css/js if opened in previews/
@@ -51,5 +57,6 @@ for file in files:
     out_name = file.replace('.php', '.html')
     with open(os.path.join(output_dir, out_name), "w", encoding="utf-8") as f:
         f.write(content)
+
 
 print("Rendered preview HTML files successfully!")
