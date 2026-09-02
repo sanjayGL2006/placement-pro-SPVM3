@@ -277,8 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('beforeinstallprompt', (e) => {
           e.preventDefault();
           deferredPrompt = e;
-          pwaBanner.classList.remove('d-none');
+          if (pwaBanner) pwaBanner.classList.remove('d-none');
         });
+
 
         btnInstall.addEventListener('click', async () => {
           if (deferredPrompt) {
