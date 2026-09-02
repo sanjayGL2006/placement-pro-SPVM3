@@ -307,20 +307,29 @@
         const filters = await API.get('/dashboard/filters');
         
         const deptSelect = document.getElementById('rosterDept');
-        deptSelect.innerHTML = '<option value="">All Departments</option>';
-        filters.departments.forEach(d => {
-          deptSelect.innerHTML += `<option value="${d}">${d}</option>`;
-        });
+        if (deptSelect) {
+          deptSelect.innerHTML = '<option value="">All Departments</option>';
+          if (filters && Array.isArray(filters.departments)) {
+            filters.departments.forEach(d => {
+              deptSelect.innerHTML += `<option value="${d}">${d}</option>`;
+            });
+          }
+        }
 
         const sectionSelect = document.getElementById('rosterSection');
-        sectionSelect.innerHTML = '<option value="">All Sections</option>';
-        filters.sections.forEach(s => {
-          sectionSelect.innerHTML += `<option value="${s}">Section ${s}</option>`;
-        });
+        if (sectionSelect) {
+          sectionSelect.innerHTML = '<option value="">All Sections</option>';
+          if (filters && Array.isArray(filters.sections)) {
+            filters.sections.forEach(s => {
+              sectionSelect.innerHTML += `<option value="${s}">Section ${s}</option>`;
+            });
+          }
+        }
       } catch (err) {
         console.error('Failed to load filter options:', err);
       }
     }
+
 
     // On selector change
     function onDriveChange() {

@@ -64,8 +64,53 @@
       }
       if (path.includes('/dashboard/filters')) {
         return {
-          departments: ['BCA', 'BBA', 'BBA - Hospitality & Hotel Management', 'B.Com', 'B.Sc'],
+          departments: ['BCA', 'BBA', 'BBA – Hospitality & Hotel Management', 'B.Com', 'B.Sc'],
+          sections: ['A', 'B', 'C'],
           academic_years: ['2023-2024', '2024-2025', '2025-2026']
+        };
+      }
+      if (path.includes('/skill-gap') || path.includes('/skill_gap')) {
+        return {
+          summary: {
+            total_student_skills: 42,
+            total_demand_skills: 28,
+            coverage_percentage: 78.5,
+            critical_gaps: 4,
+            students_with_skills: 120,
+            companies_analyzed: 25
+          },
+          top_demanded_skills: [
+            { skill: 'Python', count: 35 },
+            { skill: 'Java', count: 30 },
+            { skill: 'React', count: 25 },
+            { skill: 'SQL', count: 40 },
+            { skill: 'AWS', count: 20 }
+          ],
+          top_student_skills: [
+            { skill: 'Python', count: 32 },
+            { skill: 'Java', count: 28 },
+            { skill: 'React', count: 18 },
+            { skill: 'SQL', count: 38 },
+            { skill: 'AWS', count: 12 }
+          ],
+          skills_matrix: [
+            { skill: 'Python', demand_count: 35, supply_count: 32, gap: 3, gap_pct: 8.5, status: 'Covered' },
+            { skill: 'Java', demand_count: 30, supply_count: 28, gap: 2, gap_pct: 6.6, status: 'Covered' },
+            { skill: 'AWS', demand_count: 20, supply_count: 12, gap: 8, gap_pct: 40.0, status: 'Moderate' },
+            { skill: 'Docker', demand_count: 15, supply_count: 3, gap: 12, gap_pct: 80.0, status: 'Critical' }
+          ],
+          dept_breakdown: {
+            'BCA': [{ skill: 'Python', count: 25 }, { skill: 'Java', count: 20 }],
+            'BBA': [{ skill: 'Excel', count: 30 }, { skill: 'PowerBI', count: 15 }],
+            'B.Com': [{ skill: 'Accounting', count: 28 }, { skill: 'Tally', count: 22 }]
+          },
+          suggested_workshops: [
+            { title: 'Docker & Containerization Masterclass', priority: 'High', target_dept: 'BCA' },
+            { title: 'AWS Cloud Fundamentals', priority: 'Medium', target_dept: 'BCA / B.Sc' }
+          ],
+          surplus_skills: [
+            { skill: 'C++', supply_count: 45, demand_count: 10 }
+          ]
         };
       }
       if (path.includes('/drives/repeat-alerts')) {
@@ -85,8 +130,11 @@
       }
       if (path.includes('/students')) {
         return {
-          students: [],
-          total: 0,
+          students: [
+            { id: 1, name: 'Aarav Sharma', register_number: '1PE23BCA001', department_name: 'BCA', section: 'Section A', placement_status: 'Placed', company_name: 'Google' },
+            { id: 2, name: 'Ananya Rao', register_number: '1PE23BBA014', department_name: 'BBA', section: 'Section B', placement_status: 'Placed', company_name: 'Microsoft' }
+          ],
+          total: 2,
           page: 1,
           per_page: 25
         };

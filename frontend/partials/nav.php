@@ -89,10 +89,8 @@ require_once __DIR__ . '/header.php';
   </div>
 </div>
 
-<script>
-  window.API_BASE = '<?php echo API_BASE; ?>';
-  window.API_TOKEN = '<?php echo $_SESSION['token'] ?? ""; ?>';
-</script>
+<script src="assets/js/auth.js"></script>
+
 <script src="assets/js/api.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
