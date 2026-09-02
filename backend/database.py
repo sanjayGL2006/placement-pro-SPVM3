@@ -70,6 +70,11 @@ class DictConnection:
 def init_sqlite_db():
     schema_path = os.path.join(os.path.dirname(__file__), "schema_sqlite.sql")
     os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
+    if os.path.exists(DB_PATH):
+        try:
+            os.remove(DB_PATH)
+        except OSError:
+            pass
     conn = sqlite3.connect(DB_PATH)
     with open(schema_path, "r") as f:
         conn.executescript(f.read())
