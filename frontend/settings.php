@@ -77,14 +77,14 @@
               <div class="row g-3">
                 <div class="col-12 col-md-6">
                   <label for="displayName" class="form-label font-weight-600 text-muted small">DISPLAY NAME</label>
-                  <input type="text" id="displayName" name="display_name" class="form-control form-control-pp" value="<?php echo htmlspecialchars($_SESSION['user']['name'] ?? 'SPVM3 Tech Solution by Sanjay G L'); ?>">
-
+                  <input type="text" id="displayName" name="display_name" autocomplete="name" class="form-control form-control-pp" value="<?php echo htmlspecialchars($_SESSION['user']['name'] ?? 'SPVM3 Tech Solution by Sanjay G L'); ?>">
                 </div>
 
                 <div class="col-12 col-md-6">
                   <label for="displayEmail" class="form-label font-weight-600 text-muted small">EMAIL ADDRESS</label>
-                  <input type="email" id="displayEmail" name="display_email" class="form-control form-control-pp" value="<?php echo htmlspecialchars($_SESSION['user']['email'] ?? 'admin@university.edu'); ?>">
+                  <input type="email" id="displayEmail" name="display_email" autocomplete="email" class="form-control form-control-pp" value="<?php echo htmlspecialchars($_SESSION['user']['email'] ?? 'admin@university.edu'); ?>">
                 </div>
+
 
                 <div class="col-12">
                   <label for="userBio" class="form-label font-weight-600 text-muted small">BIO</label>
