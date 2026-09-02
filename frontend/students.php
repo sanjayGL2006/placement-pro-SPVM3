@@ -336,6 +336,8 @@ require_login(); ?>
       return dept.replace(/\b\w/g, c => c.toUpperCase());
     }
 
+    let currentPage = 1;
+
     // Dynamic Filter Loader
     async function initFilters() {
       try {
@@ -383,8 +385,10 @@ require_login(); ?>
     }
 
     async function loadStudents(page = 1) {
+      currentPage = page;
       const tbody = document.getElementById('studentTableBody');
       const gridContainer = document.getElementById('gridViewContainer');
+
 
       try {
         const searchInput = document.getElementById('search');
