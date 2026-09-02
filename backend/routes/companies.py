@@ -21,6 +21,7 @@ def list_companies():
 @companies_bp.route("/<int:company_id>", methods=["GET"])
 @token_required()
 def get_company(company_id):
+
     cur = get_cursor()
     cur.execute("SELECT * FROM companies WHERE id = %s", (company_id,))
     company = cur.fetchone()
