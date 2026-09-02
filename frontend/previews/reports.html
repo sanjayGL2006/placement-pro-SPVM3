@@ -160,19 +160,24 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (typeof API === 'undefined') return;
       const data = await API.get('/notifications');
-      if (data && data.notifications) {
-        if (data.unread_count > 0) {
+      const list = (data && Array.isArray(data.notifications)) ? data.notifications : (Array.isArray(data) ? data : []);
+      const unread = (data && typeof data.unread_count === 'number') ? data.unread_count : 0;
+
+      if (badge) {
+        if (unread > 0) {
           badge.classList.remove('d-none');
         } else {
           badge.classList.add('d-none');
         }
+      }
 
-        if (data.notifications.length === 0) {
+      if (container) {
+        if (list.length === 0) {
           container.innerHTML = `<li class="p-3 text-center text-muted small">No notifications</li>`;
         } else {
-          container.innerHTML = data.notifications.map(n => {
-            const timeStr = new Date(n.created_at).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'});
-            const dateStr = new Date(n.created_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+          container.innerHTML = list.map(n => {
+            const timeStr = n.created_at ? new Date(n.created_at).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'}) : '';
+            const dateStr = n.created_at ? new Date(n.created_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'}) : '';
             
             let icon = '<i class="fa-solid fa-circle-info text-info"></i>';
             if (n.type === 'success') icon = '<i class="fa-solid fa-circle-check text-success"></i>';
@@ -185,9 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <li class="p-3 border-bottom ${bgClass} d-flex align-items-start gap-3">
                 <div style="font-size: 1.15rem; margin-top: 0.15rem;">${icon}</div>
                 <div class="flex-grow-1">
-                  <div class="font-weight-700 text-dark small" style="line-height: 1.25;">${n.title}</div>
-                  <div class="text-muted small mt-1" style="font-size: 0.775rem; line-height: 1.35;">${n.message}</div>
-                  <div class="text-muted mt-1" style="font-size: 0.7rem;">${dateStr} at ${timeStr}</div>
+                  <div class="font-weight-700 text-dark small" style="line-height: 1.25;">${n.title || 'Notification'}</div>
+                  <div class="text-muted small mt-1" style="font-size: 0.775rem; line-height: 1.35;">${n.message || ''}</div>
+                  <div class="text-muted mt-1" style="font-size: 0.7rem;">${dateStr} ${timeStr ? 'at ' + timeStr : ''}</div>
                 </div>
               </li>
             `;

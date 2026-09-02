@@ -160,19 +160,24 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (typeof API === 'undefined') return;
       const data = await API.get('/notifications');
-      if (data && data.notifications) {
-        if (data.unread_count > 0) {
+      const list = (data && Array.isArray(data.notifications)) ? data.notifications : (Array.isArray(data) ? data : []);
+      const unread = (data && typeof data.unread_count === 'number') ? data.unread_count : 0;
+
+      if (badge) {
+        if (unread > 0) {
           badge.classList.remove('d-none');
         } else {
           badge.classList.add('d-none');
         }
+      }
 
-        if (data.notifications.length === 0) {
+      if (container) {
+        if (list.length === 0) {
           container.innerHTML = `<li class="p-3 text-center text-muted small">No notifications</li>`;
         } else {
-          container.innerHTML = data.notifications.map(n => {
-            const timeStr = new Date(n.created_at).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'});
-            const dateStr = new Date(n.created_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+          container.innerHTML = list.map(n => {
+            const timeStr = n.created_at ? new Date(n.created_at).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'}) : '';
+            const dateStr = n.created_at ? new Date(n.created_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'}) : '';
             
             let icon = '<i class="fa-solid fa-circle-info text-info"></i>';
             if (n.type === 'success') icon = '<i class="fa-solid fa-circle-check text-success"></i>';
@@ -185,9 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <li class="p-3 border-bottom ${bgClass} d-flex align-items-start gap-3">
                 <div style="font-size: 1.15rem; margin-top: 0.15rem;">${icon}</div>
                 <div class="flex-grow-1">
-                  <div class="font-weight-700 text-dark small" style="line-height: 1.25;">${n.title}</div>
-                  <div class="text-muted small mt-1" style="font-size: 0.775rem; line-height: 1.35;">${n.message}</div>
-                  <div class="text-muted mt-1" style="font-size: 0.7rem;">${dateStr} at ${timeStr}</div>
+                  <div class="font-weight-700 text-dark small" style="line-height: 1.25;">${n.title || 'Notification'}</div>
+                  <div class="text-muted small mt-1" style="font-size: 0.775rem; line-height: 1.35;">${n.message || ''}</div>
+                  <div class="text-muted mt-1" style="font-size: 0.7rem;">${dateStr} ${timeStr ? 'at ' + timeStr : ''}</div>
                 </div>
               </li>
             `;
@@ -860,11 +865,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function confirmReset(type) {
       const label = type === 'all' ? 'All Data (Students & Companies)' : (type === 'students' ? 'Student Data' : 'Company Data');
-      if (confirm(`Are you absolutely sure you want to soft reset ${label}?\nThis will move all records to the Recycle Bin.`)) {
+      
+      const res = await Swal.fire({
+        title: 'Soft Reset Data?',
+        text: `Are you sure you want to soft reset ${label}? This will move all records to the Recycle Bin.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#F59E0B',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, move to trash'
+      });
+
+      if (res.isConfirmed) {
         try {
-          const res = await API.post('/recycle-bin/reset', { type });
-          const studentsMoved = res.students_moved !== undefined ? res.students_moved : 45;
-          const companiesMoved = res.companies_moved !== undefined ? res.companies_moved : 12;
+          const resApi = await API.post('/recycle-bin/reset', { type });
+          const studentsMoved = resApi.students_moved !== undefined ? resApi.students_moved : 45;
+          const companiesMoved = resApi.companies_moved !== undefined ? resApi.companies_moved : 12;
           showToast(`Soft reset completed! Moved ${studentsMoved} students and ${companiesMoved} companies to trash.`);
           loadTrash();
         } catch (err) {
@@ -874,12 +890,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-
     async function confirmHardReset() {
-      if (confirm('CRITICAL WARNING: Are you sure you want to HARD RESET the system?\nThis will permanently delete all students, companies, placement records, documents, and empty the Recycle Bin across all places!')) {
+      const res = await Swal.fire({
+        title: 'CRITICAL SYSTEM HARD RESET',
+        text: 'Are you sure you want to HARD RESET the system? This will permanently delete all students, companies, placement records, and empty the Recycle Bin!',
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, HARD RESET'
+      });
+
+      if (res.isConfirmed) {
         try {
-          const res = await API.post('/recycle-bin/hard-reset');
-          showToast(res.message || 'Hard Reset completed! All data and places have been emptied.');
+          const resApi = await API.post('/recycle-bin/hard-reset');
+          showToast(resApi.message || 'Hard Reset completed! All data and places have been emptied.');
           loadTrash();
         } catch (err) {
           showToast(err.message || 'Hard Reset completed!', 'info');
@@ -900,7 +925,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function deletePermanently(id) {
-      if (confirm('Are you sure you want to permanently delete this record? This action cannot be undone.')) {
+      const res = await Swal.fire({
+        title: 'Delete Permanently?',
+        text: 'Are you sure you want to permanently delete this record? This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, delete permanently'
+      });
+
+      if (res.isConfirmed) {
         try {
           await API.request(`/recycle-bin/${id}`, { method: 'DELETE' });
           showToast('Record permanently deleted.');
@@ -913,7 +948,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function emptyTrashBin() {
-      if (confirm('Are you sure you want to empty the Recycle Bin? All deleted data will be lost forever.')) {
+      const res = await Swal.fire({
+        title: 'Empty Recycle Bin?',
+        text: 'Are you sure you want to empty the Recycle Bin? All deleted data will be lost forever.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Empty Recycle Bin'
+      });
+
+      if (res.isConfirmed) {
         try {
           await API.request('/recycle-bin/empty', { method: 'DELETE' });
           showToast('Recycle Bin emptied successfully.');
@@ -925,11 +970,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-
     function loadAutoUpdateSettings() {
-
       const autoUpdate = localStorage.getItem('setting_auto_update') !== 'false';
-
       const interval = localStorage.getItem('setting_update_interval') || '30000';
       const connectUpcoming = localStorage.getItem('setting_connect_upcoming') !== 'false';
       const leadDays = localStorage.getItem('setting_upcoming_lead_days') || '3';
@@ -956,7 +998,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    document.addEventListener('DOMContentLoaded', loadAutoUpdateSettings);
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAutoUpdateSettings();
+      loadTrash();
+    });
   </script>
 </body>
 </html>
