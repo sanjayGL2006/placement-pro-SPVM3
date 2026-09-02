@@ -58,6 +58,10 @@ def send_drive_reminders():
 
 def run_scheduler(app):
     """Run background tasks continuously in a separate thread."""
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        logger.info("Scheduler omitted in serverless environment.")
+        return
+
     def loop():
         while True:
             try:
