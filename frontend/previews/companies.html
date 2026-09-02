@@ -460,9 +460,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <button class="btn btn-pp-outline">
           <i class="fa-solid fa-filter"></i> Filter
         </button>
-        <a href="download.php?type=excel" class="btn btn-pp-primary text-white text-decoration-none">
+        <a href="#" onclick="event.preventDefault(); showToast('Exporting Company Directory (Excel)...', 'info');" class="btn btn-pp-primary text-white text-decoration-none">
           <i class="fa-solid fa-file-excel"></i> Export List
         </a>
+
       </div>
     </div>
 

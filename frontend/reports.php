@@ -67,12 +67,13 @@
  
           <!-- Action Buttons -->
           <div class="pt-3 border-top d-flex gap-2">
-            <a href="download.php?type=pdf" class="btn btn-pp-primary flex-grow-1 justify-content-center text-white text-decoration-none">
+            <a href="#" onclick="event.preventDefault(); showToast('Downloading Placement Report (PDF)...', 'info');" class="btn btn-pp-primary flex-grow-1 justify-content-center text-white text-decoration-none">
               <i class="fa-solid fa-file-pdf"></i> Download PDF
             </a>
-            <a href="download.php?type=excel" class="btn btn-pp-outline flex-grow-1 justify-content-center text-decoration-none">
+            <a href="#" onclick="event.preventDefault(); showToast('Exporting Student Roster (Excel)...', 'info');" class="btn btn-pp-outline flex-grow-1 justify-content-center text-decoration-none">
               <i class="fa-solid fa-file-excel text-success"></i> Export Excel
             </a>
+
           </div>
         </div>
       </div>
