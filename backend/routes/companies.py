@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-from database import get_cursor, commit
+from database import get_cursor, commit, rollback
+
 
 companies_bp = Blueprint("companies", __name__)
 from routes.auth import token_required
