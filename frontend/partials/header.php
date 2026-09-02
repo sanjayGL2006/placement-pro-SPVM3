@@ -6,7 +6,8 @@ $userRole = isset($_SESSION['user']['role']) ? ucfirst($_SESSION['user']['role']
   <!-- Search Bar -->
   <div class="header-search-container">
     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-    <input type="text" placeholder="Search students, companies, records..." id="globalSearchInput">
+    <input type="text" placeholder="Search students, companies, records..." id="globalSearchInput" name="global_search" autocomplete="off" aria-label="Search students, companies, records">
+
   </div>
 
   <!-- Header Right Actions -->

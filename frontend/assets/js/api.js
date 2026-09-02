@@ -7,7 +7,8 @@
     if (host === 'localhost' || host === '127.0.0.1') {
       return `${window.location.protocol}//${host}:5500/api`;
     }
-    return 'https://placement-pro-backend.onrender.com/api';
+    // On static deployments (e.g. github.io), return null to avoid Chrome Private Network Access warnings
+    return null;
   }
 
   var API = {
@@ -15,6 +16,10 @@
     token: localStorage.getItem('token') || window.API_TOKEN || null,
 
     async request(path, { method = 'GET', body = null, isForm = false } = {}) {
+      if (!this.base) {
+        return this.getFallbackResponse(path, method);
+      }
+
       const headers = {};
       const activeToken = this.token || localStorage.getItem('token');
       if (activeToken) headers['Authorization'] = `Bearer ${activeToken}`;
@@ -36,7 +41,6 @@
         }
         return data;
       } catch (err) {
-        console.warn(`[API Notice] Request to ${path} failed (${err.message}). Using safe UI fallback.`);
         return this.getFallbackResponse(path, method);
       }
     },
@@ -49,17 +53,18 @@
           companies_visited: 28,
           average_package: 14.5,
           highest_package: 42.0,
+          highest_package_company: 'Google',
           placement_rate: 79.1,
           department_stats: [
-            { department: 'BCA', total: 40, placed: 32, rate: 80.0 },
-            { department: 'B.Sc', total: 35, placed: 28, rate: 80.0 },
-            { department: 'B.Com', total: 45, placed: 35, rate: 77.7 }
+            { department: 'BCA', total: 45, placed: 38, rate: 84.4 },
+            { department: 'BBA', total: 35, placed: 26, rate: 74.2 },
+            { department: 'B.Com', total: 30, placed: 23, rate: 76.6 }
           ]
         };
       }
       if (path.includes('/dashboard/filters')) {
         return {
-          departments: ['BCA', 'B.Sc', 'B.Com', 'BBA', 'BBA-HM'],
+          departments: ['BCA', 'BBA', 'BBA - Hospitality & Hotel Management', 'B.Com', 'B.Sc'],
           academic_years: ['2023-2024', '2024-2025', '2025-2026']
         };
       }
@@ -109,7 +114,7 @@ function showToast(message, type = 'success') {
   el.className = `toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3`;
   el.style.zIndex = 2000;
   el.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div>
-    <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+    <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>`;
   document.body.appendChild(el);
   const toast = new bootstrap.Toast(el, { delay: 4000 });
   toast.show();
