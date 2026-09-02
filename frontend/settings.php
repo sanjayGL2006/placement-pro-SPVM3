@@ -422,11 +422,22 @@
 
     async function confirmReset(type) {
       const label = type === 'all' ? 'All Data (Students & Companies)' : (type === 'students' ? 'Student Data' : 'Company Data');
-      if (confirm(`Are you absolutely sure you want to soft reset ${label}?\nThis will move all records to the Recycle Bin.`)) {
+      
+      const res = await Swal.fire({
+        title: 'Soft Reset Data?',
+        text: `Are you sure you want to soft reset ${label}? This will move all records to the Recycle Bin.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#F59E0B',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, move to trash'
+      });
+
+      if (res.isConfirmed) {
         try {
-          const res = await API.post('/recycle-bin/reset', { type });
-          const studentsMoved = res.students_moved !== undefined ? res.students_moved : 45;
-          const companiesMoved = res.companies_moved !== undefined ? res.companies_moved : 12;
+          const resApi = await API.post('/recycle-bin/reset', { type });
+          const studentsMoved = resApi.students_moved !== undefined ? resApi.students_moved : 45;
+          const companiesMoved = resApi.companies_moved !== undefined ? resApi.companies_moved : 12;
           showToast(`Soft reset completed! Moved ${studentsMoved} students and ${companiesMoved} companies to trash.`);
           loadTrash();
         } catch (err) {
@@ -436,12 +447,21 @@
       }
     }
 
-
     async function confirmHardReset() {
-      if (confirm('CRITICAL WARNING: Are you sure you want to HARD RESET the system?\nThis will permanently delete all students, companies, placement records, documents, and empty the Recycle Bin across all places!')) {
+      const res = await Swal.fire({
+        title: 'CRITICAL SYSTEM HARD RESET',
+        text: 'Are you sure you want to HARD RESET the system? This will permanently delete all students, companies, placement records, and empty the Recycle Bin!',
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, HARD RESET'
+      });
+
+      if (res.isConfirmed) {
         try {
-          const res = await API.post('/recycle-bin/hard-reset');
-          showToast(res.message || 'Hard Reset completed! All data and places have been emptied.');
+          const resApi = await API.post('/recycle-bin/hard-reset');
+          showToast(resApi.message || 'Hard Reset completed! All data and places have been emptied.');
           loadTrash();
         } catch (err) {
           showToast(err.message || 'Hard Reset completed!', 'info');
@@ -462,7 +482,17 @@
     }
 
     async function deletePermanently(id) {
-      if (confirm('Are you sure you want to permanently delete this record? This action cannot be undone.')) {
+      const res = await Swal.fire({
+        title: 'Delete Permanently?',
+        text: 'Are you sure you want to permanently delete this record? This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, delete permanently'
+      });
+
+      if (res.isConfirmed) {
         try {
           await API.request(`/recycle-bin/${id}`, { method: 'DELETE' });
           showToast('Record permanently deleted.');
@@ -475,7 +505,17 @@
     }
 
     async function emptyTrashBin() {
-      if (confirm('Are you sure you want to empty the Recycle Bin? All deleted data will be lost forever.')) {
+      const res = await Swal.fire({
+        title: 'Empty Recycle Bin?',
+        text: 'Are you sure you want to empty the Recycle Bin? All deleted data will be lost forever.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Empty Recycle Bin'
+      });
+
+      if (res.isConfirmed) {
         try {
           await API.request('/recycle-bin/empty', { method: 'DELETE' });
           showToast('Recycle Bin emptied successfully.');
@@ -487,11 +527,8 @@
       }
     }
 
-
     function loadAutoUpdateSettings() {
-
       const autoUpdate = localStorage.getItem('setting_auto_update') !== 'false';
-
       const interval = localStorage.getItem('setting_update_interval') || '30000';
       const connectUpcoming = localStorage.getItem('setting_connect_upcoming') !== 'false';
       const leadDays = localStorage.getItem('setting_upcoming_lead_days') || '3';
@@ -518,7 +555,10 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', loadAutoUpdateSettings);
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAutoUpdateSettings();
+      loadTrash();
+    });
   </script>
 </body>
 </html>
