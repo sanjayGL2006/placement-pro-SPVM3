@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: placement-pro-backend
+    ports:
+      - "5500:5500"
+    environment:
+      - SECRET_KEY=placement-pro-secret-key-prod-2026
+      - JWT_SECRET=placement-pro-jwt-secret-key-prod-2026
+      - CORS_ORIGINS=*
+      - DATABASE_PATH=/app/data/placement_pro.db
+      - UPLOAD_FOLDER=/app/data/uploads
+    volumes:
+      - backend_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5500/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: placement-pro-frontend
+    ports:
+      - "7500:80"
+    environment:
+      - PLACEMENT_API_BASE=http://localhost:5500/api
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  backend_data:
+    driver: local

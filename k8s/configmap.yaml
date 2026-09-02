@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: placement-pro-config
+  namespace: placement-pro
+  labels:
+    app.kubernetes.io/name: placement-pro
+data:
+  PLACEMENT_API_BASE: "http://backend-service.placement-pro.svc.cluster.local:5500/api"
+  CORS_ORIGINS: "*"
+  DATABASE_PATH: "/app/data/placement_pro.db"
+  UPLOAD_FOLDER: "/app/data/uploads"

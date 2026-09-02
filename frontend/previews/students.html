@@ -1,0 +1,487 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students Directory — Placement Pro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="../assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+  
+<aside id="sidebar">
+  <div>
+    <!-- Logo Area -->
+    <div class="sidebar-logo">
+      <div class="brand-title">
+        <i class="fa-solid fa-graduation-cap text-primary" style="color: var(--pp-primary) !important;"></i>
+        Placement Pro
+      </div>
+      <div class="brand-subtitle">Admin Portal</div>
+    </div>
+
+    <!-- Navigation Links -->
+    <ul class="sidebar-nav">
+      <li>
+        <a href="dashboard.php" class="nav-item-link ">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="students.php" class="nav-item-link ">
+          <i class="fa-solid fa-user-graduate"></i>
+          <span>Students</span>
+        </a>
+      </li>
+      <li>
+        <a href="companies.php" class="nav-item-link ">
+          <i class="fa-solid fa-building"></i>
+          <span>Companies</span>
+        </a>
+      </li>
+      <li>
+        <a href="import.php" class="nav-item-link ">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Import</span>
+        </a>
+      </li>
+      <li>
+        <a href="sections.php" class="nav-item-link ">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Sections</span>
+        </a>
+      </li>
+      <li>
+        <a href="reports.php" class="nav-item-link ">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Reports</span>
+        </a>
+      </li>
+      <li>
+        <a href="settings.php" class="nav-item-link ">
+          <i class="fa-solid fa-gear"></i>
+          <span>Settings</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Sidebar Footer CTA -->
+  <div class="sidebar-footer">
+    <button class="btn-post-job" data-bs-toggle="modal" data-bs-target="#postJobModal">
+      <i class="fa-solid fa-plus"></i>
+      <span>+ Post New Job</span>
+    </button>
+  </div>
+</aside>
+
+
+<header id="top-header">
+  <!-- Search Bar -->
+  <div class="header-search-container">
+    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+    <input type="text" placeholder="Search students, companies, records..." id="globalSearchInput">
+  </div>
+
+  <!-- Header Right Actions -->
+  <div class="header-actions">
+    <!-- Help / Question Mark -->
+    <button class="header-icon-btn" title="Help & Documentation">
+      <i class="fa-regular fa-circle-question"></i>
+    </button>
+
+    <!-- Notification Bell -->
+    <button class="header-icon-btn" title="Notifications">
+      <i class="fa-regular fa-bell"></i>
+      <span class="notification-dot"></span>
+    </button>
+
+    <!-- User Profile Component -->
+    <div class="dropdown">
+      <div class="user-profile-badge cursor-pointer" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120" alt="Avatar" class="user-avatar">
+        <div class="user-info">
+          <div class="user-name"></div>
+          <div class="user-role"></div>
+        </div>
+        <i class="fa-solid fa-chevron-down ms-1 text-muted" style="font-size: 0.75rem;"></i>
+      </div>
+      <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2">
+        <li><a class="dropdown-item py-2" href="settings.php"><i class="fa-solid fa-user me-2 text-muted"></i> Edit Profile</a></li>
+        <li><a class="dropdown-item py-2" href="settings.php"><i class="fa-solid fa-gear me-2 text-muted"></i> Account Settings</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item py-2 text-danger" href="logout.php"><i class="fa-solid fa-right-from-bracket me-2"></i> Sign Out</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+
+<!-- Global Post New Job Modal -->
+<div class="modal fade" id="postJobModal" tabindex="-1" aria-labelledby="postJobModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+      <div class="modal-header border-0 pb-0 px-4 pt-4">
+        <h5 class="modal-title font-weight-bold" id="postJobModalLabel">
+          <i class="fa-solid fa-briefcase text-primary me-2" style="color: var(--pp-primary) !important;"></i> Post New Job Drive
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="postJobForm" onsubmit="event.preventDefault(); showToast('Job post drive published successfully!'); bootstrap.Modal.getInstance(document.getElementById('postJobModal')).hide();">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label font-weight-600 text-muted small">COMPANY NAME</label>
+              <input id="preview_e_g_goldman_sachs_1" name="preview_e_g_goldman_sachs" type="text" class="form-control form-control-pp" placeholder="e.g. Goldman Sachs" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label font-weight-600 text-muted small">ROLE / POSITION</label>
+              <input id="preview_e_g_software_development_engineer_2" name="preview_e_g_software_development_engineer" type="text" class="form-control form-control-pp" placeholder="e.g. Software Development Engineer" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label font-weight-600 text-muted small">PACKAGE (LPA)</label>
+              <input id="preview_e_g_14_5_3" name="preview_e_g_14_5" type="text" class="form-control form-control-pp" placeholder="e.g. 14.5" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label font-weight-600 text-muted small">DRIVE DATE</label>
+              <input id="preview_date_4_4" name="preview_date_4" type="date" class="form-control form-control-pp" required>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label font-weight-600 text-muted small">ELIGIBLE DEPARTMENTS</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" checked id="deptCS">
+                  <label class="form-check-label" for="deptCS">Computer Science</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" checked id="deptIT">
+                  <label class="form-check-label" for="deptIT">Information Tech</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deptECE">
+                  <label class="form-check-label" for="deptECE">Electronics & Comm</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label font-weight-600 text-muted small">JOB DESCRIPTION & REQUIREMENTS</label>
+              <textarea id="preview_enter_drive_details_5" name="preview_enter_drive_details" class="form-control form-control-pp" rows="3" placeholder="Enter drive details..."></textarea>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-4 pt-2 border-top">
+            <button type="button" class="btn btn-pp-outline" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-pp-primary"><i class="fa-solid fa-paper-plane me-1"></i> Publish Drive</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <main id="main-wrapper">
+
+    <!-- Header Area & View Toggle -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="h3 font-weight-800 mb-1">Students Directory</h2>
+        <p class="text-muted small mb-0">Manage registered candidates and placement track status</p>
+      </div>
+
+      <!-- List vs Grid Toggle Switch -->
+      <div class="bg-white p-1 rounded-3 border d-flex gap-1 shadow-sm">
+        <button class="btn btn-sm px-3 font-weight-600 rounded-2 active" id="btnListView" style="background-color: var(--pp-primary-light); color: var(--pp-primary-dark); border: 1px solid var(--pp-primary);" onclick="toggleView('list')">
+          <i class="fa-solid fa-list me-1"></i> List
+        </button>
+        <button class="btn btn-sm px-3 font-weight-600 text-muted rounded-2 border-0" id="btnGridView" onclick="toggleView('grid')">
+          <i class="fa-solid fa-border-all me-1"></i> Grid
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="pp-card mb-4 p-3">
+      <div class="row g-3 align-items-center">
+        <!-- Search Input -->
+        <div class="col-12 col-md-3">
+          <div class="position-relative">
+            <i class="fa-solid fa-magnifying-glass position-absolute text-muted" style="left: 0.85rem; top: 50%; transform: translateY(-50%); font-size: 0.85rem;"></i>
+            <input type="text" class="form-control-pp w-100 ps-5" id="search" placeholder="Search name or ID..." onkeyup="loadStudents(1)">
+          </div>
+        </div>
+
+        <!-- Department Dropdown -->
+        <div class="col-6 col-md-2">
+          <select class="form-select-pp w-100" id="deptFilter" onchange="loadStudents(1)">
+            <option value="">Department</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Electronics & Comm.">Electronics & Comm.</option>
+            <option value="Information Tech">Information Tech</option>
+          </select>
+        </div>
+
+        <!-- Status Dropdown -->
+        <div class="col-6 col-md-2">
+          <select class="form-select-pp w-100" id="statusFilter" onchange="loadStudents(1)">
+            <option value="">All Statuses</option>
+            <option value="selected">Placed</option>
+            <option value="not_placed">Unplaced</option>
+            <option value="applied">In-process</option>
+          </select>
+        </div>
+
+        <!-- Batch Year Dropdown -->
+        <div class="col-6 col-md-2">
+          <select class="form-select-pp w-100" id="batchFilter" onchange="loadStudents(1)">
+            <option value="">Batch Year</option>
+            <option value="2024" selected>2023-2024</option>
+            <option value="2025">2024-2025</option>
+          </select>
+        </div>
+
+        <!-- Showing Count Text -->
+        <div class="col-12 col-md-3 text-md-end">
+          <span class="text-muted small font-weight-600" id="showingText">Showing 1-10 of 2,450 students</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table Container -->
+    <div class="pp-card p-0 overflow-hidden mb-4" id="listViewContainer">
+      <div class="table-responsive">
+        <table class="pp-table">
+          <thead>
+            <tr>
+              <th>STUDENT</th>
+              <th>DEPARTMENT & SECTION</th>
+              <th>COMPANY</th>
+              <th>STATUS</th>
+              <th class="text-end">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="studentTableBody">
+            <!-- Populated dynamically or with fallback -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Grid View Container (Hidden by default) -->
+    <div class="row g-3 d-none mb-4" id="gridViewContainer">
+      <!-- Grid items render here -->
+    </div>
+
+    <!-- Table Footer Controls -->
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small">Rows per page:</span>
+        <select class="form-select-pp py-1 px-2 small" style="width: 70px;" id="perPageSelect" onchange="loadStudents(1)">
+          <option value="10">10</option>
+          <option value="25" selected>25</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+
+      <nav>
+        <ul class="pagination pagination-sm mb-0" id="pagination">
+          <!-- Rendered dynamically -->
+        </ul>
+      </nav>
+    </div>
+
+  </main>
+
+  <!-- Floating Action Button (FAB) -->
+  <button class="fab-btn" title="Add New Student" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+    <i class="fa-solid fa-user-plus"></i>
+  </button>
+
+  <!-- Add Student Modal -->
+  <div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-header border-0 pb-0 px-4 pt-4">
+          <h5 class="modal-title font-weight-bold"><i class="fa-solid fa-user-plus text-primary me-2"></i> Add New Student</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="addStudentForm" onsubmit="event.preventDefault(); showToast('Student added successfully!'); bootstrap.Modal.getInstance(document.getElementById('addStudentModal')).hide();">
+            <div class="mb-3">
+              <label class="form-label font-weight-600 small text-muted">FULL NAME</label>
+              <input id="preview_e_g_alex_morgan_6" name="preview_e_g_alex_morgan" type="text" class="form-control form-control-pp" placeholder="e.g. Alex Morgan" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label font-weight-600 small text-muted">REGISTER / ROLL NUMBER</label>
+              <input id="preview_e_g_21cs042_7" name="preview_e_g_21cs042" type="text" class="form-control form-control-pp" placeholder="e.g. 21CS042" required>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label font-weight-600 small text-muted">DEPARTMENT</label>
+                <select id="preview_select_8_8" name="preview_select_8" class="form-select-pp w-100" required>
+                  <option value="Computer Science">Computer Science</option>
+                  <option value="Information Tech">Information Tech</option>
+                  <option value="Electronics & Comm.">Electronics & Comm.</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label font-weight-600 small text-muted">SECTION</label>
+                <select id="preview_select_9_9" name="preview_select_9" class="form-select-pp w-100" required>
+                  <option>Section A</option>
+                  <option>Section B</option>
+                  <option>Section C</option>
+                </select>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+              <button type="button" class="btn btn-pp-outline" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-pp-primary">Add Student</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>window.API_BASE = 'http://localhost:5000/api'; window.API_TOKEN = 'demo';</script>
+  <script src="../assets/js/api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const MOCK_STUDENTS = [
+      { name: "Alex Morgan", id: "21CS042", dept: "Computer Science", sec: "Section A", company: "Goldman Sachs", logo: "https://logo.clearbit.com/goldmansachs.com", status: "Placed", statusType: "success" },
+      { name: "Sophia Chen", id: "21CS108", dept: "Computer Science", sec: "Section A", company: "Amazon", logo: "https://logo.clearbit.com/amazon.com", status: "Placed", statusType: "success" },
+      { name: "Marcus Vance", id: "21IT019", dept: "Information Tech", sec: "Section B", company: "TCS Digital", logo: "https://logo.clearbit.com/tcs.com", status: "In-process", statusType: "warning" },
+      { name: "Emily Watson", id: "21EC085", dept: "Electronics & Comm.", sec: "Section C", company: "Qualcomm", logo: "https://logo.clearbit.com/qualcomm.com", status: "Placed", statusType: "success" },
+      { name: "David Kim", id: "21CS144", dept: "Computer Science", sec: "Section B", company: "-", logo: "", status: "Unplaced", statusType: "danger" },
+      { name: "Jessica Taylor", id: "21IT072", dept: "Information Tech", sec: "Section A", company: "Microsoft", logo: "https://logo.clearbit.com/microsoft.com", status: "Placed", statusType: "success" },
+      { name: "Ryan Reynolds", id: "21EC012", dept: "Electronics & Comm.", sec: "Section B", company: "Texas Instruments", logo: "", status: "In-process", statusType: "warning" },
+      { name: "Hannah Abbott", id: "21CS009", dept: "Computer Science", sec: "Section C", company: "-", logo: "", status: "Unplaced", statusType: "danger" },
+    ];
+
+    async function loadStudents(page = 1) {
+      const tbody = document.getElementById('studentTableBody');
+      const gridContainer = document.getElementById('gridViewContainer');
+      
+      try {
+        const search = document.getElementById('search').value;
+        const dept = document.getElementById('deptFilter').value;
+        const status = document.getElementById('statusFilter').value;
+
+        const data = await API.get(`/students?page=${page}&per_page=10&search=${search}&department=${dept}&placement_status=${status}`);
+        if(data && data.students && data.students.length > 0) {
+          renderStudents(data.students, data.total);
+          return;
+        }
+      } catch(err) {
+        console.log('Using mock student directory:', err.message);
+      }
+
+      renderStudents(MOCK_STUDENTS, 2450);
+    }
+
+    function renderStudents(list, total) {
+      document.getElementById('showingText').innerText = `Showing 1-${list.length} of ${total.toLocaleString()} students`;
+
+      // Table View
+      document.getElementById('studentTableBody').innerHTML = list.map(s => {
+        const statusBadge = s.statusType === 'success' || s.placement_status === 'selected' || s.placement_status === 'joined'
+          ? `<span class="badge-pill-success"><i class="fa-solid fa-circle" style="font-size: 0.4rem;"></i> Placed</span>`
+          : (s.statusType === 'warning' || s.placement_status === 'applied'
+            ? `<span class="badge-pill-warning"><i class="fa-solid fa-circle" style="font-size: 0.4rem;"></i> In-process</span>`
+            : `<span class="badge-pill-danger"><i class="fa-solid fa-circle" style="font-size: 0.4rem;"></i> Unplaced</span>`);
+
+        const companyLogo = s.logo 
+          ? `<img src="${s.logo}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'" width="20" height="20" class="rounded me-2">` 
+          : `<i class="fa-solid fa-building me-2 text-muted"></i>`;
+
+        return `
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || 'Student')}&background=4F46E5&color=fff" class="rounded-circle" width="36" height="36">
+                <div>
+                  <div class="font-weight-700 text-dark">${s.name}</div>
+                  <div class="text-muted small">${s.register_number || s.id || '21CS000'}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="font-weight-600 text-dark">${s.department_name || s.dept || 'Computer Science'}</div>
+              <div class="text-muted small">${s.section || s.sec || 'Section A'}</div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center font-weight-600 text-dark">
+                ${companyLogo} ${s.company_name || s.company || '-'}
+              </div>
+            </td>
+            <td>${statusBadge}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-pp-outline py-1 px-2"><i class="fa-regular fa-eye me-1"></i> View</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Grid View
+      document.getElementById('gridViewContainer').innerHTML = list.map(s => `
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="pp-card h-100">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || 'Student')}&background=4F46E5&color=fff" class="rounded-circle" width="48" height="48">
+              <div>
+                <div class="font-weight-700 text-dark mb-0">${s.name}</div>
+                <div class="text-muted small">${s.register_number || s.id || '21CS000'}</div>
+              </div>
+            </div>
+            <div class="small mb-2"><span class="text-muted">Dept:</span> <span class="font-weight-600">${s.department_name || s.dept || 'CS'}</span></div>
+            <div class="small mb-3"><span class="text-muted">Company:</span> <span class="font-weight-600">${s.company_name || s.company || '-'}</span></div>
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+              <span class="badge-pill-success">Placed</span>
+              <button class="btn btn-sm btn-pp-outline py-1"><i class="fa-regular fa-eye me-1"></i> Profile</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Pagination
+      document.getElementById('pagination').innerHTML = `
+        <li class="page-item disabled"><a class="page-link" href="#">Prev</a></li>
+        <li class="page-item active"><a class="page-link" href="#" style="background-color: var(--pp-primary); border-color: var(--pp-primary);">1</a></li>
+        <li class="page-item"><a class="page-link" href="#">2</a></li>
+        <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+        <li class="page-item"><a class="page-link" href="#">245</a></li>
+        <li class="page-item"><a class="page-link" href="#">Next</a></li>
+      `;
+    }
+
+    function toggleView(mode) {
+      if(mode === 'list') {
+        document.getElementById('listViewContainer').classList.remove('d-none');
+        document.getElementById('gridViewContainer').classList.add('d-none');
+        document.getElementById('btnListView').style.backgroundColor = 'var(--pp-primary-light)';
+        document.getElementById('btnListView').style.color = 'var(--pp-primary-dark)';
+        document.getElementById('btnListView').style.border = '1px solid var(--pp-primary)';
+        document.getElementById('btnGridView').style.backgroundColor = 'transparent';
+        document.getElementById('btnGridView').style.color = '#6B7280';
+        document.getElementById('btnGridView').style.border = 'none';
+      } else {
+        document.getElementById('listViewContainer').classList.add('d-none');
+        document.getElementById('gridViewContainer').classList.remove('d-none');
+        document.getElementById('btnGridView').style.backgroundColor = 'var(--pp-primary-light)';
+        document.getElementById('btnGridView').style.color = 'var(--pp-primary-dark)';
+        document.getElementById('btnGridView').style.border = '1px solid var(--pp-primary)';
+        document.getElementById('btnListView').style.backgroundColor = 'transparent';
+        document.getElementById('btnListView').style.color = '#6B7280';
+        document.getElementById('btnListView').style.border = 'none';
+      }
+    }
+
+    loadStudents(1);
+  </script>
+</body>
+</html>

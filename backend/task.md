@@ -1,0 +1,5 @@
+- `[x]` Create `Dockerfile`
+- `[x]` Create `.dockerignore`
+- `[ ]` Create `vercel.json`
+- `[ ]` Create `api/index.py`
+- `[ ]` Verify files and create walkthrough
