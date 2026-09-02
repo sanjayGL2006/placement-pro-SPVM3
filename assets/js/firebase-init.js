@@ -31,7 +31,11 @@ window.firebaseAnalytics = analytics;
 window.firebaseAuth = auth;
 window.googleProvider = googleProvider;
 
+let isSigningIn = false;
+
 window.signInWithGoogle = async function() {
+  if (isSigningIn) return { cancelled: true };
+  isSigningIn = true;
   try {
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
@@ -44,8 +48,14 @@ window.signInWithGoogle = async function() {
     }));
     return { success: true, user };
   } catch (error) {
+    if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+      console.info("Google Sign-In popup closed or request superseded.");
+      return { cancelled: true };
+    }
     console.error("Google Auth error:", error);
     throw error;
+  } finally {
+    isSigningIn = false;
   }
 };
 

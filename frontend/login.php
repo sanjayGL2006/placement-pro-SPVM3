@@ -98,21 +98,35 @@
     });
 
     // Google Sign In handler
-    document.getElementById('btnGoogleLogin').addEventListener('click', async () => {
+    document.getElementById('btnGoogleLogin').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnGoogleLogin');
+      if (btn.disabled) return;
+      btn.disabled = true;
       const errorBox = document.getElementById('error');
       errorBox.classList.add('d-none');
+
+      const isHtmlPreview = window.location.pathname.endsWith('.html');
+      const targetDashboard = isHtmlPreview ? 'dashboard.html' : 'dashboard.php';
+
       try {
         if (typeof window.signInWithGoogle === 'function') {
-          await window.signInWithGoogle();
-          window.location.href = 'dashboard.php';
+          const res = await window.signInWithGoogle();
+          if (res && res.success) {
+            window.location.href = targetDashboard;
+          }
         } else {
           localStorage.setItem('token', 'demo_google_admin_token');
           localStorage.setItem('user', JSON.stringify({ name: 'SPVM3 Google Admin', role: 'admin', email: 'admin@pesiams.edu.in' }));
-          window.location.href = 'dashboard.php';
+          window.location.href = targetDashboard;
         }
       } catch (err) {
-        errorBox.textContent = 'Google sign-in error: ' + (err.message || 'Popup closed or blocked');
-        errorBox.classList.remove('d-none');
+        if (err.code !== 'auth/cancelled-popup-request' && err.code !== 'auth/popup-closed-by-user') {
+          errorBox.textContent = 'Google sign-in error: ' + (err.message || 'Popup closed or blocked');
+          errorBox.classList.remove('d-none');
+        }
+      } finally {
+        btn.disabled = false;
       }
     });
 
