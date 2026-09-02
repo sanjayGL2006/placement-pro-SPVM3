@@ -26,43 +26,61 @@
     <!-- Navigation Links -->
     <ul class="sidebar-nav">
       <li>
-        <a href="dashboard.php" class="nav-item-link ">
+        <a href="dashboard.html" class="nav-item-link ">
           <i class="fa-solid fa-chart-pie"></i>
           <span>Dashboard</span>
         </a>
       </li>
       <li>
-        <a href="students.php" class="nav-item-link ">
+        <a href="students.html" class="nav-item-link ">
           <i class="fa-solid fa-user-graduate"></i>
           <span>Students</span>
         </a>
       </li>
       <li>
-        <a href="companies.php" class="nav-item-link ">
+        <a href="companies.html" class="nav-item-link ">
           <i class="fa-solid fa-building"></i>
           <span>Companies</span>
         </a>
       </li>
       <li>
-        <a href="import.php" class="nav-item-link ">
+        <a href="push.php" class="nav-item-link ">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Push to Company</span>
+        </a>
+      </li>
+      <li>
+        <a href="import.html" class="nav-item-link ">
           <i class="fa-solid fa-cloud-arrow-up"></i>
           <span>Import</span>
         </a>
       </li>
       <li>
-        <a href="sections.php" class="nav-item-link ">
+        <a href="sections.html" class="nav-item-link ">
           <i class="fa-solid fa-layer-group"></i>
           <span>Sections</span>
         </a>
       </li>
       <li>
-        <a href="reports.php" class="nav-item-link ">
+        <a href="reports.html" class="nav-item-link ">
           <i class="fa-solid fa-chart-line"></i>
           <span>Reports</span>
         </a>
       </li>
       <li>
-        <a href="settings.php" class="nav-item-link ">
+        <a href="skill_gap.php" class="nav-item-link ">
+          <i class="fa-solid fa-magnifying-glass-chart"></i>
+          <span>Skill Gap</span>
+        </a>
+      </li>
+      <li>
+        <a href="ai_hub.php" class="nav-item-link ">
+          <i class="fa-solid fa-robot"></i>
+          <span>AI Hub</span>
+        </a>
+      </li>
+      <li>
+        <a href="settings.html" class="nav-item-link ">
           <i class="fa-solid fa-gear"></i>
           <span>Settings</span>
         </a>
@@ -95,10 +113,21 @@
     </button>
 
     <!-- Notification Bell -->
-    <button class="header-icon-btn" title="Notifications">
-      <i class="fa-regular fa-bell"></i>
-      <span class="notification-dot"></span>
-    </button>
+    <div class="dropdown">
+      <button class="header-icon-btn position-relative" title="Notifications" data-bs-toggle="dropdown" aria-expanded="false" id="notifDropdownBtn">
+        <i class="fa-regular fa-bell"></i>
+        <span class="notification-dot d-none" id="notifBadge" style="width: 8px; height: 8px; background-color: var(--pp-danger-dot) !important; border-radius: 50%; position: absolute; top: 8px; right: 8px;"></span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-0" style="width: 320px; max-height: 400px; overflow-y: auto;" id="notifDropdownMenu">
+        <li class="p-3 border-bottom d-flex justify-content-between align-items-center">
+          <span class="font-weight-700 text-dark">Notifications</span>
+          <a href="#" class="small text-decoration-none" style="color: var(--pp-primary);" id="notifMarkAllRead">Mark all read</a>
+        </li>
+        <div id="notifListContainer">
+          <li class="p-3 text-center text-muted small">No new notifications</li>
+        </div>
+      </ul>
+    </div>
 
     <!-- User Profile Component -->
     <div class="dropdown">
@@ -111,15 +140,164 @@
         <i class="fa-solid fa-chevron-down ms-1 text-muted" style="font-size: 0.75rem;"></i>
       </div>
       <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2">
-        <li><a class="dropdown-item py-2" href="settings.php"><i class="fa-solid fa-user me-2 text-muted"></i> Edit Profile</a></li>
-        <li><a class="dropdown-item py-2" href="settings.php"><i class="fa-solid fa-gear me-2 text-muted"></i> Account Settings</a></li>
+        <li><a class="dropdown-item py-2" href="settings.html"><i class="fa-solid fa-user me-2 text-muted"></i> Edit Profile</a></li>
+        <li><a class="dropdown-item py-2" href="settings.html"><i class="fa-solid fa-gear me-2 text-muted"></i> Account Settings</a></li>
         <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item py-2 text-danger" href="logout.php"><i class="fa-solid fa-right-from-bracket me-2"></i> Sign Out</a></li>
+        <li><a class="dropdown-item py-2 text-danger" href="logout.html"><i class="fa-solid fa-right-from-bracket me-2"></i> Sign Out</a></li>
       </ul>
     </div>
   </div>
 </header>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const badge = document.getElementById('notifBadge');
+  const container = document.getElementById('notifListContainer');
+  const markAllBtn = document.getElementById('notifMarkAllRead');
+
+  async function loadNotifications() {
+    try {
+      if (typeof API === 'undefined') return;
+      const data = await API.get('/notifications');
+      if (data && data.notifications) {
+        if (data.unread_count > 0) {
+          badge.classList.remove('d-none');
+        } else {
+          badge.classList.add('d-none');
+        }
+
+        if (data.notifications.length === 0) {
+          container.innerHTML = `<li class="p-3 text-center text-muted small">No notifications</li>`;
+        } else {
+          container.innerHTML = data.notifications.map(n => {
+            const timeStr = new Date(n.created_at).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'});
+            const dateStr = new Date(n.created_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+            
+            let icon = '<i class="fa-solid fa-circle-info text-info"></i>';
+            if (n.type === 'success') icon = '<i class="fa-solid fa-circle-check text-success"></i>';
+            else if (n.type === 'warning') icon = '<i class="fa-solid fa-circle-exclamation text-warning"></i>';
+            else if (n.type === 'danger') icon = '<i class="fa-solid fa-triangle-exclamation text-danger"></i>';
+            
+            const bgClass = n.is_read ? '' : 'bg-light';
+            
+            return `
+              <li class="p-3 border-bottom ${bgClass} d-flex align-items-start gap-3">
+                <div style="font-size: 1.15rem; margin-top: 0.15rem;">${icon}</div>
+                <div class="flex-grow-1">
+                  <div class="font-weight-700 text-dark small" style="line-height: 1.25;">${n.title}</div>
+                  <div class="text-muted small mt-1" style="font-size: 0.775rem; line-height: 1.35;">${n.message}</div>
+                  <div class="text-muted mt-1" style="font-size: 0.7rem;">${dateStr} at ${timeStr}</div>
+                </div>
+              </li>
+            `;
+          }).join('');
+        }
+      }
+    } catch (err) {
+      console.log('Failed to fetch notifications:', err.message);
+    }
+  }
+
+  markAllBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      await API.post('/notifications/mark-read');
+      badge.classList.add('d-none');
+      loadNotifications();
+      showToast('All notifications marked as read.');
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+    // Load once
+  loadNotifications();
+  // Poll every 30 seconds
+  setInterval(loadNotifications, 30000);
+});
+
+// --- PWA Installation Logic ---
+(function() {
+  // Inject manifest dynamically
+  const manifestLink = document.createElement('link');
+  manifestLink.rel = 'manifest';
+  manifestLink.href = 'manifest.json';
+  document.head.appendChild(manifestLink);
+
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('Service Worker registered', reg))
+        .catch(err => console.error('Service Worker registration failed', err));
+    });
+  }
+
+  // Handle Install Prompt
+  let deferredPrompt;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const pwaBanner = document.createElement('div');
+    pwaBanner.id = 'pwaInstallBanner';
+    pwaBanner.className = 'fixed-bottom bg-primary text-white p-3 shadow d-none d-flex justify-content-between align-items-center';
+    pwaBanner.style.zIndex = '9999';
+    pwaBanner.innerHTML = `
+      <div>
+        <strong>Install Placement Pro App</strong>
+        <p class="mb-0 small" id="pwaInstruction">Add to your home screen for a better experience.</p>
+      </div>
+      <div>
+        <button id="pwaInstallBtn" class="btn btn-light btn-sm font-weight-bold me-2">Install</button>
+        <button id="pwaDismissBtn" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-times"></i></button>
+      </div>
+    `;
+    document.body.appendChild(pwaBanner);
+
+    const btnInstall = document.getElementById('pwaInstallBtn');
+    const btnDismiss = document.getElementById('pwaDismissBtn');
+
+    btnDismiss.addEventListener('click', () => {
+      pwaBanner.classList.add('d-none');
+      localStorage.setItem('pwaDismissed', 'true');
+    });
+
+    if (localStorage.getItem('pwaDismissed') !== 'true') {
+      if (isIOS) {
+        // iOS doesn't support beforeinstallprompt, show instructional banner
+        const isStandalone = window.navigator.standalone === true;
+        if (!isStandalone) {
+          pwaBanner.classList.remove('d-none');
+          btnInstall.style.display = 'none';
+          document.getElementById('pwaInstruction').innerText = 'Tap Share button below, then "Add to Home Screen".';
+        }
+      } else {
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          pwaBanner.classList.remove('d-none');
+        });
+
+        btnInstall.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+              console.log('User accepted PWA install');
+            }
+            deferredPrompt = null;
+            pwaBanner.classList.add('d-none');
+          }
+        });
+      }
+    }
+  });
+})();
+</script>
+
+
+<!-- SweetAlert2 for beautiful popups -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <!-- Global Post New Job Modal -->
 <div class="modal fade" id="postJobModal" tabindex="-1" aria-labelledby="postJobModalLabel" aria-hidden="true">
@@ -132,44 +310,64 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        <form id="postJobForm" onsubmit="event.preventDefault(); showToast('Job post drive published successfully!'); bootstrap.Modal.getInstance(document.getElementById('postJobModal')).hide();">
+        <form id="postJobForm">
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label font-weight-600 text-muted small">COMPANY NAME</label>
-              <input id="preview_e_g_goldman_sachs_1" name="preview_e_g_goldman_sachs" type="text" class="form-control form-control-pp" placeholder="e.g. Goldman Sachs" required>
+              <label for="jobCompName" class="form-label font-weight-600 text-muted small">COMPANY NAME</label>
+              <input type="text" class="form-control form-control-pp" id="jobCompName" name="company_name" placeholder="e.g. Wipro" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label font-weight-600 text-muted small">ROLE / POSITION</label>
-              <input id="preview_e_g_software_development_engineer_2" name="preview_e_g_software_development_engineer" type="text" class="form-control form-control-pp" placeholder="e.g. Software Development Engineer" required>
+              <label for="jobRole" class="form-label font-weight-600 text-muted small">ROLE / POSITION</label>
+              <input type="text" class="form-control form-control-pp" id="jobRole" name="role" placeholder="e.g. Software Development Engineer" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label font-weight-600 text-muted small">PACKAGE (LPA)</label>
-              <input id="preview_e_g_14_5_3" name="preview_e_g_14_5" type="text" class="form-control form-control-pp" placeholder="e.g. 14.5" required>
+              <label for="jobPackage" class="form-label font-weight-600 text-muted small">PACKAGE (LPA)</label>
+              <input type="number" step="0.01" class="form-control form-control-pp" id="jobPackage" name="package_lpa" placeholder="e.g. 14.5" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label font-weight-600 text-muted small">DRIVE DATE</label>
-              <input id="preview_date_4_4" name="preview_date_4" type="date" class="form-control form-control-pp" required>
+              <label for="jobDate" class="form-label font-weight-600 text-muted small">DRIVE DATE (INTERVIEW DATE)</label>
+              <input type="date" class="form-control form-control-pp" id="jobDate" name="drive_date" required>
+            </div>
+            <div class="col-md-4">
+              <label for="jobMinCgpa" class="form-label font-weight-600 text-muted small">MINIMUM CGPA</label>
+              <input type="number" step="0.1" min="0" max="10" class="form-control form-control-pp" id="jobMinCgpa" name="min_cgpa" value="6.0" required>
+            </div>
+            <div class="col-md-4">
+              <label for="jobMaxBacklogs" class="form-label font-weight-600 text-muted small">MAX ALLOWED BACKLOGS</label>
+              <input type="number" min="0" class="form-control form-control-pp" id="jobMaxBacklogs" name="max_backlogs" value="0" required>
+            </div>
+            <div class="col-md-4">
+              <label for="jobDeadline" class="form-label font-weight-600 text-muted small">REGISTRATION DEADLINE</label>
+              <input type="date" class="form-control form-control-pp" id="jobDeadline" name="registration_deadline" required>
             </div>
             <div class="col-md-12">
-              <label class="form-label font-weight-600 text-muted small">ELIGIBLE DEPARTMENTS</label>
-              <div class="d-flex gap-3">
+              <label for="deptBCA" class="form-label font-weight-600 text-muted small">ELIGIBLE DEPARTMENTS</label>
+              <div class="d-flex flex-wrap gap-3">
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" checked id="deptCS">
-                  <label class="form-check-label" for="deptCS">Computer Science</label>
+                  <input class="form-check-input" type="checkbox" checked id="deptBCA" name="dept_bca">
+                  <label class="form-check-label" for="deptBCA">BCA</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" checked id="deptIT">
-                  <label class="form-check-label" for="deptIT">Information Tech</label>
+                  <input class="form-check-input" type="checkbox" checked id="deptBSc" name="dept_bsc">
+                  <label class="form-check-label" for="deptBSc">B.Sc</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="deptECE">
-                  <label class="form-check-label" for="deptECE">Electronics & Comm</label>
+                  <input class="form-check-input" type="checkbox" id="deptBCom" name="dept_bcom">
+                  <label class="form-check-label" for="deptBCom">B.Com</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deptBBA" name="dept_bba">
+                  <label class="form-check-label" for="deptBBA">BBA</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deptBBAH" name="dept_bbah">
+                  <label class="form-check-label" for="deptBBAH">BBA - Hospitality</label>
                 </div>
               </div>
             </div>
             <div class="col-md-12">
-              <label class="form-label font-weight-600 text-muted small">JOB DESCRIPTION & REQUIREMENTS</label>
-              <textarea id="preview_enter_drive_details_5" name="preview_enter_drive_details" class="form-control form-control-pp" rows="3" placeholder="Enter drive details..."></textarea>
+              <label for="jobDesc" class="form-label font-weight-600 text-muted small">JOB DESCRIPTION & REQUIREMENTS</label>
+              <textarea class="form-control form-control-pp" id="jobDesc" name="job_description" rows="3" placeholder="Enter drive details..."></textarea>
             </div>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4 pt-2 border-top">
@@ -182,6 +380,72 @@
   </div>
 </div>
 
+<script>
+  window.API_BASE = '<?php echo API_BASE; ?>';
+  window.API_TOKEN = '<?php echo $_SESSION['token'] ?? ""; ?>';
+</script>
+<script src="../assets/js/api.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('postJobForm');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const selectedDepts = [];
+      if (document.getElementById('deptBCA').checked) selectedDepts.push('BCA');
+      if (document.getElementById('deptBSc').checked) selectedDepts.push('B.Sc');
+      if (document.getElementById('deptBCom').checked) selectedDepts.push('B.Com');
+      if (document.getElementById('deptBBA').checked) selectedDepts.push('BBA');
+      if (document.getElementById('deptBBAH').checked) selectedDepts.push('BBA - Hospitality & Hotel Management');
+
+      const payload = {
+        name: document.getElementById('jobCompName').value,
+        job_role: document.getElementById('jobRole').value,
+        package_amount: parseFloat(document.getElementById('jobPackage').value) || 0,
+        visit_date: document.getElementById('jobDate').value || null,
+        last_date: document.getElementById('jobDeadline').value || null,
+        min_cgpa: parseFloat(document.getElementById('jobMinCgpa').value) || 0.0,
+        allowed_backlogs: parseInt(document.getElementById('jobMaxBacklogs').value) || 0,
+        eligible_departments: selectedDepts.join(','),
+        industry: 'IT Services',
+        description: document.getElementById('jobDesc').value || ''
+      };
+
+      try {
+        await API.post('/companies', payload);
+        
+        Swal.fire({
+          title: 'Success!',
+          text: 'Job drive posted successfully to PostgreSQL database.',
+          icon: 'success',
+          confirmButtonColor: 'var(--pp-primary)'
+        }).then(() => {
+          const modalEl = document.getElementById('postJobModal');
+          const modalInstance = bootstrap.Modal.getInstance(modalEl);
+          if (modalInstance) modalInstance.hide();
+          form.reset();
+          
+          if (typeof loadCompanies === 'function') {
+            loadCompanies();
+          } else {
+            window.location.reload();
+          }
+        });
+      } catch (err) {
+        Swal.fire({
+          title: 'Error!',
+          text: 'Failed to publish drive: ' + err.message,
+          icon: 'error',
+          confirmButtonColor: 'var(--pp-primary)'
+        });
+      }
+    });
+  }
+});
+</script>
+
+
 
   <main id="main-wrapper">
 
@@ -189,7 +453,7 @@
     <div class="mb-4">
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb small mb-1">
-          <li class="breadcrumb-item"><a href="dashboard.php" class="text-decoration-none text-muted">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="dashboard.html" class="text-decoration-none text-muted">Dashboard</a></li>
           <li class="breadcrumb-item active text-primary font-weight-600" aria-current="page" style="color: var(--pp-primary) !important;">Import Student Data</li>
         </ol>
       </nav>
@@ -211,7 +475,7 @@
             Supports Excel (.xlsx, .xls), CSV, Word (.docx), and PDF tables up to 50MB per batch upload.
           </p>
 
-          <input type="file" id="fileInput" class="d-none" accept=".xlsx,.xls,.csv,.docx,.pdf">
+          <input type="file" id="fileInput" name="file_import" aria-label="Upload data file" class="d-none" accept=".xlsx,.xls,.csv,.docx,.pdf">
 
           <div class="d-flex justify-content-center gap-3">
             <button class="btn btn-pp-outline py-2 px-4" onclick="document.getElementById('fileInput').click()">
@@ -359,7 +623,7 @@
       document.getElementById('previewBody').innerHTML = previewData.rows.map((r, i) => {
         return `<tr>
           <td>
-            <select id="preview_select_6_6" name="preview_select_6" class="form-select-pp py-1 small" onchange="previewData.rows[${i}].action=this.value">
+            <select class="form-select-pp py-1 small" id="rowAction_${i}" name="row_action_${i}" aria-label="Row action for record ${i+1}" onchange="previewData.rows[${i}].action=this.value">
               <option value="insert" ${r.action==='insert'?'selected':''}>Insert</option>
               <option value="update" ${r.action==='update'?'selected':''}>Update</option>
               <option value="skip" ${r.action==='skip'?'selected':''}>Skip</option>
