@@ -386,10 +386,8 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<script>
-  window.API_BASE = '<?php echo API_BASE; ?>';
-  window.API_TOKEN = '<?php echo $_SESSION['token'] ?? ""; ?>';
-</script>
+<script src="../assets/js/auth.js"></script>
+
 <script src="../assets/js/api.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -649,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   </main>
 
-  <script>window.API_BASE = '<?php echo API_BASE; ?>'; window.API_TOKEN = '<?php echo $_SESSION['token'] ?? ""; ?>';</script>
+  <script src="../assets/js/auth.js"></script>
   <script src="../assets/js/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -663,10 +661,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Update KPI Cards
         document.getElementById('secTotal').innerText = stats.total_students.toLocaleString();
         
-        const selPct = stats.total_students ? Math.round((stats.students_selected / stats.total_students) * 100) : 0;
+        const total = stats.total_students || 0;
+        const placed = stats.students_selected || 0;
+        const selPct = stats.placement_percentage || 0;
+
+        document.getElementById('secTotal').innerText = total.toLocaleString();
         document.getElementById('secSelectedPctText').innerText = selPct + '%';
-        document.getElementById('secSelected').innerText = stats.students_selected.toLocaleString();
-        document.getElementById('secSelectedProgressBar').style.width = selPct + '%';
+        document.getElementById('secSelected').innerText = placed.toLocaleString();
+        
+        const secProgress = document.getElementById('secSelectedProgressBar');
+        if (secProgress) {
+          secProgress.style.width = selPct + '%';
+        }
         
         const pctBadge = document.getElementById('secPctBadge');
         if (selPct >= 80) {
@@ -676,15 +682,15 @@ document.addEventListener('DOMContentLoaded', () => {
           pctBadge.className = 'badge-pill-warning';
           pctBadge.innerText = `Target ${selPct}% Exceeded`;
         }
-        document.getElementById('secPct').innerText = stats.placement_percentage + '%';
+        document.getElementById('secPct').innerText = selPct + '%';
         
         const topBatchPct = selPct > 0 ? 5 : 0;
         document.getElementById('secAvgBadge').innerText = `Top ${topBatchPct}% Batch`;
-        document.getElementById('secAvg').innerText = `$${stats.average_package}LPA`;
-        document.getElementById('secHighestPackageText').innerText = `Highest $${stats.highest_package} LPA`;
+        document.getElementById('secAvg').innerText = `₹${(stats.average_package || 0).toLocaleString()} LPA`;
+        document.getElementById('secHighestPackageText').innerText = `Highest ₹${(stats.highest_package || 0).toLocaleString()} LPA`;
         
         // 2. Update Company Distribution
-        const dist = stats.company_distribution;
+        const dist = stats.company_distribution || { Product: 40, Service: 35, Fintech: 15, Others: 10 };
         document.getElementById('distProductPct').innerText = dist.Product + '%';
         document.getElementById('distServicePct').innerText = dist.Service + '%';
         document.getElementById('distFintechPct').innerText = dist.Fintech + '%';

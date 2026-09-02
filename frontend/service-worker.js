@@ -1,5 +1,6 @@
 // Basic Service Worker for Placement Pro
-const CACHE_NAME = 'placement-pro-cache-v3';
+const CACHE_NAME = 'placement-pro-cache-v4';
+
 
 // Force immediate activation — replace old broken service worker
 self.addEventListener('install', event => {
