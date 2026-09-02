@@ -177,13 +177,13 @@ require_login(); ?>
             <div class="mb-3">
               <label for="addStudentName" class="form-label font-weight-600 small text-muted">FULL NAME</label>
               <input type="text" id="addStudentName" name="name" class="form-control form-control-pp"
-                placeholder="e.g. Alex Morgan" required>
+                placeholder="e.g. Alex Morgan" required autocomplete="name">
             </div>
             <div class="mb-3">
               <label for="addStudentReg" class="form-label font-weight-600 small text-muted">REGISTER / ROLL
                 NUMBER</label>
               <input type="text" id="addStudentReg" name="register_number" class="form-control form-control-pp"
-                placeholder="e.g. 21CS042" required>
+                placeholder="e.g. 21CS042" required autocomplete="off">
             </div>
             <div class="row g-2 mb-3">
               <div class="col-6">

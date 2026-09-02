@@ -320,32 +320,33 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="row g-3">
             <div class="col-md-6">
               <label for="jobCompName" class="form-label font-weight-600 text-muted small">COMPANY NAME</label>
-              <input type="text" class="form-control form-control-pp" id="jobCompName" name="company_name" placeholder="e.g. Wipro" required>
+              <input type="text" class="form-control form-control-pp" id="jobCompName" name="company_name" autocomplete="organization" placeholder="e.g. Wipro" required>
             </div>
             <div class="col-md-6">
               <label for="jobRole" class="form-label font-weight-600 text-muted small">ROLE / POSITION</label>
-              <input type="text" class="form-control form-control-pp" id="jobRole" name="role" placeholder="e.g. Software Development Engineer" required>
+              <input type="text" class="form-control form-control-pp" id="jobRole" name="role" autocomplete="organization-title" placeholder="e.g. Software Development Engineer" required>
             </div>
             <div class="col-md-6">
               <label for="jobPackage" class="form-label font-weight-600 text-muted small">PACKAGE (LPA)</label>
-              <input type="number" step="0.01" class="form-control form-control-pp" id="jobPackage" name="package_lpa" placeholder="e.g. 14.5" required>
+              <input type="number" step="0.01" class="form-control form-control-pp" id="jobPackage" name="package_lpa" autocomplete="off" placeholder="e.g. 14.5" required>
             </div>
             <div class="col-md-6">
               <label for="jobDate" class="form-label font-weight-600 text-muted small">DRIVE DATE (INTERVIEW DATE)</label>
-              <input type="date" class="form-control form-control-pp" id="jobDate" name="drive_date" required>
+              <input type="date" class="form-control form-control-pp" id="jobDate" name="drive_date" autocomplete="off" required>
             </div>
             <div class="col-md-4">
               <label for="jobMinCgpa" class="form-label font-weight-600 text-muted small">MINIMUM CGPA</label>
-              <input type="number" step="0.1" min="0" max="10" class="form-control form-control-pp" id="jobMinCgpa" name="min_cgpa" value="6.0" required>
+              <input type="number" step="0.1" min="0" max="10" class="form-control form-control-pp" id="jobMinCgpa" name="min_cgpa" value="6.0" autocomplete="off" required>
             </div>
             <div class="col-md-4">
               <label for="jobMaxBacklogs" class="form-label font-weight-600 text-muted small">MAX ALLOWED BACKLOGS</label>
-              <input type="number" min="0" class="form-control form-control-pp" id="jobMaxBacklogs" name="max_backlogs" value="0" required>
+              <input type="number" min="0" class="form-control form-control-pp" id="jobMaxBacklogs" name="max_backlogs" value="0" autocomplete="off" required>
             </div>
             <div class="col-md-4">
               <label for="jobDeadline" class="form-label font-weight-600 text-muted small">REGISTRATION DEADLINE</label>
-              <input type="date" class="form-control form-control-pp" id="jobDeadline" name="registration_deadline" required>
+              <input type="date" class="form-control form-control-pp" id="jobDeadline" name="registration_deadline" autocomplete="off" required>
             </div>
+
             <div class="col-md-12">
               <label for="deptBCA" class="form-label font-weight-600 text-muted small">ELIGIBLE DEPARTMENTS</label>
               <div class="d-flex flex-wrap gap-3">
@@ -612,13 +613,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="mb-3">
               <label for="addStudentName" class="form-label font-weight-600 small text-muted">FULL NAME</label>
               <input type="text" id="addStudentName" name="name" class="form-control form-control-pp"
-                placeholder="e.g. Alex Morgan" required>
+                placeholder="e.g. Alex Morgan" required autocomplete="name">
             </div>
             <div class="mb-3">
               <label for="addStudentReg" class="form-label font-weight-600 small text-muted">REGISTER / ROLL
                 NUMBER</label>
               <input type="text" id="addStudentReg" name="register_number" class="form-control form-control-pp"
-                placeholder="e.g. 21CS042" required>
+                placeholder="e.g. 21CS042" required autocomplete="off">
             </div>
             <div class="row g-2 mb-3">
               <div class="col-6">
