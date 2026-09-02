@@ -24,7 +24,7 @@ Placement Pro is a full-stack, enterprise-grade Placement & Campus Recruitment M
 - **Frontend**: PHP 8.2 + Bootstrap 5 + Vanilla JS (AJAX API integration)
 - **Backend API**: Python 3.12 + Flask REST API + Gunicorn WSGI
 - **Database**: SQLite (Development/Container default) / PostgreSQL / PyMySQL
-- **Containerization & Cloud**: Docker, Docker Compose, Kubernetes (K8s), Vercel Serverless
+- **Containerization**: Docker, Docker Compose, Kubernetes (K8s)
 
 ---
 
@@ -32,8 +32,6 @@ Placement Pro is a full-stack, enterprise-grade Placement & Campus Recruitment M
 
 ```text
 placement-pro/
-├── api/
-│   └── index.py                # Vercel Serverless Function entrypoint
 ├── backend/
 │   ├── app.py                  # Flask application factory
 │   ├── database.py             # SQLite / database connector & schema initializer
@@ -72,8 +70,7 @@ placement-pro/
 │   ├── ingress.yaml
 │   └── kustomization.yaml
 ├── docker-compose.yml          # Multi-container local/prod orchestrator
-├── vercel.json                 # Vercel cloud deployment config
-└── requirements.txt            # Root dependencies for cloud builds
+└── requirements.txt            # Root dependencies for container builds
 ```
 
 ---
@@ -135,19 +132,26 @@ Access via NodePort `http://<node-ip>:30750` or configured NGINX Ingress domain.
 
 ---
 
-### 3. Vercel Cloud Deployment
+### 3. Koyeb Cloud Deployment
 
-Deploy serverless functions and static frontend onto Vercel:
+Deploy full-stack services using Koyeb Docker deployment:
 
-```bash
-# Deploy directly to Vercel using npx (recommended on Windows & Linux)
-npx vercel
+1. **Backend Web Service**:
+   - **Repository**: Connect `sanjayGL2006/placement-pro-SPVM3`
+   - **Builder**: `Dockerfile`
+   - **Dockerfile Location**: `backend/Dockerfile`
+   - **Exposed Port**: `5500`
+   - **Health Check**: `/api/health`
+   - **Environment Variables**:
+     - `SECRET_KEY` = `placement-pro-secret-key-prod-2026`
+     - `JWT_SECRET` = `placement-pro-jwt-secret-key-prod-2026`
+     - `CORS_ORIGINS` = `*`
 
-# Or if vercel is added to your PATH:
-vercel
-```
-
-Vercel automatically uses `vercel.json` and `api/index.py` to route `/api/*` requests to the Python serverless function and serve the frontend web pages.
+2. **Frontend Web Service**:
+   - **Builder**: `Dockerfile`
+   - **Dockerfile Location**: `frontend/Dockerfile`
+   - **Exposed Port**: `80`
+   - **Environment Variable**: `PLACEMENT_API_BASE` = `https://<your-koyeb-backend-app>.koyeb.app/api`
 
 
 ---
