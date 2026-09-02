@@ -131,6 +131,9 @@ cd backend
 ### 4. Regenerate Static Previews for GitHub Pages
 
 ```powershell
+# Navigate back to root project directory (if in a subdirectory)
+cd ..
+
 # Regenerate static HTML files in frontend/previews/
 python render_previews.py
 ```
