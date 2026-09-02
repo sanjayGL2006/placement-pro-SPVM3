@@ -51,7 +51,10 @@
         <h2 class="h3 font-weight-800 mb-1" id="dashHeaderTitle">Recruitment Drive Dashboard</h2>
         <p class="text-muted small mb-0">Monitor hiring stats, pipeline rounds, and select candidates</p>
       </div>
-      <div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-danger" onclick="deleteCurrentCompany()">
+          <i class="fa-solid fa-trash me-1"></i> Delete Company
+        </button>
         <a href="companies.php" class="btn btn-pp-outline">
           <i class="fa-solid fa-arrow-left"></i> Back to Directory
         </a>
@@ -244,6 +247,21 @@
     if (!companyId) {
       alert('Error: Company ID is required.');
       window.location.href = 'companies.php';
+    }
+
+    async function deleteCurrentCompany() {
+      const compName = document.getElementById('compName').innerText || 'this company';
+      if (confirm(`Are you sure you want to delete "${compName}"? All related placement records for this drive will be moved to the Recycle Bin.`)) {
+        try {
+          await API.del(`/companies/${companyId}`);
+          showToast(`Company "${compName}" deleted successfully.`);
+          setTimeout(() => {
+            window.location.href = 'companies.php';
+          }, 800);
+        } catch (err) {
+          showToast('Delete failed: ' + err.message, 'danger');
+        }
+      }
     }
 
     // Load company details & roster

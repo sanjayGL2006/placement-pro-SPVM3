@@ -387,9 +387,8 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<script src="../assets/js/auth.js"></script>
 
-<script src="../assets/js/api.js"></script>
+<script type="module" src="assets/js/firebase-init.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('postJobForm');
@@ -422,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         Swal.fire({
           title: 'Success!',
-          text: 'Job drive posted successfully to PostgreSQL database.',
+          text: 'Job drive posted successfully.',
           icon: 'success',
           confirmButtonColor: 'var(--pp-primary)'
         }).then(() => {
@@ -608,8 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
-          <form id="addStudentForm"
-            onsubmit="event.preventDefault(); showToast('Student added successfully!'); bootstrap.Modal.getInstance(document.getElementById('addStudentModal')).hide();">
+          <form id="addStudentForm" onsubmit="saveNewStudent(event)">
             <div class="mb-3">
               <label for="addStudentName" class="form-label font-weight-600 small text-muted">FULL NAME</label>
               <input type="text" id="addStudentName" name="name" class="form-control form-control-pp"
@@ -728,6 +726,8 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
   </div>
+  
+  <script src="../assets/js/api.js"></script>
   <script src="../assets/js/auth.js"></script>
   <script src="../assets/js/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -825,6 +825,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const tbody = document.getElementById('studentTableBody');
       const gridContainer = document.getElementById('gridViewContainer');
 
+      if (tbody) {
+        tbody.innerHTML = Array(5).fill(0).map(() => `
+          <tr>
+            <td style="padding-left: 1.5rem;"><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+            <td><div class="placeholder-glow"><span class="placeholder col-8"></span></div></td>
+            <td><div class="placeholder-glow"><span class="placeholder col-7"></span></div></td>
+            <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+            <td><div class="placeholder-glow"><span class="placeholder col-5"></span></div></td>
+            <td class="text-end"><div class="placeholder-glow"><span class="placeholder col-10"></span></div></td>
+          </tr>
+        `).join('');
+      }
 
       try {
         const searchInput = document.getElementById('search');
@@ -852,8 +864,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderErrorState(err.message);
         return;
       }
-
-      renderStudents(MOCK_STUDENTS, MOCK_STUDENTS.length, page, 25);
     }
 
     function renderErrorState(msg) {
@@ -944,8 +954,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </td>
             <td>${statusBadge}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-pp-outline py-1 px-2" onclick="showToast('Loading profile for ${s.name}...')"><i class="fa-regular fa-eye me-1"></i> View</button>
-              <a href="documents.php?id=${s.id}" class="btn btn-sm btn-outline-info py-1 px-2 ms-1"><i class="fa-solid fa-folder-open"></i> Docs</a>
+              <button class="btn btn-sm btn-pp-outline py-1 px-2" onclick="openViewModal(${s.id})"><i class="fa-regular fa-eye me-1"></i> View</button>
+              <a href="documents.html?id=${s.id}" class="btn btn-sm btn-outline-info py-1 px-2 ms-1"><i class="fa-solid fa-folder-open"></i> Docs</a>
               <button class="btn btn-sm btn-pp-primary py-1 px-2 ms-1" onclick="openEditModal(${s.id})"><i class="fa-solid fa-user-pen"></i> Edit</button>
               <button class="btn btn-sm btn-outline-danger py-1 px-2 ms-1" title="Delete Student" onclick="deleteSingleStudent(${s.id}, '${escapeJsQuotes(s.name)}')"><i class="fa-solid fa-trash"></i> Delete</button>
             </td>
@@ -978,8 +988,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                 ${badge}
                 <div class="d-flex gap-1">
-                  <button class="btn btn-sm btn-pp-outline py-1 px-2" onclick="showToast('Loading profile for ${s.name}...')"><i class="fa-regular fa-eye"></i> View</button>
-                  <a href="documents.php?id=${s.id}" class="btn btn-sm btn-outline-info py-1 px-2"><i class="fa-solid fa-folder-open"></i> Docs</a>
+                  <button class="btn btn-sm btn-pp-outline py-1 px-2" onclick="openViewModal(${s.id})"><i class="fa-regular fa-eye"></i> View</button>
+                  <a href="documents.html?id=${s.id}" class="btn btn-sm btn-outline-info py-1 px-2"><i class="fa-solid fa-folder-open"></i> Docs</a>
                   <button class="btn btn-sm btn-pp-primary py-1 px-2" onclick="openEditModal(${s.id})"><i class="fa-solid fa-user-pen"></i> Edit</button>
                   <button class="btn btn-sm btn-outline-danger py-1 px-2" title="Delete Student" onclick="deleteSingleStudent(${s.id}, '${escapeJsQuotes(s.name)}')"><i class="fa-solid fa-trash"></i> Delete</button>
                 </div>
@@ -1123,11 +1133,103 @@ document.addEventListener('DOMContentLoaded', () => {
       return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
 
+    async function saveNewStudent(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('addStudentName').value.trim(),
+        register_number: document.getElementById('addStudentReg').value.trim(),
+        department_name: document.getElementById('addStudentDept').value,
+        section: document.getElementById('addStudentSection').value,
+        academic_year: '2023-2026',
+        placement_status: 'unplaced'
+      };
+
+      try {
+        const res = await API.post('/students', payload);
+        showToast(res.message || 'Student added successfully!');
+
+        const modalEl = document.getElementById('addStudentModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+        document.getElementById('addStudentForm').reset();
+
+        loadStudents(1);
+      } catch (err) {
+        showToast('Failed to add student: ' + err.message, 'danger');
+      }
+    }
+
+    async function openViewModal(studentId) {
+      const modalEl = document.getElementById('viewStudentModal');
+      const modalBody = document.getElementById('viewStudentModalBody');
+      modalBody.innerHTML = `<div class="text-center py-4"><i class="fa-solid fa-spinner fa-spin me-2" style="font-size: 1.5rem;"></i> Loading profile...</div>`;
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      modal.show();
+
+      try {
+        const s = await API.get(`/students/${studentId}`);
+        if (!s) throw new Error('Student record not found');
+
+        const statusBadge = s.placement_status === 'selected' || s.placement_status === 'joined' || s.placement_status === 'placed'
+          ? `<span class="badge-pill-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.4rem;"></i> Placed</span>`
+          : (s.placement_status === 'applied' || s.placement_status === 'in-process'
+            ? `<span class="badge-pill-warning"><i class="fa-solid fa-circle me-1" style="font-size: 0.4rem;"></i> In-process</span>`
+            : `<span class="badge-pill-danger"><i class="fa-solid fa-circle me-1" style="font-size: 0.4rem;"></i> Unplaced</span>`);
+
+        modalBody.innerHTML = `
+          <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 mb-4">
+            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || 'Student')}&background=4F46E5&color=fff" class="rounded-circle" width="64" height="64">
+            <div>
+              <h4 class="font-weight-700 mb-1 text-dark">${s.name}</h4>
+              <div class="text-muted small mb-2"><i class="fa-solid fa-hashtag me-1"></i> ${s.register_number || 'N/A'}</div>
+              ${statusBadge}
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="p-3 border rounded-3 bg-white">
+                <div class="text-muted small font-weight-600 text-uppercase mb-2 text-primary">Academic Information</div>
+                <div class="mb-2"><strong>Department:</strong> ${formatDept(s.department_name || s.dept || 'N/A')}</div>
+                <div class="mb-2"><strong>Section:</strong> ${formatSection(s.section || s.sec || 'N/A')}</div>
+                <div class="mb-2"><strong>Academic Batch:</strong> ${s.academic_year || '2023-2026'}</div>
+                <div class="mb-2"><strong>CGPA:</strong> ${s.cgpa != null ? s.cgpa : '8.0'}</div>
+                <div><strong>Active Backlogs:</strong> ${s.backlogs != null ? s.backlogs : 0}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 border rounded-3 bg-white">
+                <div class="text-muted small font-weight-600 text-uppercase mb-2 text-primary">Placement Information</div>
+                <div class="mb-2"><strong>Placement Status:</strong> <span class="text-capitalize">${s.placement_status || 'Unplaced'}</span></div>
+                <div class="mb-2"><strong>Company:</strong> ${s.company_name || s.company || 'N/A'}</div>
+                <div class="mb-2"><strong>Package Offered:</strong> ${s.package_amount ? s.package_amount + ' LPA' : 'N/A'}</div>
+                <div class="mb-2"><strong>Email:</strong> ${s.email || (s.name ? s.name.toLowerCase().replace(/\s+/g, '.') + '@pesiams.edu.in' : 'N/A')}</div>
+                <div><strong>Phone:</strong> ${s.phone || '+91 98765 43210'}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        modalBody.innerHTML = `<div class="text-danger p-3 text-center"><i class="fa-solid fa-circle-exclamation me-2"></i> ${err.message}</div>`;
+      }
+    }
+
     // Delete Single Student
     async function deleteSingleStudent(studentId, studentName) {
       if (!studentId) return;
       const displayTitle = studentName ? `student "${studentName}"` : 'this student record';
-      if (confirm(`Are you sure you want to delete ${displayTitle}? This action cannot be undone.`)) {
+      
+      const res = await Swal.fire({
+        title: 'Delete Student Record?',
+        text: `Are you sure you want to delete ${displayTitle}? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, delete'
+      });
+
+      if (res.isConfirmed) {
         try {
           await API.del(`/students/${studentId}`);
           showToast(`Student record deleted successfully.`);
@@ -1144,7 +1246,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const studentName = document.getElementById('editName').value;
       if (!studentId) return;
 
-      if (confirm(`Are you sure you want to delete student "${studentName || 'Record'}"? This action is irreversible.`)) {
+      const res = await Swal.fire({
+        title: 'Delete Student Record?',
+        text: `Are you sure you want to delete record for "${studentName || 'Student'}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, delete'
+      });
+
+      if (res.isConfirmed) {
         try {
           await API.del(`/students/${studentId}`);
           showToast(`Student record deleted successfully.`);
@@ -1245,14 +1357,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Trigger Bulk Delete
     async function triggerBulkDelete() {
       const checkboxes = document.querySelectorAll('.student-select:checked');
-      const studentIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+      const studentIds = Array.from(checkboxes).map(cb => parseInt(cb.value, 10)).filter(id => !isNaN(id));
 
-      if (confirm(`Are you sure you want to delete the selected ${studentIds.length} student records? This action is irreversible.`)) {
+      if (!studentIds.length) {
+        showToast('Please select at least one student.', 'warning');
+        return;
+      }
+
+      const res = await Swal.fire({
+        title: 'Delete Selected Students?',
+        text: `Are you sure you want to delete ${studentIds.length} selected student records? This action is irreversible.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: `Delete ${studentIds.length} Records`
+      });
+
+      if (res.isConfirmed) {
         try {
           const result = await API.post('/students/bulk-delete', {
             student_ids: studentIds
           });
-          showToast(`Deleted ${result.deleted_count} student records.`);
+          showToast(`Deleted ${result.deleted_count} student records successfully!`);
           loadStudents(1);
         } catch (err) {
           showToast('Delete failed: ' + err.message, 'danger');
@@ -1320,6 +1447,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 Company</button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  <!-- View Student Profile Modal -->
+  <div class="modal fade" id="viewStudentModal" tabindex="-1" aria-labelledby="viewStudentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-header border-0 pb-0 px-4 pt-4">
+          <h5 class="modal-title font-weight-bold" id="viewStudentModalLabel"><i class="fa-solid fa-id-card text-primary me-2"></i> Student Profile</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4" id="viewStudentModalBody">
+          <div class="text-center py-4"><i class="fa-solid fa-spinner fa-spin me-2" style="font-size: 1.5rem;"></i> Loading profile...</div>
+        </div>
+        <div class="modal-footer border-0 pt-0 px-4 pb-4">
+          <button type="button" class="btn btn-pp-outline" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>

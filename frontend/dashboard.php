@@ -311,15 +311,27 @@
     async function fetchStats() {
       try {
         const stats = await API.get('/dashboard/stats');
-        if(stats.total_students) document.getElementById('valTotalStudents').innerText = stats.total_students.toLocaleString();
-        if(stats.total_companies) document.getElementById('valTotalCompanies').innerText = stats.total_companies;
-        if(stats.students_selected) document.getElementById('valTotalSelected').innerText = stats.students_selected.toLocaleString();
-        if(stats.placement_percentage) document.getElementById('valPlacementRate').innerText = stats.placement_percentage + '%';
-        if(stats.highest_package) document.getElementById('valHighestPackage').innerText = '₹' + Number(stats.highest_package).toLocaleString() + ' LPA';
-        if(stats.highest_package_company) document.getElementById('valHighestPackageCompany').innerText = stats.highest_package_company;
-        if(stats.average_package) document.getElementById('valAvgPackage').innerText = '₹' + Number(stats.average_package).toLocaleString() + ' LPA';
-
-
+        if (stats && stats.total_students !== undefined) {
+          document.getElementById('valTotalStudents').innerText = Number(stats.total_students).toLocaleString();
+        }
+        if (stats && stats.total_companies !== undefined) {
+          document.getElementById('valTotalCompanies').innerText = Number(stats.total_companies).toLocaleString();
+        }
+        if (stats && stats.students_selected !== undefined) {
+          document.getElementById('valTotalSelected').innerText = Number(stats.students_selected).toLocaleString();
+        }
+        if (stats && stats.placement_percentage !== undefined) {
+          document.getElementById('valPlacementRate').innerText = stats.placement_percentage + '%';
+        }
+        if (stats && stats.highest_package !== undefined) {
+          document.getElementById('valHighestPackage').innerText = '₹' + Number(stats.highest_package).toLocaleString() + ' LPA';
+        }
+        if (stats && stats.highest_package_company !== undefined) {
+          document.getElementById('valHighestPackageCompany').innerText = stats.highest_package_company || '-';
+        }
+        if (stats && stats.average_package !== undefined) {
+          document.getElementById('valAvgPackage').innerText = '₹' + Number(stats.average_package).toLocaleString() + ' LPA';
+        }
       } catch (err) {
         console.log('Using mock dashboard specs:', err.message);
       }

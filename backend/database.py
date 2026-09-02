@@ -90,6 +90,7 @@ def close_db_pool(exc=None):
 def get_conn():
     if "db_conn" not in g:
         raw_conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        raw_conn.execute("PRAGMA foreign_keys = ON;")
         raw_conn.row_factory = sqlite3.Row
         g.db_conn = DictConnection(raw_conn)
     return g.db_conn

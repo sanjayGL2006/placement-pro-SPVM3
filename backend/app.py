@@ -45,6 +45,10 @@ def create_app():
 
     init_db_pool(app)
 
+    # Initialize Firebase Admin SDK
+    from firebase_config import init_firebase_admin
+    init_firebase_admin(app)
+
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(students_bp, url_prefix="/api/students")
     app.register_blueprint(companies_bp, url_prefix="/api/companies")

@@ -90,8 +90,8 @@ class PlacementProTestCase(unittest.TestCase):
         """Bulk push should process valid students in a mixed batch without aborting on one invalid row."""
         init_sqlite_db()
         response = self.client.post('/api/students/bulk-push', json={
-            'student_ids': [5, 6],
-            'company_id': 1,
+            'student_ids': [1, 8],
+            'company_id': 5,
             'stage': 'applied'
         })
         self.assertEqual(response.status_code, 200, response.get_data(as_text=True))

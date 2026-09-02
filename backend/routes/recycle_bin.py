@@ -18,7 +18,7 @@ def list_trash():
 
 
 @recycle_bin_bp.route("/reset", methods=["POST"])
-@token_required(roles=["admin"])
+@token_required(roles=["hr", "faculty", "admin"])
 def reset_data():
     """Move data to recycle bin (soft reset) based on type: 'all' | 'students' | 'companies'."""
     data = request.get_json(force=True) or {}
@@ -154,7 +154,7 @@ def reset_data():
 
 
 @recycle_bin_bp.route("/restore/<int:trash_id>", methods=["POST"])
-@token_required(roles=["admin"])
+@token_required(roles=["hr", "faculty", "admin"])
 def restore_record(trash_id):
     """Restore a soft-deleted record back to its original table."""
     cur = get_cursor()
@@ -251,7 +251,7 @@ def restore_record(trash_id):
 
 
 @recycle_bin_bp.route("/<int:trash_id>", methods=["DELETE"])
-@token_required(roles=["admin"])
+@token_required(roles=["hr", "faculty", "admin"])
 def delete_trash_permanently(trash_id):
     """Permanently delete an item from the recycle bin."""
     cur = get_cursor()
@@ -261,7 +261,7 @@ def delete_trash_permanently(trash_id):
 
 
 @recycle_bin_bp.route("/empty", methods=["DELETE"])
-@token_required(roles=["admin"])
+@token_required(roles=["hr", "faculty", "admin"])
 def empty_trash():
     """Permanently clear all items from the recycle bin."""
     cur = get_cursor()
@@ -271,7 +271,7 @@ def empty_trash():
 
 
 @recycle_bin_bp.route("/hard-reset", methods=["POST"])
-@token_required(roles=["admin"])
+@token_required(roles=["hr", "faculty", "admin"])
 def hard_reset():
     """Permanently delete all students, companies, placements, pipeline stages, and empty recycle bin."""
     cur = get_cursor()

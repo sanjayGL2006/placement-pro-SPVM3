@@ -1,103 +1,168 @@
 import os
-import base64
-from email.message import EmailMessage
+import smtplib
 import logging
+from email.message import EmailMessage
 from database import get_cursor, commit
-
-# Optional imports for Gmail API - requires google-api-python-client, google-auth-httplib2, google-auth-oauthlib
-try:
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
-    from googleapiclient.discovery import build
-    GMAIL_API_AVAILABLE = True
-except ImportError:
-    GMAIL_API_AVAILABLE = False
 
 logger = logging.getLogger("placement_pro.email")
 
-SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 
-def get_gmail_service():
-    """Authenticate and return the Gmail API service."""
-    creds = None
-    token_path = os.environ.get('GMAIL_TOKEN_PATH', 'token.json')
-    creds_path = os.environ.get('GMAIL_CREDS_PATH', 'credentials.json')
+def get_smtp_config():
+    """Retrieve SMTP configuration from environment variables or defaults."""
+    return {
+        "sender_address": os.environ.get("SMTP_SENDER_ADDRESS", "support@yourdomain.com"),
+        "sender_name": os.environ.get("SMTP_SENDER_NAME", "Placement Pro Notification System"),
+        "host": os.environ.get("SMTP_HOST", "smtp.host.com"),
+        "port": int(os.environ.get("SMTP_PORT", 587)),
+        "username": os.environ.get("SMTP_USERNAME", "username"),
+        "password": os.environ.get("SMTP_PASSWORD", "password"),
+        "security_mode": os.environ.get("SMTP_SECURITY_MODE", "STARTTLS").upper(),  # STARTTLS | SSL | TLS | NONE
+    }
 
-    if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+
+def send_email_smtp(to_email, subject, body_text, body_html=None):
+    """Send an email using standard Python smtplib with SMTP/STARTTLS/SSL configuration."""
+    config = get_smtp_config()
     
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            if not os.path.exists(creds_path):
-                logger.warning(f"Gmail credentials file {creds_path} not found. Cannot send email via API.")
-                return None
-            flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open(token_path, 'w') as token:
-            token.write(creds.to_json())
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = f"{config['sender_name']} <{config['sender_address']}>"
+    msg["To"] = to_email
+    msg.set_content(body_text)
 
-    return build('gmail', 'v1', credentials=creds)
+    if body_html:
+        msg.add_alternative(body_html, subtype="html")
+
+    host = config["host"]
+    port = config["port"]
+    username = config["username"]
+    password = config["password"]
+    security_mode = config["security_mode"]
+
+    try:
+        if security_mode in ("SSL", "TLS") or port == 465:
+            server = smtplib.SMTP_SSL(host, port, timeout=10)
+        else:
+            server = smtplib.SMTP(host, port, timeout=10)
+            if security_mode == "STARTTLS":
+                server.starttls()
+
+        if username and password and username != "username":
+            server.login(username, password)
+
+        server.send_message(msg)
+        server.quit()
+        logger.info(f"Email successfully sent to {to_email} via SMTP ({host}:{port})")
+        return True, "Email sent successfully"
+
+    except Exception as e:
+        logger.warning(f"SMTP send failed ({e}). Simulating fallback notification dispatch for {to_email}.")
+        # Log to in-app notifications as fallback so system retains record
+        try:
+            cur = get_cursor()
+            cur.execute(
+                "INSERT INTO notifications (title, message, type) VALUES (%s, %s, 'info')",
+                (f"Email Dispatch: {subject}", f"Sent to {to_email} (Preview Mode / SMTP configured for {host}:{port})")
+            )
+            commit()
+        except Exception as db_err:
+            logger.error(f"Failed to record email log notification: {db_err}")
+
+        return False, f"SMTP dispatch error: {str(e)}"
+
+
+def send_verification_email(to_email, display_name="User", action_link="https://pes-iams-placement.firebaseapp.com/__/auth/action?mode=action&oobCode=code", app_name="Placement Pro"):
+    """Send Email Address Verification template email."""
+    subject = f"Verify your email for {app_name}"
+    body = f"""Hello {display_name},
+
+Follow this link to verify your email address.
+
+{action_link}
+
+If you didn’t ask to verify this address, you can ignore this email.
+
+Thanks,
+Your {app_name} team
+"""
+    return send_email_smtp(to_email, subject, body)
+
+
+def send_password_reset_email(to_email, display_name="User", action_link="https://pes-iams-placement.firebaseapp.com/__/auth/action?mode=action&oobCode=code", app_name="Placement Pro"):
+    """Send Password Reset template email."""
+    subject = f"Reset your password for {app_name}"
+    body = f"""Hello {display_name},
+
+Follow this link to reset your password.
+
+{action_link}
+
+If you didn’t request a password reset, you can ignore this email.
+
+Thanks,
+Your {app_name} team
+"""
+    return send_email_smtp(to_email, subject, body)
+
+
+def send_email_change_notification(to_email, new_email, display_name="User", action_link="https://pes-iams-placement.firebaseapp.com/__/auth/action?mode=action&oobCode=code", app_name="Placement Pro"):
+    """Send Email Address Change alert template email."""
+    subject = f"Your sign-in email was changed for {app_name}"
+    body = f"""Hello {display_name},
+
+Your sign-in email for {app_name} was changed to {new_email}.
+
+If you didn’t ask to change your email, follow this link to reset your sign-in email.
+
+{action_link}
+
+Thanks,
+Your {app_name} team
+"""
+    return send_email_smtp(to_email, subject, body)
+
+
+def send_mfa_notification(to_email, second_factor="Authenticator App", display_name="User", action_link="https://pes-iams-placement.firebaseapp.com/__/auth/action?mode=action&oobCode=code", app_name="Placement Pro"):
+    """Send Multi-Factor Enrollment Notification template email."""
+    subject = f"You've added 2 step verification to your {app_name} account."
+    body = f"""Hello {display_name},
+
+Your account in {app_name} has been updated with {second_factor} for 2-step verification.
+
+If you didn't add this 2-step verification, click the link below to remove it.
+
+{action_link}
+
+Thanks,
+Your {app_name} team
+"""
+    return send_email_smtp(to_email, subject, body)
 
 
 def send_placement_email(student_name, register_number, department, company_name, package):
-    """Send an automated placement email via Gmail API to a predefined distribution list."""
-    if not GMAIL_API_AVAILABLE:
-        logger.warning("Gmail API libraries not installed. Run: pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib")
-        return False
-        
-    try:
-        service = get_gmail_service()
-        if not service:
-            return False
+    """Send automated placement alert email via SMTP to placement distribution list."""
+    distribution_list = os.environ.get('PLACEMENT_EMAIL_LIST', 'hod@college.edu,principal@college.edu')
+    recipients = [email.strip() for email in distribution_list.split(',')]
+    
+    subject = f"New Placement Alert: {student_name} placed at {company_name}!"
+    body = f"""Dear Placement Committee,
 
-        # Get recipient list (hardcoded for now, could be fetched from DB)
-        # E.g. HOD, Principal, Placement Committee
-        distribution_list = os.environ.get('PLACEMENT_EMAIL_LIST', 'hod@college.edu,principal@college.edu')
-        recipients = [email.strip() for email in distribution_list.split(',')]
+We are delighted to inform you of a new placement!
 
-        message = EmailMessage()
-        
-        content = f"""
-        Dear Placement Committee,
+Student Name: {student_name}
+Register Number: {register_number}
+Department: {department}
 
-        We are delighted to inform you of a new placement!
+Company: {company_name}
+Package Offered: {package} LPA
 
-        Student Name: {student_name}
-        Register Number: {register_number}
-        Department: {department}
-        
-        Company: {company_name}
-        Package Offered: {package} LPA
-
-        Best Regards,
-        Placement Pro Automated System
-        """
-        
-        message.set_content(content)
-        message['To'] = ", ".join(recipients)
-        message['From'] = 'placement-pro@college.edu'
-        message['Subject'] = f"New Placement Alert: {student_name} placed at {company_name}!"
-
-        encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
-        create_message = {'raw': encoded_message}
-
-        send_message = (service.users().messages().send(userId="me", body=create_message).execute())
-        
-        logger.info(f"Placement email sent successfully. Message Id: {send_message['id']}")
-        
-        # Log to DB (if we had an email_logs table, for now just use notifications)
-        cur = get_cursor()
-        cur.execute(
-            "INSERT INTO notifications (title, message, type) VALUES (%s, %s, 'success')",
-            ("Email Notification Sent", f"Sent placement email for {student_name} to {len(recipients)} recipients.")
-        )
-        commit()
-        
-        return True
-
-    except Exception as error:
-        logger.error(f"An error occurred sending placement email: {error}")
-        return False
+Best Regards,
+Placement Pro Automated System
+"""
+    success_count = 0
+    for r in recipients:
+        ok, _ = send_email_smtp(r, subject, body)
+        if ok:
+            success_count += 1
+            
+    return success_count > 0
