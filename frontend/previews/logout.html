@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=login.html">
+  <title>Logging out... — Placement Pro</title>
+  <script>
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = "login.html";
+  </script>
+</head>
+<body>
+  <p>Logging out... <a href="login.html">Click here if not redirected</a>.</p>
+</body>
+</html>
