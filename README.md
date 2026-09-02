@@ -89,19 +89,51 @@ placement-pro/
 ### 1. Backend Setup (Windows PowerShell)
 
 ```powershell
+# Navigate to backend directory
+cd backend
 
+# Create Python virtual environment if not created
+python -m venv venv
 
+# Activate virtual environment
+.\venv\Scripts\Activate.ps1
+
+# Install all backend dependencies
+pip install -r requirements.txt pytest
+
+# Start local Flask API server
+python app.py
 ```
-*Backend API runs on `http://localhost:5500`*
+*Backend REST API runs on `http://localhost:5500`*
 
 ### 2. Frontend Setup (Windows PowerShell)
 
 ```powershell
+# Navigate to frontend directory
 cd frontend
+
+# Set API base URL
 $env:PLACEMENT_API_BASE="http://localhost:5500/api"
+
+# Start local PHP development server
 php -S localhost:7500
 ```
 *Frontend application runs on `http://localhost:7500/login.php`*
+
+### 3. Run Automated Unit & API Tests
+
+```powershell
+# Run backend pytest suite
+cd backend
+.\venv\Scripts\python.exe -m pytest
+```
+
+### 4. Regenerate Static Previews for GitHub Pages
+
+```powershell
+# Regenerate static HTML files in frontend/previews/
+python render_previews.py
+```
 
 ---
 
