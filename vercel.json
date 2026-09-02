@@ -1,19 +1,21 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "backend/app.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "frontend/previews/**",
-      "use": "@vercel/static"
-    }
-  ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "backend/app.py"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "assets/$1"
+    },
+    {
+      "src": "/frontend/assets/(.*)",
+      "dest": "frontend/assets/$1"
+    },
+    {
+      "src": "/$",
+      "dest": "frontend/previews/dashboard.html"
     },
     {
       "src": "/(.*)",
