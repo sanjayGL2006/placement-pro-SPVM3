@@ -26,3 +26,7 @@ search-path = [
     "backend",
     "backend/venv/Lib/site-packages"
 ]
+
+[tool.vercel]
+entrypoint = "backend.app:app"
+
