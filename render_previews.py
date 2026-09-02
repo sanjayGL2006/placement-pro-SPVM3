@@ -67,6 +67,7 @@ for file in files:
     content = content.replace('assets/css/style.css', '../assets/css/style.css')
     content = content.replace('assets/js/api.js', '../assets/js/api.js')
     content = content.replace('assets/js/auth.js', '../assets/js/auth.js')
+    content = content.replace('assets/js/firebase-init.js', '../assets/js/firebase-init.js')
     content = content.replace('assets/vendor/sweetalert2/sweetalert2.all.min.js', '../assets/vendor/sweetalert2/sweetalert2.all.min.js')
 
     # Remove duplicate auth.js / api.js includes
