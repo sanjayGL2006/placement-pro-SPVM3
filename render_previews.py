@@ -1,6 +1,7 @@
 """Convert frontend PHP pages into static HTML for GitHub Pages / Vercel."""
 import os
 import re
+import shutil
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 FRONTEND = os.path.join(ROOT, "frontend")
@@ -72,7 +73,9 @@ def php_links_to_html(text):
 
 def rewrite_assets(text):
     for src, dest in ASSET_REWRITES:
-        text = text.replace(src, dest)
+        # Prevent double-rewriting: only replace src when not already prefixed with ../ or ./
+        pattern = r'(?<!\.\./)(?<!\./)' + re.escape(src)
+        text = re.sub(pattern, dest, text)
     return text
 
 
@@ -95,7 +98,7 @@ def build_nav(page_html):
         r'\1 active"',
         sidebar,
     )
-    return rewrite_assets(sidebar + "\n" + header + "\n" + nav_rest)
+    return sidebar + "\n" + header + "\n" + nav_rest
 
 
 def convert_page(filename):
@@ -126,6 +129,12 @@ def convert_page(filename):
     content = re.sub(r"window\.API_BASE = '<\?php.*?\?>';", "", content)
     content = re.sub(r"window\.API_TOKEN = '<\?php.*?\?>';", "", content)
 
+    if '<link rel="icon"' not in content:
+        content = content.replace(
+            "<title>",
+            '<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">\n  <link rel="alternate icon" href="../assets/favicon.ico">\n  <title>',
+        )
+
     content = content.replace("<?php include 'partials/nav.php'; ?>", build_nav(page_html))
     content = strip_php(content)
     content = php_links_to_html(content)
@@ -150,18 +159,6 @@ def convert_page(filename):
             content,
         )
 
-    auth_tag = '<script src="../assets/js/auth.js"></script>'
-    api_tag = '<script src="../assets/js/api.js"></script>'
-    content = re.sub(
-        r'<script src="\.\./assets/js/auth\.js"></script>\s*<script src="\.\./assets/js/api\.js"></script>',
-        "",
-        content,
-    )
-    if auth_tag not in content:
-        content = content.replace(
-            '<script src="https://cdn.jsdelivr.net/npm/bootstrap',
-            f"{auth_tag}\n  {api_tag}\n  <script src=\"https://cdn.jsdelivr.net/npm/bootstrap",
-        )
     return content
 
 
@@ -207,6 +204,29 @@ def write_logout():
     )
 
 
+def sync_assets():
+    frontend_assets = os.path.join(FRONTEND, "assets")
+    root_assets = os.path.join(ROOT, "assets")
+    output_assets = os.path.join(OUTPUT, "assets")
+    if os.path.exists(frontend_assets):
+        shutil.copytree(frontend_assets, root_assets, dirs_exist_ok=True)
+        shutil.copytree(frontend_assets, output_assets, dirs_exist_ok=True)
+
+    fav_ico = os.path.join(FRONTEND, "favicon.ico")
+    fav_svg = os.path.join(FRONTEND, "favicon.svg")
+    targets = [ROOT, FRONTEND, OUTPUT, root_assets, output_assets, os.path.join(FRONTEND, "assets")]
+    for t in targets:
+        os.makedirs(t, exist_ok=True)
+        for src in [fav_ico, fav_svg]:
+            if os.path.exists(src):
+                dest = os.path.join(t, os.path.basename(src))
+                try:
+                    shutil.copy2(src, dest)
+                except PermissionError:
+                    pass
+    print("Synchronized all asset and favicon directories.")
+
+
 def main():
     os.makedirs(OUTPUT, exist_ok=True)
     for filename in PAGES:
@@ -218,6 +238,7 @@ def main():
         print(f"Converted {filename} -> {filename.replace('.php', '.html')}")
     write_index()
     write_logout()
+    sync_assets()
     print("Rendered static HTML previews.")
 
 
