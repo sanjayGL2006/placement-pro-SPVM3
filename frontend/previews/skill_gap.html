@@ -72,7 +72,7 @@
         </a>
       </li>
       <li>
-        <a href="skill_gap.html" class="nav-item-link ">
+        <a href="skill_gap.html" class="nav-item-link active">
           <i class="fa-solid fa-magnifying-glass-chart"></i>
           <span>Skill Gap</span>
         </a>
@@ -100,7 +100,6 @@
     </button>
   </div>
 </aside>
-
 
 <header id="top-header">
   <!-- Search Bar -->
@@ -288,7 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
           if (pwaBanner) pwaBanner.classList.remove('d-none');
         });
 
-
         btnInstall.addEventListener('click', async () => {
           if (deferredPrompt) {
             deferredPrompt.prompt();
@@ -306,11 +304,9 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 
-
 <!-- SweetAlert2 for beautiful popups with local fallback -->
-<script src="../assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
+<script src="../../assets/vendor/sweetalert2/sweetalert2.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" onerror="this.onerror=null;"></script>
-
 
 <!-- Global Post New Job Modal -->
 <div class="modal fade" id="postJobModal" tabindex="-1" aria-labelledby="postJobModalLabel" aria-hidden="true">
@@ -394,8 +390,9 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-
-<script type="module" src="../assets/js/firebase-init.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script type="module" src="../../assets/js/firebase-init.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('postJobForm');
@@ -455,8 +452,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
-
-
 
   <main id="main-wrapper">
 

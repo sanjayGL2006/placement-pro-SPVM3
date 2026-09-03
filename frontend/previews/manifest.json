@@ -2,7 +2,7 @@
   "name": "Placement Pro",
   "short_name": "PlacementPro",
   "description": "College Placement Coordination Application",
-  "start_url": "/dashboard.php",
+  "start_url": "./dashboard.html",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#4f46e5",

@@ -27,6 +27,6 @@ search-path = [
     "backend/venv/Lib/site-packages"
 ]
 
-[tool.vercel]
-entrypoint = "backend.app:app"
+# API is served from api/index.py so static HTML in frontend/previews is not
+# routed through the Python function.
 

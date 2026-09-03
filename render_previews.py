@@ -1,46 +1,142 @@
+"""Convert frontend PHP pages into static HTML for GitHub Pages / Vercel."""
 import os
 import re
 
-frontend_dir = r"c:\Users\Sanjay G L\Desktop\placement-pro\frontend"
-output_dir = os.path.join(frontend_dir, "previews")
-os.makedirs(output_dir, exist_ok=True)
+ROOT = os.path.dirname(os.path.abspath(__file__))
+FRONTEND = os.path.join(ROOT, "frontend")
+OUTPUT = os.path.join(FRONTEND, "previews")
+PAGES = [
+    "login.php",
+    "dashboard.php",
+    "sections.php",
+    "students.php",
+    "companies.php",
+    "import.php",
+    "reports.php",
+    "settings.php",
+    "push.php",
+    "skill_gap.php",
+    "ai_hub.php",
+    "documents.php",
+    "company_dashboard.php",
+]
+PHP_TO_HTML = [
+    "dashboard",
+    "students",
+    "companies",
+    "import",
+    "sections",
+    "reports",
+    "settings",
+    "login",
+    "logout",
+    "push",
+    "skill_gap",
+    "ai_hub",
+    "documents",
+    "company_dashboard",
+]
+ASSET_REWRITES = [
+    ("assets/vendor/sweetalert2/sweetalert2.all.min.js", "../assets/vendor/sweetalert2/sweetalert2.all.min.js"),
+    ("assets/js/firebase-init.js", "../assets/js/firebase-init.js"),
+    ("assets/js/auth.js", "../assets/js/auth.js"),
+    ("assets/js/api.js", "../assets/js/api.js"),
+    ("assets/css/style.css", "../assets/css/style.css"),
+    ('href="favicon.svg"', 'href="../assets/favicon.svg"'),
+    ('href="favicon.ico"', 'href="../assets/favicon.ico"'),
+]
 
-# Read partials
-with open(os.path.join(frontend_dir, "partials", "sidebar.php"), "r", encoding="utf-8") as f:
-    sidebar_content = f.read()
 
-with open(os.path.join(frontend_dir, "partials", "header.php"), "r", encoding="utf-8") as f:
-    header_content = f.read()
+def read(path):
+    with open(path, "r", encoding="utf-8") as fh:
+        return fh.read()
 
-with open(os.path.join(frontend_dir, "partials", "nav.php"), "r", encoding="utf-8") as f:
-    nav_content = f.read()
 
-# Replace PHP tags in sidebar
-sidebar_html = re.sub(r"<\?php.*?\?>", "", sidebar_content, flags=re.DOTALL)
-# Replace PHP tags in header
-header_html = re.sub(r"<\?php.*?\?>", "", header_content, flags=re.DOTALL)
-header_html = header_html.replace('<?php echo htmlspecialchars($userName); ?>', 'Admin User')
-header_html = header_html.replace('<?php echo htmlspecialchars($userRole); ?>', 'Administrator')
+def write(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(content)
 
-# Replace PHP tags in nav
-nav_html = nav_content.replace("<?php\nrequire_once __DIR__ . '/sidebar.php';\nrequire_once __DIR__ . '/header.php';\n?>", sidebar_html + "\n" + header_html)
 
-files = ['login.php', 'dashboard.php', 'sections.php', 'students.php', 'companies.php', 'import.php', 'reports.php', 'settings.php', 'push.php', 'skill_gap.php', 'ai_hub.php', 'documents.php']
+def strip_php(text):
+    text = re.sub(r"<\?(?:php)?(?:(?!\?>).)*\?>", "", text, flags=re.DOTALL)
+    text = re.sub(r"<\?php[\s\S]*", "", text)
+    return text
 
-for file in files:
-    filepath = os.path.join(frontend_dir, file)
-    if not os.path.exists(filepath):
-        continue
-    with open(filepath, "r", encoding="utf-8") as f:
-        content = f.read()
-    
-    # Replace php require/login header
-    content = re.sub(r"<\?php require_once 'config.php';.*?\?>", "", content)
-    content = re.sub(r"<\?php require_once 'config.php'; \?>", "", content)
-    content = content.replace("<?php include 'partials/nav.php'; ?>", nav_html)
-    
-    # Replace login script block for static preview
-    if file == 'login.php':
+
+def php_links_to_html(text):
+    for name in PHP_TO_HTML:
+        text = text.replace(f"{name}.php", f"{name}.html")
+    return text
+
+
+def rewrite_assets(text):
+    for src, dest in ASSET_REWRITES:
+        text = text.replace(src, dest)
+    return text
+
+
+def build_nav(page_html):
+    sidebar = strip_php(read(os.path.join(FRONTEND, "partials", "sidebar.php")))
+    header = strip_php(read(os.path.join(FRONTEND, "partials", "header.php")))
+    header = header.replace("<?php echo htmlspecialchars($userName); ?>", "Admin User")
+    header = header.replace("<?php echo htmlspecialchars($userRole); ?>", "Administrator")
+    nav_rest = strip_php(read(os.path.join(FRONTEND, "partials", "nav.php")))
+    nav_rest = re.sub(
+        r"require_once __DIR__ \. '/sidebar\.php';\s*require_once __DIR__ \. '/header\.php';",
+        "",
+        nav_rest,
+    )
+    sidebar = php_links_to_html(sidebar)
+    header = php_links_to_html(header)
+    nav_rest = php_links_to_html(nav_rest)
+    sidebar = re.sub(
+        rf'(href="{re.escape(page_html)}" class="nav-item-link)\s*"',
+        r'\1 active"',
+        sidebar,
+    )
+    return rewrite_assets(sidebar + "\n" + header + "\n" + nav_rest)
+
+
+def convert_page(filename):
+    content = read(os.path.join(FRONTEND, filename))
+    page_html = filename.replace(".php", ".html")
+
+    content = content.replace(
+        'value="<?php echo $student_id; ?>"',
+        'value=""',
+    )
+    content = content.replace(
+        "const studentId = <?php echo $student_id; ?>;",
+        'const studentId = Number(new URLSearchParams(window.location.search).get("id")) || 1;\n'
+        "    const docStudentIdEl = document.getElementById(\"docStudentId\");\n"
+        "    if (docStudentIdEl) docStudentIdEl.value = String(studentId);",
+    )
+    content = re.sub(
+        r"<\?php echo htmlspecialchars\(\$_SESSION\['user'\]\['name'\] \?\? '.*?'\); \?>",
+        "SPVM3 Tech Solution by Sanjay G L",
+        content,
+    )
+    content = re.sub(
+        r"<\?php echo htmlspecialchars\(\$_SESSION\['user'\]\['email'\] \?\? '.*?'\); \?>",
+        "admin@university.edu",
+        content,
+    )
+    content = re.sub(r"<script>\s*window\.API_BASE =.*?</script>", "", content, flags=re.DOTALL)
+    content = re.sub(r"window\.API_BASE = '<\?php.*?\?>';", "", content)
+    content = re.sub(r"window\.API_TOKEN = '<\?php.*?\?>';", "", content)
+
+    content = content.replace("<?php include 'partials/nav.php'; ?>", build_nav(page_html))
+    content = strip_php(content)
+    content = php_links_to_html(content)
+    content = rewrite_assets(content)
+    content = re.sub(r"\n{3,}", "\n\n", content)
+    content = content.replace(
+        "Job drive posted successfully to PostgreSQL database.",
+        "Job drive posted successfully.",
+    )
+
+    if filename == "login.php":
         login_script = """document.getElementById('loginForm').addEventListener('submit', (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value || 'admin@college.edu';
@@ -48,43 +144,82 @@ for file in files:
       localStorage.setItem('user', JSON.stringify({ name: 'SPVM3 Tech Solution by Sanjay G L', role: 'admin', email: email }));
       window.location.href = 'dashboard.html';
     });"""
-        content = re.sub(r"document\.getElementById\('loginForm'\)\.addEventListener\('submit',[\s\S]*?\n    \}\);", login_script, content)
+        content = re.sub(
+            r"document\.getElementById\('loginForm'\)\.addEventListener\('submit',[\s\S]*?\n    \}\);",
+            login_script,
+            content,
+        )
 
-    # Replace inline API_BASE and API_TOKEN declarations
-    content = re.sub(r"<script>\s*window\.API_BASE =.*?</script>", "", content, flags=re.DOTALL)
-    content = re.sub(r"window\.API_TOKEN = '<\?php.*?\?>';", "", content)
-    content = re.sub(r"<\?php echo htmlspecialchars\(\$_SESSION\['user'\]\['name'\] \?\? '.*?'\); \?>", "SPVM3 Tech Solution by Sanjay G L", content)
-    content = re.sub(r"<\?php echo htmlspecialchars\(\$_SESSION\['user'\]\['email'\] \?\? '.*?'\); \?>", "admin@university.edu", content)
-    
-    # Strip any remaining PHP tags cleanly
-    content = re.sub(r"<\?php.*?\?>", "", content, flags=re.DOTALL)
-
-    # Replace .php links with .html links for static GitHub Pages preview navigation
-    for page_name in ['dashboard', 'students', 'companies', 'import', 'sections', 'reports', 'settings', 'login', 'logout', 'push', 'skill_gap', 'ai_hub', 'documents', 'company_dashboard']:
-        content = content.replace(f'{page_name}.php', f'{page_name}.html')
-
-    # Fix relative paths to css/js if opened in previews/
-    content = content.replace('assets/css/style.css', '../assets/css/style.css')
-    content = content.replace('assets/js/api.js', '../assets/js/api.js')
-    content = content.replace('assets/js/auth.js', '../assets/js/auth.js')
-    content = content.replace('assets/js/firebase-init.js', '../assets/js/firebase-init.js')
-    content = content.replace('assets/vendor/sweetalert2/sweetalert2.all.min.js', '../assets/vendor/sweetalert2/sweetalert2.all.min.js')
-
-    # Remove duplicate auth.js / api.js includes
-    # Ensure auth.js and api.js are included once cleanly
     auth_tag = '<script src="../assets/js/auth.js"></script>'
     api_tag = '<script src="../assets/js/api.js"></script>'
-    
-    # Keep only the last auth.js and api.js tags before body or bootstrap script
-    content = re.sub(r'<script src="\.\./assets/js/auth\.js"></script>\s*<script src="\.\./assets/js/api\.js"></script>', '', content)
+    content = re.sub(
+        r'<script src="\.\./assets/js/auth\.js"></script>\s*<script src="\.\./assets/js/api\.js"></script>',
+        "",
+        content,
+    )
     if auth_tag not in content:
-        content = content.replace('<script src="https://cdn.jsdelivr.net/npm/bootstrap', f'{auth_tag}\n  {api_tag}\n  <script src="https://cdn.jsdelivr.net/npm/bootstrap')
+        content = content.replace(
+            '<script src="https://cdn.jsdelivr.net/npm/bootstrap',
+            f"{auth_tag}\n  {api_tag}\n  <script src=\"https://cdn.jsdelivr.net/npm/bootstrap",
+        )
+    return content
 
-    # Fix PostgreSQL text
-    content = content.replace('Job drive posted successfully to PostgreSQL database.', 'Job drive posted successfully.')
 
-    out_name = file.replace('.php', '.html')
-    with open(os.path.join(output_dir, out_name), "w", encoding="utf-8") as f:
-        f.write(content)
+def write_index():
+    write(
+        os.path.join(OUTPUT, "index.html"),
+        """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=dashboard.html">
+  <title>Placement Pro — SPVM3 Tech Solution</title>
+  <script>window.location.href = "dashboard.html";</script>
+</head>
+<body>
+  <p>Redirecting to <a href="dashboard.html">Placement Pro Dashboard</a>...</p>
+</body>
+</html>
+""",
+    )
 
-print("Rendered preview HTML files successfully!")
+
+def write_logout():
+    write(
+        os.path.join(OUTPUT, "logout.html"),
+        """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=login.html">
+  <title>Logging out... — Placement Pro</title>
+  <script>
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = "login.html";
+  </script>
+</head>
+<body>
+  <p>Logging out... <a href="login.html">Click here if not redirected</a>.</p>
+</body>
+</html>
+""",
+    )
+
+
+def main():
+    os.makedirs(OUTPUT, exist_ok=True)
+    for filename in PAGES:
+        path = os.path.join(FRONTEND, filename)
+        if not os.path.exists(path):
+            print(f"Skip missing {filename}")
+            continue
+        write(os.path.join(OUTPUT, filename.replace(".php", ".html")), convert_page(filename))
+        print(f"Converted {filename} -> {filename.replace('.php', '.html')}")
+    write_index()
+    write_logout()
+    print("Rendered static HTML previews.")
+
+
+if __name__ == "__main__":
+    main()

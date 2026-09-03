@@ -3,12 +3,42 @@ import os
 import tempfile
 from flask import g
 
-if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
-    default_db_dir = tempfile.gettempdir()
-else:
-    default_db_dir = os.path.dirname(__file__)
 
-DB_PATH = os.environ.get("DATABASE_PATH") or os.path.join(default_db_dir, "placement_pro.db")
+def _is_serverless():
+    return bool(
+        os.environ.get("VERCEL")
+        or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+        or os.environ.get("LAMBDA_TASK_ROOT")
+    )
+
+
+def _default_db_dir():
+    if _is_serverless():
+        return tempfile.gettempdir()
+    local_dir = os.path.dirname(os.path.abspath(__file__))
+    try:
+        probe = os.path.join(local_dir, ".db_write_probe")
+        with open(probe, "w") as fh:
+            fh.write("ok")
+        os.remove(probe)
+        return local_dir
+    except OSError:
+        return tempfile.gettempdir()
+
+
+DB_PATH = os.environ.get("DATABASE_PATH") or os.path.join(_default_db_dir(), "placement_pro.db")
+
+
+def _schema_path():
+    candidates = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema_sqlite.sql"),
+        os.path.join(os.getcwd(), "backend", "schema_sqlite.sql"),
+        os.path.join(os.getcwd(), "schema_sqlite.sql"),
+    ]
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+    return candidates[0]
 
 
 class DictCursor:
@@ -73,16 +103,26 @@ class DictConnection:
         self._conn.close()
 
 
-def init_sqlite_db():
-    schema_path = os.path.join(os.path.dirname(__file__), "schema_sqlite.sql")
-    os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
+def init_sqlite_db(force=False):
+    schema_path = _schema_path()
+    os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)) or ".", exist_ok=True)
+    keep_existing = (
+        os.path.exists(DB_PATH)
+        and os.path.getsize(DB_PATH) > 0
+        and not force
+        and _is_serverless()
+    )
+    if keep_existing:
+        return
     if os.path.exists(DB_PATH):
         try:
             os.remove(DB_PATH)
         except OSError:
             pass
+    if not os.path.isfile(schema_path):
+        raise FileNotFoundError(f"SQLite schema not found: {schema_path}")
     conn = sqlite3.connect(DB_PATH)
-    with open(schema_path, "r") as f:
+    with open(schema_path, "r", encoding="utf-8") as f:
         conn.executescript(f.read())
     conn.commit()
     conn.close()
@@ -100,7 +140,7 @@ def close_db_pool(exc=None):
 
 def get_conn():
     if "db_conn" not in g:
-        if not os.path.exists(DB_PATH):
+        if not os.path.exists(DB_PATH) or os.path.getsize(DB_PATH) == 0:
             init_sqlite_db()
         raw_conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         raw_conn.execute("PRAGMA foreign_keys = ON;")
