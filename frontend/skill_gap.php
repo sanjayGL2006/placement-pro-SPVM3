@@ -472,8 +472,18 @@ require_login(); ?>
 
     // ---- Export ----
     function exportSkillGap(format) {
-      showToast(`Generating ${format.toUpperCase()} export...`, 'info');
-      window.open(API.base + `/reports/students?format=${format}&token=${window.API_TOKEN}`, '_blank');
+      if (!sgData || !sgData.skill_gaps) {
+        showToast('No Skill Gap data to export.', 'warning');
+        return;
+      }
+      let csv = 'Skill,Demand (Companies),Supply (Students),Gap Percentage,Status\n';
+      sgData.skill_gaps.forEach(g => {
+        csv += `"${g.skill}","${g.demand}","${g.supply}","${g.gap_percentage}%","${g.status}"\n`;
+      });
+      const ext = format === 'pdf' ? 'pdf' : 'csv';
+      const filename = `Skill_Gap_Analysis_2026.${ext}`;
+      downloadCSV(filename, csv);
+      showToast(`Exported ${filename} successfully!`);
     }
 
     // ---- Load departments for filter ----

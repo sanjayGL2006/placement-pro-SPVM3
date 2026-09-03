@@ -332,6 +332,114 @@
         return { success: true, pushed_count: count, message: `Pushed ${count} students successfully!` };
       }
 
+      // --- IMPORT DATA INGESTION HANDLERS ---
+      // Preview Import: POST /imports/:kind/preview
+      if (pathname.includes('/imports/') && pathname.includes('/preview')) {
+        return {
+          summary: { to_insert: 5, to_update: 1, to_skip: 0 },
+          rows_with_errors: 0,
+          rows: [
+            { action: 'insert', data: { 'Reg No': '1PE23BCA101', 'Name': 'Aaron Vance', 'Dept': 'BCA', 'Section': 'Section A', 'Status': 'Selected', 'Company': 'Google', 'Package': '28.5', 'GPA': '8.9' }, errors: [] },
+            { action: 'insert', data: { 'Reg No': '1PE23BCA102', 'Name': 'Bella Thorne', 'Dept': 'BCA', 'Section': 'Section A', 'Status': 'Selected', 'Company': 'Microsoft', 'Package': '26.0', 'GPA': '9.1' }, errors: [] },
+            { action: 'update', data: { 'Reg No': '1PE23BBA044', 'Name': 'Charles Lee', 'Dept': 'BBA', 'Section': 'Section B', 'Status': 'Applied', 'Company': 'TCS Digital', 'Package': '7.5', 'GPA': '8.2' }, errors: [] },
+            { action: 'insert', data: { 'Reg No': '1PE23BCOM055', 'Name': 'Devika Sen', 'Dept': 'B.Com', 'Section': 'Section A', 'Status': 'Selected', 'Company': 'Goldman Sachs', 'Package': '22.0', 'GPA': '8.7' }, errors: [] },
+            { action: 'insert', data: { 'Reg No': '1PE23BSC012', 'Name': 'Ethan Hunt', 'Dept': 'B.Sc', 'Section': 'Section C', 'Status': 'Applied', 'Company': 'Wipro', 'Package': '9.5', 'GPA': '8.0' }, errors: [] },
+            { action: 'insert', data: { 'Reg No': '1PE23BCA089', 'Name': 'Farhan Akhtar', 'Dept': 'BCA', 'Section': 'Section B', 'Status': 'Selected', 'Company': 'Amazon', 'Package': '24.0', 'GPA': '9.0' }, errors: [] }
+          ]
+        };
+      }
+
+      // Commit Import: POST /imports/:kind/commit
+      if (pathname.includes('/imports/') && pathname.includes('/commit') && method === 'POST') {
+        const rows = (body && Array.isArray(body.rows)) ? body.rows : [];
+        let students = getStoredStudents();
+        let companies = getStoredCompanies();
+
+        let insertedCount = 0;
+        let updatedCount = 0;
+        let skippedCount = 0;
+
+        rows.forEach(r => {
+          if (r.action === 'skip') {
+            skippedCount++;
+            return;
+          }
+
+          const rData = r.data || {};
+          const name = rData['Name'] || rData['Student Name'] || rData['name'] || 'Imported Candidate';
+          const regNo = rData['Reg No'] || rData['Register Number'] || rData['register_number'] || `1PE23BCA${Math.floor(100 + Math.random() * 900)}`;
+          const dept = rData['Dept'] || rData['Department'] || rData['department_name'] || 'BCA';
+          const sec = rData['Section'] || rData['section'] || 'Section A';
+          const year = rData['Academic Year'] || rData['academic_year'] || '2023-2026';
+          const rawStatus = (rData['Status'] || rData['Placement Status'] || rData['placement_status'] || 'unplaced').toLowerCase();
+          const status = (rawStatus === 'placed' || rawStatus === 'selected') ? 'selected' : (rawStatus === 'applied' ? 'applied' : 'unplaced');
+          const compName = rData['Company'] || rData['Company Name'] || rData['company_name'] || null;
+          const pkg = rData['Package'] || rData['Package Amount'] || rData['package_amount'] || null;
+          const gpa = parseFloat(rData['GPA'] || rData['CGPA'] || rData['cgpa']) || 8.2;
+
+          // Check if student exists by Reg No or ID
+          const existingIdx = students.findIndex(s => s.register_number === regNo || s.name === name);
+          if (existingIdx !== -1 && r.action === 'update') {
+            students[existingIdx] = {
+              ...students[existingIdx],
+              name, department_name: dept, section: sec, placement_status: status,
+              company_name: compName || students[existingIdx].company_name,
+              package_amount: pkg || students[existingIdx].package_amount,
+              cgpa: gpa
+            };
+            updatedCount++;
+          } else {
+            const newStudent = {
+              id: Date.now() + Math.floor(Math.random() * 10000),
+              name: name,
+              register_number: regNo,
+              department_name: dept,
+              section: sec,
+              academic_year: year,
+              placement_status: status,
+              company_name: compName,
+              package_amount: pkg,
+              cgpa: gpa,
+              backlogs: 0,
+              email: `${name.toLowerCase().replace(/\s+/g, '.')}@pesiams.edu.in`,
+              phone: '+91 98765 ' + Math.floor(10000 + Math.random() * 90000),
+              skills: [dept, 'Imported']
+            };
+            students.unshift(newStudent);
+            insertedCount++;
+          }
+
+          // If company is specified in imported row, ensure company exists in companies list
+          if (compName) {
+            const compExists = companies.some(c => c.name.toLowerCase() === compName.toLowerCase());
+            if (!compExists) {
+              companies.unshift({
+                id: Date.now() + Math.floor(Math.random() * 5000),
+                name: compName,
+                visit_date: new Date(Date.now() + 864000000).toISOString().split('T')[0],
+                package_offered: parseFloat(pkg) || 12.0,
+                package_amount: parseFloat(pkg) || 12.0,
+                status: 'Active',
+                job_role: 'Campus Placement Drive',
+                min_cgpa: 7.5,
+                allowed_backlogs: 0
+              });
+            }
+          }
+        });
+
+        saveStoredStudents(students);
+        saveStoredCompanies(companies);
+
+        return {
+          success: true,
+          inserted: insertedCount,
+          updated: updatedCount,
+          skipped: skippedCount,
+          message: `Successfully imported ${insertedCount} students and updated ${companies.length} active company drives!`
+        };
+      }
+
       // Students collection: GET /students or POST /students
       if (pathname === '/students' || pathname.startsWith('/students?')) {
         let students = getStoredStudents();
@@ -586,45 +694,88 @@
       }
 
       if (path.includes('/skill-gap') || path.includes('/skill_gap')) {
+        const students = getStoredStudents();
+        const companies = getStoredCompanies();
+        const studentCount = students.length;
+        const companyCount = companies.length;
+
         return {
           summary: {
-            total_student_skills: 42,
-            total_demand_skills: 28,
+            total_student_skills: 18,
+            total_demand_skills: 15,
             coverage_percentage: 78.5,
-            critical_gaps: 4,
-            students_with_skills: 120,
-            companies_analyzed: 25
+            critical_gaps: 2,
+            students_with_skills: studentCount,
+            companies_analyzed: companyCount
           },
           top_demanded_skills: [
             { skill: 'Python', count: 35 },
-            { skill: 'Java', count: 30 },
-            { skill: 'React', count: 25 },
             { skill: 'SQL', count: 40 },
-            { skill: 'AWS', count: 20 }
+            { skill: 'Java', count: 30 },
+            { skill: 'React', count: 28 },
+            { skill: 'AWS', count: 22 },
+            { skill: 'Docker', count: 18 }
           ],
           top_student_skills: [
             { skill: 'Python', count: 32 },
-            { skill: 'Java', count: 28 },
-            { skill: 'React', count: 18 },
             { skill: 'SQL', count: 38 },
-            { skill: 'AWS', count: 12 }
+            { skill: 'Java', count: 28 },
+            { skill: 'React', count: 22 },
+            { skill: 'AWS', count: 12 },
+            { skill: 'Docker', count: 4 }
+          ],
+          skill_gaps: [
+            { skill: 'Docker & Microservices', demand: 18, supply: 4, gap_percentage: 77.8, status: 'critical' },
+            { skill: 'AWS Cloud Infrastructure', demand: 22, supply: 12, gap_percentage: 45.5, status: 'moderate' },
+            { skill: 'React Framework', demand: 28, supply: 22, gap_percentage: 21.4, status: 'covered' },
+            { skill: 'Core Python Development', demand: 35, supply: 32, gap_percentage: 8.6, status: 'covered' },
+            { skill: 'Java & Spring Boot', demand: 30, supply: 28, gap_percentage: 6.7, status: 'covered' },
+            { skill: 'SQL & Relational Databases', demand: 40, supply: 38, gap_percentage: 5.0, status: 'covered' }
           ],
           skills_matrix: [
-            { skill: 'Python', demand_count: 35, supply_count: 32, gap: 3, gap_pct: 8.5, status: 'Covered' },
-            { skill: 'Java', demand_count: 30, supply_count: 28, gap: 2, gap_pct: 6.6, status: 'Covered' },
-            { skill: 'AWS', demand_count: 20, supply_count: 12, gap: 8, gap_pct: 40.0, status: 'Moderate' },
-            { skill: 'Docker', demand_count: 15, supply_count: 3, gap: 12, gap_pct: 80.0, status: 'Critical' }
+            { skill: 'Docker & Microservices', demand_count: 18, supply_count: 4, gap: 14, gap_pct: 77.8, status: 'Critical' },
+            { skill: 'AWS Cloud Infrastructure', demand_count: 22, supply_count: 12, gap: 10, gap_pct: 45.5, status: 'Moderate' },
+            { skill: 'React Framework', demand_count: 28, supply_count: 22, gap: 6, gap_pct: 21.4, status: 'Covered' },
+            { skill: 'Core Python Development', demand_count: 35, supply_count: 32, gap: 3, gap_pct: 8.6, status: 'Covered' }
+          ],
+          department_breakdown: [
+            {
+              department: 'BCA',
+              skills: [{ skill: 'Python', count: 25 }, { skill: 'Java', count: 20 }, { skill: 'React', count: 18 }, { skill: 'SQL', count: 30 }]
+            },
+            {
+              department: 'BBA',
+              skills: [{ skill: 'Excel', count: 28 }, { skill: 'PowerBI', count: 15 }, { skill: 'Finance', count: 22 }]
+            },
+            {
+              department: 'B.Com',
+              skills: [{ skill: 'Accounting', count: 26 }, { skill: 'Tally Prime', count: 20 }, { skill: 'Auditing', count: 18 }]
+            },
+            {
+              department: 'B.Sc',
+              skills: [{ skill: 'C++', count: 24 }, { skill: 'Python', count: 18 }, { skill: 'Embedded C', count: 12 }]
+            }
           ],
           dept_breakdown: [
             { department: 'BCA', skills: [{ skill: 'Python', count: 25 }, { skill: 'Java', count: 20 }] },
-            { department: 'BBA', skills: [{ skill: 'Excel', count: 30 }, { skill: 'PowerBI', count: 15 }] },
-            { department: 'B.Com', skills: [{ skill: 'Accounting', count: 28 }, { skill: 'Tally', count: 22 }] }
+            { department: 'BBA', skills: [{ skill: 'Excel', count: 28 }, { skill: 'PowerBI', count: 15 }] },
+            { department: 'B.Com', skills: [{ skill: 'Accounting', count: 26 }, { skill: 'Tally Prime', count: 20 }] },
+            { department: 'B.Sc', skills: [{ skill: 'C++', count: 24 }, { skill: 'Python', count: 18 }] }
+          ],
+          training_recommendations: [
+            { skill: 'Docker & Microservices', gap_percentage: 77.8, recommendation: 'Conduct intensive 3-day bootcamp on Docker containers and microservices for BCA & B.Sc final year candidates.' },
+            { skill: 'AWS Cloud Architecture', gap_percentage: 45.5, recommendation: 'Host AWS Certified Cloud Practitioner certification drive to bridge cloud infrastructure gap.' },
+            { skill: 'Advanced React & Frontend Frameworks', gap_percentage: 21.4, recommendation: 'Organize full-stack React project lab with hands-on state management workshops.' }
           ],
           suggested_workshops: [
             { title: 'Docker & Containerization Masterclass', priority: 'High', target_dept: 'BCA' },
             { title: 'AWS Cloud Fundamentals', priority: 'Medium', target_dept: 'BCA / B.Sc' }
           ],
-          surplus_skills: [{ skill: 'C++', count: 45 }]
+          surplus_skills: [
+            { skill: 'C++', count: 38 },
+            { skill: 'HTML/CSS', count: 42 },
+            { skill: 'Photoshop', count: 15 }
+          ]
         };
       }
 

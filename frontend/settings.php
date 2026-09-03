@@ -249,6 +249,18 @@
                 </div>
 
                 <div class="pt-3 border-top">
+                  <div class="font-weight-700 text-dark mb-1"><i class="fa-solid fa-users-rectangle me-1 text-primary"></i> Unified Institutional Dashboard Access</div>
+                  <p class="text-muted small mb-3">All registered users and administrators access the single, unified institutional Placement Pro Dashboard with shared live metrics.</p>
+                  <div class="p-3 bg-light rounded-3 border">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="font-weight-700 small text-dark"><i class="fa-solid fa-gauge-high me-1 text-success"></i> Active Dashboard View:</span>
+                      <span class="badge-pill-success">Single Shared Dashboard</span>
+                    </div>
+                    <div class="small text-muted" id="registeredUsersCount">Loading registered users...</div>
+                  </div>
+                </div>
+
+                <div class="pt-3 border-top">
                   <div class="font-weight-700 text-dark mb-1">Active Sessions</div>
                   <p class="text-muted small mb-3">Sign out from all other browser sessions across desktop and mobile.</p>
                   <button class="btn btn-pp-outline text-danger border-danger" onclick="showToast('Signed out all active sessions!', 'warning');">
@@ -555,9 +567,33 @@
       }
     }
 
+    function loadRegisteredUsersInfo() {
+      const box = document.getElementById('registeredUsersCount');
+      if (!box) return;
+      let regUsers = [];
+      try { regUsers = JSON.parse(localStorage.getItem('pp_registered_users') || '[]'); } catch (e) {}
+      
+      let currentUser = { name: 'Placement Admin', role: 'admin', email: 'admin@pesiams.edu.in' };
+      try {
+        const storedU = localStorage.getItem('user');
+        if (storedU) currentUser = JSON.parse(storedU);
+      } catch (e) {}
+
+      let html = `<p class="mb-1 text-dark"><strong>Active Session Account:</strong> ${currentUser.name} (${currentUser.email} • <em>${currentUser.role}</em>)</p>`;
+      if (regUsers.length > 0) {
+        html += `<div class="mt-2 pt-2 border-top"><strong>Registered Authorized Accounts (${regUsers.length}):</strong><ul class="mb-0 ps-3 mt-1 text-dark">` +
+          regUsers.slice(0, 5).map(u => `<li>${u.name} &lt;${u.email}&gt; — <em>${u.role}</em></li>`).join('') +
+          `</ul></div>`;
+      } else {
+        html += `<p class="mb-0 text-muted">No additional external accounts registered yet. Use the "Create a New Account" link on the login page to register additional personnel.</p>`;
+      }
+      box.innerHTML = html;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       loadAutoUpdateSettings();
       loadTrash();
+      loadRegisteredUsersInfo();
     });
   </script>
 </body>
