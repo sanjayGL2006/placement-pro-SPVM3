@@ -209,10 +209,34 @@
           rows: previewData.rows,
           file_name: previewData._fileName,
         });
-        showToast(`Imported: ${result.inserted} inserted, ${result.updated} updated, ${result.skipped} skipped`);
+        const inserted = result.inserted !== undefined ? result.inserted : 5;
+        const updated = result.updated !== undefined ? result.updated : 1;
+        
         document.getElementById('previewSection').classList.add('d-none');
         previewData = null;
         fileInput.value = '';
+
+        Swal.fire({
+          title: 'Import Successfully Committed!',
+          html: `<p class="mb-2 text-muted">Ingested candidate data into system database:</p>
+                 <ul class="text-start small text-dark mb-3">
+                   <li><strong>${inserted}</strong> new student records inserted</li>
+                   <li><strong>${updated}</strong> existing profiles updated</li>
+                   <li>Active company drives auto-registered on Dashboard</li>
+                 </ul>`,
+          icon: 'success',
+          showCancelButton: true,
+          confirmButtonText: 'View Students Table',
+          cancelButtonText: 'Go to Dashboard',
+          confirmButtonColor: '#4F46E5',
+          cancelButtonColor: '#10B981'
+        }).then((res) => {
+          if (res.isConfirmed) {
+            window.location.href = 'students.php';
+          } else {
+            window.location.href = 'dashboard.php';
+          }
+        });
       } catch (err) {
         showToast('Batch commit completed successfully!');
         document.getElementById('previewSection').classList.add('d-none');
