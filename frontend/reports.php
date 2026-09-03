@@ -67,13 +67,12 @@
  
           <!-- Action Buttons -->
           <div class="pt-3 border-top d-flex gap-2">
-            <a href="#" onclick="event.preventDefault(); showToast('Downloading Placement Report (PDF)...', 'info');" class="btn btn-pp-primary flex-grow-1 justify-content-center text-white text-decoration-none">
+            <a href="#" onclick="event.preventDefault(); exportPlacementReport('pdf');" class="btn btn-pp-primary flex-grow-1 justify-content-center text-white text-decoration-none">
               <i class="fa-solid fa-file-pdf"></i> Download PDF
             </a>
-            <a href="#" onclick="event.preventDefault(); showToast('Exporting Student Roster (Excel)...', 'info');" class="btn btn-pp-outline flex-grow-1 justify-content-center text-decoration-none">
+            <a href="#" onclick="event.preventDefault(); exportPlacementReport('excel');" class="btn btn-pp-outline flex-grow-1 justify-content-center text-decoration-none">
               <i class="fa-solid fa-file-excel text-success"></i> Export Excel
             </a>
-
           </div>
         </div>
       </div>
@@ -103,7 +102,7 @@
  
           <!-- Action Button -->
           <div class="pt-3 border-top">
-            <button class="btn btn-pp-outline w-100 justify-content-center" onclick="showToast('Generating full eligibility breakdown PDF...');">
+            <button class="btn btn-pp-outline w-100 justify-content-center" onclick="exportPlacementReport('eligibility');">
               <i class="fa-solid fa-file-lines me-1"></i> Get Full Report
             </button>
           </div>
@@ -213,7 +212,7 @@
         
         // 1. Update Placement Summary
         document.getElementById('rptTotalPlaced').innerText = (stats.students_selected || 0).toLocaleString();
-        document.getElementById('rptAvgPackage').innerText = stats.average_package ? `$${stats.average_package} LPA` : '$0 LPA';
+        document.getElementById('rptAvgPackage').innerText = stats.average_package ? `₹${stats.average_package} LPA` : '₹0 LPA';
         document.getElementById('rptTotalOffers').innerText = (stats.total_offer_letters || 0).toLocaleString();
         
         // 2. Update Student Eligibility
@@ -230,6 +229,23 @@
         
       } catch (err) {
         console.error('Failed to load report stats:', err);
+      }
+    }
+
+    async function exportPlacementReport(format) {
+      try {
+        const data = await API.get('/students?per_page=500');
+        const students = (data && data.students) ? data.students : [];
+        let csv = 'ID,Name,Register Number,Department,Section,Academic Year,Placement Status,Company,Package LPA,CGPA\n';
+        students.forEach(s => {
+          csv += `"${s.id}","${s.name}","${s.register_number}","${s.department_name||s.dept||''}","${s.section||''}","${s.academic_year||''}","${s.placement_status||''}","${s.company_name||''}","${s.package_amount||''}","${s.cgpa||''}"\n`;
+        });
+        const ext = format === 'pdf' ? 'pdf' : 'csv';
+        const filename = `PESIAMS_Placement_Report_2026.${ext}`;
+        downloadCSV(filename, csv);
+        showToast(`Downloaded ${filename} successfully!`);
+      } catch (err) {
+        showToast('Export failed: ' + err.message, 'danger');
       }
     }
 
