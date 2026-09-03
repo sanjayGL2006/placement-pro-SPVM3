@@ -1,5 +1,5 @@
 // Basic Service Worker for Placement Pro
-const CACHE_NAME = 'placement-pro-cache-v4';
+const CACHE_NAME = 'placement-pro-cache-v5';
 
 
 // Force immediate activation — replace old broken service worker

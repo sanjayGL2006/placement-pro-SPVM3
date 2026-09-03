@@ -5,7 +5,9 @@ logger = logging.getLogger("placement_pro.firebase")
 
 FIREBASE_ADMIN_AVAILABLE = False
 try:
+    # pyrefly: ignore [missing-import]
     import firebase_admin
+    # pyrefly: ignore [missing-import]
     from firebase_admin import credentials, messaging
     FIREBASE_ADMIN_AVAILABLE = True
 except ImportError:
@@ -13,7 +15,7 @@ except ImportError:
 
 
 def init_firebase_admin(app=None):
-    """Initialize Firebase Admin SDK for project pes-iams-placement."""
+    """Initialize Firebase Admin SDK for project spvm3-placement."""
     if not FIREBASE_ADMIN_AVAILABLE:
         logger.info("firebase_admin Python package not installed. Using local notification fallback.")
         return False
@@ -26,14 +28,14 @@ def init_firebase_admin(app=None):
             if os.path.exists(cred_path):
                 cred = credentials.Certificate(cred_path)
                 firebase_admin.initialize_app(cred, {
-                    "projectId": os.environ.get("FIREBASE_PROJECT_ID", "pes-iams-placement"),
-                    "serviceAccountId": "firebase-adminsdk-fbsvc@pes-iams-placement.iam.gserviceaccount.com"
+                    "projectId": os.environ.get("FIREBASE_PROJECT_ID", "spvm3-placement"),
+                    "serviceAccountId": "firebase-adminsdk-fbsvc@spvm3-placement.iam.gserviceaccount.com"
                 })
                 logger.info("Firebase Admin SDK initialized successfully with service account.")
             else:
                 try:
                     firebase_admin.initialize_app(options={
-                        "projectId": os.environ.get("FIREBASE_PROJECT_ID", "pes-iams-placement")
+                        "projectId": os.environ.get("FIREBASE_PROJECT_ID", "spvm3-placement")
                     })
                     logger.info("Firebase Admin SDK initialized with project default options.")
                 except Exception as default_err:

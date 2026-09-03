@@ -1,6 +1,7 @@
 # Placement Pro — Smart College Placement Management System
 
 > **Developed by SPVM3 Tech Solution by Sanjay G L**  
+> **Live Firebase Preview**: [spvm3-placement.web.app](https://spvm3-placement.web.app/)  
 > **Live GitHub Pages Preview**: [sanjaygl2006.github.io/placement-pro-SPVM3](https://sanjaygl2006.github.io/placement-pro-SPVM3/)
 
 Placement Pro is a full-stack, enterprise-grade Placement & Campus Recruitment Management System built for PESIAMS and modern colleges & universities.
@@ -88,8 +89,8 @@ placement-pro/
 ## Testing & Deployment Architecture
 
 Placement Pro uses a strict host split architecture:
+- **Firebase Hosting (Static Demo / PWA)**: Serves static HTML/CSS/JS compiled via `render_previews.py` from `frontend/previews/`. Configured via `firebase.json` for `pes-iams-placement`.
 - **GitHub Pages (Static Demo)**: Serves static HTML/CSS/JS compiled via `render_previews.py` from `frontend/previews/`. Uses offline mock fallback layer in `api.js`.
-- **Vercel (Serverless Full Stack)**: Routes `/api/*` to Python Flask API (`api/index.py`) using `vercel.json` rewrites and serves static frontend assets.
 - **Docker / Kubernetes / Local**: Runs full Python Flask REST API + SQLite/PostgreSQL database with JWT authentication and file processing.
 
 For detailed testing classification across all 32 testing types, environment splits, and route checklists, refer to [`TESTING_TYPES.md`](file:///c:/Users/Sanjay%20G%20L/Desktop/placement-pro/TESTING_TYPES.md).

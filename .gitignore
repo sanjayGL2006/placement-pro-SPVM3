@@ -47,6 +47,10 @@ tmp/
 .env.local
 .env.*.local
 
+# Firebase Service Account
+serviceAccountKey.json
+*.json.secret
+
 # Vercel & IDE
 .vercel
 .vscode/
