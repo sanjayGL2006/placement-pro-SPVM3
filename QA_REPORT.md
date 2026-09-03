@@ -2,7 +2,8 @@
 
 > **Developer**: SPVM3 Tech Solution by Sanjay G L  
 > **Repository**: [github.com/sanjayGL2006/placement-pro-SPVM3](https://github.com/sanjayGL2006/placement-pro-SPVM3)  
-> **Live Preview**: [sanjaygl2006.github.io/placement-pro-SPVM3](https://sanjaygl2006.github.io/placement-pro-SPVM3/)  
+> **Live Firebase Preview**: [spvm3-placement.web.app](https://spvm3-placement.web.app/)  
+> **Live GitHub Preview**: [sanjaygl2006.github.io/placement-pro-SPVM3](https://sanjaygl2006.github.io/placement-pro-SPVM3/)  
 > **Audit Date**: September 2, 2026
 
 ---

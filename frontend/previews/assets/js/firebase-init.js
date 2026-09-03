@@ -1,27 +1,34 @@
-// firebase-init.js — Initializes Firebase App, Auth & Analytics for pes-iams-placement
+// firebase-init.js — Initializes Firebase App, Auth & Analytics for spvm3-placement
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
+import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
-// Firebase JS SDK configuration for pes-iams-placement
+// Firebase JS SDK configuration for spvm3-placement
 const firebaseConfig = {
-  apiKey: "AIzaSyCGPMY28gJtqS0hMsfyYa83Q0zFiG4W1gk",
-  authDomain: "pes-iams-placement.firebaseapp.com",
-  projectId: "pes-iams-placement",
-  storageBucket: "pes-iams-placement.firebasestorage.app",
-  messagingSenderId: "209828607611",
-  appId: "1:209828607611:web:09ed1ae1d5c88a422414de",
-  measurementId: "G-E5PWC7YQL9"
+  apiKey: "AIzaSyDILX8Reuc86UWkKzjbYXyKG5eFFnhCU44",
+  authDomain: "spvm3-placement.firebaseapp.com",
+  projectId: "spvm3-placement",
+  storageBucket: "spvm3-placement.firebasestorage.app",
+  messagingSenderId: "600410687686",
+  appId: "1:600410687686:web:a4309693e929e756b16fc7",
+  measurementId: "G-3C5WQEEGZ4"
 };
 
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 let analytics = null;
-try {
-  analytics = getAnalytics(app);
-} catch (e) {
-  console.info("Firebase Analytics omitted in non-browser/offline environment.");
-}
+
+isSupported().then(supported => {
+  if (supported) {
+    try {
+      analytics = getAnalytics(app);
+      window.firebaseAnalytics = analytics;
+    } catch (e) {
+      console.info("Firebase Analytics omitted or restricted.");
+    }
+  }
+}).catch(() => {});
+
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
@@ -59,4 +66,4 @@ window.signInWithGoogle = async function() {
   }
 };
 
-console.log("Firebase initialized (pes-iams-placement) with Google Auth capability.");
+console.log("Firebase initialized (spvm3-placement) with Google Auth capability.");

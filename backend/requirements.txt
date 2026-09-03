@@ -12,4 +12,4 @@ lxml>=6.1.2
 pdfplumber>=0.11.0
 reportlab>=4.0.0
 gunicorn>=21.2.0
-
+firebase-admin>=6.5.0

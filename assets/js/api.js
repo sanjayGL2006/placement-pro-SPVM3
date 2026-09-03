@@ -70,10 +70,7 @@
     if (host === 'localhost' || host === '127.0.0.1') {
       return `${window.location.protocol}//${host}:5500/api`;
     }
-    if (host.endsWith('vercel.app') || window.location.pathname.startsWith('/api')) {
-      return '/api';
-    }
-    if (host.includes('github.io')) {
+    if (host.includes('github.io') || host.includes('firebaseapp.com') || host.includes('web.app')) {
       return null;
     }
     return '/api';

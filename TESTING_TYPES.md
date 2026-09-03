@@ -2,6 +2,7 @@
 
 > **Developer**: SPVM3 Tech Solution by Sanjay G L  
 > **Repository**: [github.com/sanjayGL2006/placement-pro-SPVM3](https://github.com/sanjayGL2006/placement-pro-SPVM3)  
+> **Live Firebase Hosting**: [spvm3-placement.web.app](https://spvm3-placement.web.app)  
 > **GitHub Pages Demo**: [sanjaygl2006.github.io/placement-pro-SPVM3/frontend/previews](https://sanjaygl2006.github.io/placement-pro-SPVM3/frontend/previews)  
 > **Updated**: September 2026
 
