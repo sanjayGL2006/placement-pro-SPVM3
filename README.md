@@ -79,8 +79,20 @@ placement-pro/
 │   └── kustomization.yaml
 ├── docker-compose.yml          # Multi-container local/prod orchestrator
 ├── QA_REPORT.md                # System QA inspection matrix & audit fixes
+├── TESTING_TYPES.md            # Comprehensive 32 testing types catalog & deployment matrix
 └── mock-data.json              # Static preview fallback dataset
 ```
+
+---
+
+## Testing & Deployment Architecture
+
+Placement Pro uses a strict host split architecture:
+- **GitHub Pages (Static Demo)**: Serves static HTML/CSS/JS compiled via `render_previews.py` from `frontend/previews/`. Uses offline mock fallback layer in `api.js`.
+- **Vercel (Serverless Full Stack)**: Routes `/api/*` to Python Flask API (`api/index.py`) using `vercel.json` rewrites and serves static frontend assets.
+- **Docker / Kubernetes / Local**: Runs full Python Flask REST API + SQLite/PostgreSQL database with JWT authentication and file processing.
+
+For detailed testing classification across all 32 testing types, environment splits, and route checklists, refer to [`TESTING_TYPES.md`](file:///c:/Users/Sanjay%20G%20L/Desktop/placement-pro/TESTING_TYPES.md).
 
 ---
 

@@ -41,6 +41,12 @@ A comprehensive full-stack QA, security, API, and UI/UX audit was conducted on P
 
 ---
 
-## 4. Final System Status
+## 4. Testing & Deployment Strategy
+
+Placement Pro is classified across **32 Testing Types** (25 runnable on GitHub Pages, 17 requiring live Flask API). For the full matrix, preview route checklists, and Vercel serverless deployment rules, refer to [`TESTING_TYPES.md`](file:///c:/Users/Sanjay%20G%20L/Desktop/placement-pro/TESTING_TYPES.md).
+
+---
+
+## 5. Final System Status
 
 `READY FOR DEMO` & `READY FOR DEPLOYMENT`

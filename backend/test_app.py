@@ -99,6 +99,40 @@ class PlacementProTestCase(unittest.TestCase):
         self.assertEqual(data['pushed_count'], 1)
         self.assertIn('skipped', data)
 
+    def test_12_auth_me_endpoint(self):
+        """API Test: Current User Endpoint (/api/auth/me)"""
+        response = self.client.get('/api/auth/me')
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertIn('email', data)
+        self.assertIn('role', data)
+
+    def test_13_auth_login_invalid(self):
+        """API Test: Auth Login with Invalid Credentials"""
+        response = self.client.post('/api/auth/login', json={
+            'email': 'nonexistent@pesiams.edu.in',
+            'password': 'WrongPassword123!'
+        })
+        self.assertEqual(response.status_code, 401)
+        data = response.get_json()
+        self.assertIn('error', data)
+
+    def test_14_recycle_bin_soft_reset(self):
+        """API Test: Soft Reset Data to Recycle Bin"""
+        response = self.client.post('/api/recycle-bin/reset', json={'type': 'all'})
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertIn('students_moved', data)
+
+    def test_15_recycle_bin_hard_reset(self):
+        """API Test: Hard Reset Database Data"""
+        response = self.client.post('/api/recycle-bin/hard-reset')
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertIn('message', data)
+        # Re-initialize DB seed for subsequent tests or clean state
+        init_sqlite_db()
+
 
 if __name__ == '__main__':
     unittest.main()
