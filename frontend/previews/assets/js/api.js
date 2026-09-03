@@ -1,7 +1,8 @@
-// api.js — robust REST API client with dynamic base URL resolution and fallback handlers
+// api.js — robust REST API client with dynamic base URL resolution and stateful fallback handlers
 (function () {
   const MOCK_STORAGE_KEY = 'pp_mock_students_v2';
   const MOCK_COMPANIES_KEY = 'pp_mock_companies_v2';
+  const MOCK_TRASH_KEY = 'pp_mock_recycle_bin_v2';
 
   const INITIAL_STUDENTS = [
     { id: 1, name: "Aarav Sharma", register_number: "1PE23BCA001", department_name: "BCA", section: "Section A", academic_year: "2023-2026", placement_status: "selected", company_name: "Google", package_amount: "28.5", cgpa: 9.2, backlogs: 0, email: "aarav.s@pesiams.edu.in", phone: "+91 98765 43210", skills: ["Python", "React", "SQL"] },
@@ -11,20 +12,30 @@
     { id: 5, name: "Marcus Vance", register_number: "1PE23BSC019", department_name: "B.Sc", section: "Section B", academic_year: "2023-2026", placement_status: "applied", company_name: "TCS Digital", package_amount: "7.5", cgpa: 7.8, backlogs: 0, email: "marcus.v@pesiams.edu.in", phone: "+91 98765 43214", skills: ["C++", "Data Structures"] },
     { id: 6, name: "Emily Watson", register_number: "1PE23BSC085", department_name: "B.Sc", section: "Section C", academic_year: "2023-2026", placement_status: "selected", company_name: "Qualcomm", package_amount: "18.0", cgpa: 8.5, backlogs: 0, email: "emily.w@pesiams.edu.in", phone: "+91 98765 43215", skills: ["Embedded C", "Python"] },
     { id: 7, name: "Rohan Verma", register_number: "1PE23BCOM033", department_name: "B.Com", section: "Section B", academic_year: "2023-2026", placement_status: "unplaced", company_name: null, package_amount: null, cgpa: 7.4, backlogs: 1, email: "rohan.v@pesiams.edu.in", phone: "+91 98765 43216", skills: ["Accounting", "Tally Prime"] },
-    { id: 8, name: "Priya Patel", register_number: "1PE23BBA078", department_name: "BBA – Hospitality & Hotel Management", section: "Section A", academic_year: "2023-2026", placement_status: "applied", company_name: "Taj Hotels", package_amount: "6.5", cgpa: 8.1, backlogs: 0, email: "priya.p@pesiams.edu.in", phone: "+91 98765 43217", skills: ["Hospitality Management", "Communication"] }
+    { id: 8, name: "Priya Patel", register_number: "1PE23BBA078", department_name: "BBA – Hospitality & Hotel Management", section: "Section A", academic_year: "2023-2026", placement_status: "applied", company_name: "Taj Hotels", package_amount: "6.5", cgpa: 8.1, backlogs: 0, email: "priya.p@pesiams.edu.in", phone: "+91 98765 43217", skills: ["Hospitality Management", "Communication"] },
+    { id: 9, name: "Vikram Malhotra", register_number: "1PE23BCA055", department_name: "BCA", section: "Section C", academic_year: "2023-2026", placement_status: "selected", company_name: "Wipro", package_amount: "9.5", cgpa: 8.4, backlogs: 0, email: "vikram.m@pesiams.edu.in", phone: "+91 98765 43218", skills: ["Java", "SQL", "HTML"] },
+    { id: 10, name: "Kavya Hegde", register_number: "1PE23BCOM088", department_name: "B.Com", section: "Section A", academic_year: "2023-2026", placement_status: "applied", company_name: "Deloitte", package_amount: "10.0", cgpa: 8.6, backlogs: 0, email: "kavya.h@pesiams.edu.in", phone: "+91 98765 43219", skills: ["Finance", "Auditing"] },
+    { id: 11, name: "Nikhil Joshi", register_number: "1PE23BSC041", department_name: "B.Sc", section: "Section A", academic_year: "2023-2026", placement_status: "selected", company_name: "Infosys", package_amount: "8.0", cgpa: 8.0, backlogs: 0, email: "nikhil.j@pesiams.edu.in", phone: "+91 98765 43220", skills: ["Python", "C++"] },
+    { id: 12, name: "Sneha Kulkarni", register_number: "1PE23BBA032", department_name: "BBA", section: "Section C", academic_year: "2023-2026", placement_status: "unplaced", company_name: null, package_amount: null, cgpa: 7.2, backlogs: 0, email: "sneha.k@pesiams.edu.in", phone: "+91 98765 43221", skills: ["Marketing", "HR"] }
   ];
 
   const INITIAL_COMPANIES = [
     { id: 1, name: 'Google', visit_date: '2026-09-15', package_offered: 28.5, package_amount: 28.5, status: 'Upcoming', job_role: 'Software Engineer', min_cgpa: 8.5, allowed_backlogs: 0 },
     { id: 2, name: 'Microsoft', visit_date: '2026-09-20', package_offered: 26.0, package_amount: 26.0, status: 'Upcoming', job_role: 'Cloud Developer', min_cgpa: 8.0, allowed_backlogs: 0 },
     { id: 3, name: 'Goldman Sachs', visit_date: '2026-09-25', package_offered: 22.0, package_amount: 22.0, status: 'Active', job_role: 'Financial Analyst', min_cgpa: 8.0, allowed_backlogs: 0 },
-    { id: 4, name: 'Amazon', visit_date: '2026-10-02', package_offered: 24.0, package_amount: 24.0, status: 'Upcoming', job_role: 'SDE-1', min_cgpa: 8.2, allowed_backlogs: 0 }
+    { id: 4, name: 'Amazon', visit_date: '2026-10-02', package_offered: 24.0, package_amount: 24.0, status: 'Upcoming', job_role: 'SDE-1', min_cgpa: 8.2, allowed_backlogs: 0 },
+    { id: 5, name: 'Wipro', visit_date: '2026-10-10', package_offered: 9.5, package_amount: 9.5, status: 'Upcoming', job_role: 'Project Engineer', min_cgpa: 7.0, allowed_backlogs: 1 }
+  ];
+
+  const INITIAL_TRASH = [
+    { id: 101, entity_type: 'student', item_type: 'Student', name: 'Rahul Deshmukh (1PE23BCA099)', deleted_at: new Date(Date.now() - 86400000).toISOString() },
+    { id: 102, entity_type: 'company', item_type: 'Company', name: 'Cognizant (Campus Drive 2026)', deleted_at: new Date(Date.now() - 172800000).toISOString() }
   ];
 
   function getStoredStudents() {
     try {
       const stored = localStorage.getItem(MOCK_STORAGE_KEY);
-      if (!stored) {
+      if (stored === null) {
         localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(INITIAL_STUDENTS));
         return INITIAL_STUDENTS;
       }
@@ -45,7 +56,7 @@
   function getStoredCompanies() {
     try {
       const stored = localStorage.getItem(MOCK_COMPANIES_KEY);
-      if (!stored) {
+      if (stored === null) {
         localStorage.setItem(MOCK_COMPANIES_KEY, JSON.stringify(INITIAL_COMPANIES));
         return INITIAL_COMPANIES;
       }
@@ -60,6 +71,27 @@
       localStorage.setItem(MOCK_COMPANIES_KEY, JSON.stringify(companies));
     } catch (e) {
       console.error('Failed to save mock companies to localStorage:', e);
+    }
+  }
+
+  function getStoredTrash() {
+    try {
+      const stored = localStorage.getItem(MOCK_TRASH_KEY);
+      if (stored === null) {
+        localStorage.setItem(MOCK_TRASH_KEY, JSON.stringify(INITIAL_TRASH));
+        return INITIAL_TRASH;
+      }
+      return JSON.parse(stored);
+    } catch (e) {
+      return INITIAL_TRASH;
+    }
+  }
+
+  function saveStoredTrash(trash) {
+    try {
+      localStorage.setItem(MOCK_TRASH_KEY, JSON.stringify(trash));
+    } catch (e) {
+      console.error('Failed to save mock trash to localStorage:', e);
     }
   }
 
@@ -120,6 +152,113 @@
       const pathname = url.pathname;
       const params = url.searchParams;
 
+      // --- RECYCLE BIN / RESET ENDPOINTS ---
+      // Hard Reset: POST /recycle-bin/hard-reset
+      if (pathname === '/recycle-bin/hard-reset' && method === 'POST') {
+        saveStoredStudents([]);
+        saveStoredCompanies([]);
+        saveStoredTrash([]);
+        return { success: true, message: 'Hard Reset completed! All data and places have been emptied.' };
+      }
+
+      // Soft Reset: POST /recycle-bin/reset
+      if (pathname === '/recycle-bin/reset' && method === 'POST') {
+        const resetType = (body && body.type) ? body.type : 'all';
+        let students = getStoredStudents();
+        let companies = getStoredCompanies();
+        let trash = getStoredTrash();
+
+        let sMoved = 0;
+        let cMoved = 0;
+
+        if (resetType === 'all' || resetType === 'students') {
+          students.forEach(s => {
+            trash.unshift({ id: Date.now() + Math.random(), entity_type: 'student', item_type: 'Student', name: `${s.name} (${s.register_number})`, deleted_at: new Date().toISOString(), record: s });
+            sMoved++;
+          });
+          students = [];
+        }
+
+        if (resetType === 'all' || resetType === 'companies') {
+          companies.forEach(c => {
+            trash.unshift({ id: Date.now() + Math.random(), entity_type: 'company', item_type: 'Company', name: `${c.name} (${c.job_role || 'Drive'})`, deleted_at: new Date().toISOString(), record: c });
+            cMoved++;
+          });
+          companies = [];
+        }
+
+        saveStoredStudents(students);
+        saveStoredCompanies(companies);
+        saveStoredTrash(trash);
+
+        return { success: true, students_moved: sMoved, companies_moved: cMoved, message: 'Soft reset completed successfully.' };
+      }
+
+      // Restore Item: POST /recycle-bin/restore/:id
+      const restoreMatch = pathname.match(/^\/recycle-bin\/restore\/(\d+)$/);
+      if (restoreMatch && method === 'POST') {
+        const id = parseFloat(restoreMatch[1]);
+        let trash = getStoredTrash();
+        const itemIdx = trash.findIndex(t => t.id === id);
+        if (itemIdx !== -1) {
+          const item = trash[itemIdx];
+          trash.splice(itemIdx, 1);
+          saveStoredTrash(trash);
+
+          if (item.record) {
+            if (item.entity_type === 'student' || item.item_type === 'Student') {
+              let students = getStoredStudents();
+              students.unshift(item.record);
+              saveStoredStudents(students);
+            } else if (item.entity_type === 'company' || item.item_type === 'Company') {
+              let companies = getStoredCompanies();
+              companies.unshift(item.record);
+              saveStoredCompanies(companies);
+            }
+          }
+          return { success: true, message: 'Record restored successfully!' };
+        }
+        return { success: true, message: 'Record restored successfully!' };
+      }
+
+      // Empty Trash: DELETE /recycle-bin/empty or DELETE /recycle-bin
+      if ((pathname === '/recycle-bin/empty' || pathname === '/recycle-bin') && method === 'DELETE') {
+        saveStoredTrash([]);
+        return { success: true, message: 'Recycle bin emptied successfully.' };
+      }
+
+      // Delete Single Trash Item: DELETE /recycle-bin/:id
+      const trashIdMatch = pathname.match(/^\/recycle-bin\/(\d+)$/);
+      if (trashIdMatch && method === 'DELETE') {
+        const id = parseFloat(trashIdMatch[1]);
+        let trash = getStoredTrash();
+        trash = trash.filter(t => t.id !== id);
+        saveStoredTrash(trash);
+        return { success: true, message: 'Record permanently deleted from trash.' };
+      }
+
+      // Get Trash List: GET /recycle-bin
+      if (pathname === '/recycle-bin' && method === 'GET') {
+        return getStoredTrash();
+      }
+
+      // --- COMPANY CRUD FALLBACKS ---
+      // Delete Company: DELETE /companies/:id
+      const companyIdMatch = pathname.match(/^\/companies\/(\d+)$/);
+      if (companyIdMatch && method === 'DELETE') {
+        const id = parseInt(companyIdMatch[1], 10);
+        let companies = getStoredCompanies();
+        const found = companies.find(c => c.id === id);
+        if (found) {
+          let trash = getStoredTrash();
+          trash.unshift({ id: Date.now(), entity_type: 'company', item_type: 'Company', name: `${found.name} (${found.job_role || 'Drive'})`, deleted_at: new Date().toISOString(), record: found });
+          saveStoredTrash(trash);
+        }
+        companies = companies.filter(c => c.id !== id);
+        saveStoredCompanies(companies);
+        return { success: true, message: 'Company record deleted successfully.' };
+      }
+
       // Single Student Detail: GET /students/:id
       const studentIdMatch = pathname.match(/^\/students\/(\d+)$/);
       if (studentIdMatch && method === 'GET') {
@@ -146,6 +285,12 @@
       if (studentIdMatch && method === 'DELETE') {
         const id = parseInt(studentIdMatch[1], 10);
         let students = getStoredStudents();
+        const found = students.find(s => s.id === id);
+        if (found) {
+          let trash = getStoredTrash();
+          trash.unshift({ id: Date.now(), entity_type: 'student', item_type: 'Student', name: `${found.name} (${found.register_number})`, deleted_at: new Date().toISOString(), record: found });
+          saveStoredTrash(trash);
+        }
         students = students.filter(s => s.id !== id);
         saveStoredStudents(students);
         return { success: true, message: 'Student record deleted successfully.' };
@@ -156,6 +301,12 @@
         const ids = (body && body.student_ids) ? body.student_ids.map(Number) : [];
         let students = getStoredStudents();
         const initialCount = students.length;
+        const toDelete = students.filter(s => ids.includes(s.id));
+        let trash = getStoredTrash();
+        toDelete.forEach(found => {
+          trash.unshift({ id: Date.now() + Math.random(), entity_type: 'student', item_type: 'Student', name: `${found.name} (${found.register_number})`, deleted_at: new Date().toISOString(), record: found });
+        });
+        saveStoredTrash(trash);
         students = students.filter(s => !ids.includes(s.id));
         saveStoredStudents(students);
         return { success: true, deleted_count: initialCount - students.length, errors: [] };
@@ -274,28 +425,59 @@
         return companies;
       }
 
+      // Dynamic Dashboard Stats Endpoint: GET /dashboard/stats
       if (path.includes('/dashboard/stats')) {
         const students = getStoredStudents();
-        const placedCount = students.filter(s => s.placement_status === 'selected' || s.placement_status === 'joined' || s.placement_status === 'placed').length;
+        const companies = getStoredCompanies();
+
+        // Query filtering if provided
+        const deptFilter = params.get('department') || '';
+        const yearFilter = params.get('academic_year') || '';
+
+        let targetStudents = students;
+        if (deptFilter) {
+          targetStudents = targetStudents.filter(s => s.department_name === deptFilter || s.dept === deptFilter);
+        }
+        if (yearFilter) {
+          targetStudents = targetStudents.filter(s => s.academic_year === yearFilter);
+        }
+
+        const totalStudents = targetStudents.length;
+        const totalCompanies = companies.length;
+        const placedStudents = targetStudents.filter(s => ['selected', 'placed', 'joined'].includes((s.placement_status || '').toLowerCase()));
+        const totalPlaced = placedStudents.length;
+        const totalDrives = Math.max(companies.length, totalPlaced > 0 ? 12 : 0);
+
+        const pct = totalStudents > 0 ? parseFloat(((totalPlaced / totalStudents) * 100).toFixed(1)) : 0.0;
+
+        let packages = placedStudents.map(s => parseFloat(s.package_amount) || 0).filter(p => p > 0);
+        let avgPkg = packages.length > 0 ? (packages.reduce((a, b) => a + b, 0) / packages.length).toFixed(1) : "0.0";
+        let maxPkg = packages.length > 0 ? Math.max(...packages).toFixed(1) : "0.0";
+
+        // Department breakdown
+        const depts = ['BCA', 'BBA', 'BBA – Hospitality & Hotel Management', 'B.Com', 'B.Sc'];
+        const department_stats = depts.map(d => {
+          const dStudents = students.filter(s => s.department_name === d || s.dept === d);
+          const dPlaced = dStudents.filter(s => ['selected', 'placed', 'joined'].includes((s.placement_status || '').toLowerCase())).length;
+          return { department: d, total: dStudents.length, placed: dPlaced };
+        });
+
         return {
-          total_students: 1250,
-          total_companies: 48,
-          total_placed: 890 + placedCount,
-          total_drives: 32,
-          placement_percentage: 71.2,
-          average_package: '8.5',
-          highest_package: '28.5',
-          department_stats: [
-            { department: 'BCA', total: 400, placed: 310 },
-            { department: 'BBA', total: 350, placed: 240 },
-            { department: 'BBA – Hospitality & Hotel Management', total: 150, placed: 95 },
-            { department: 'B.Com', total: 200, placed: 145 },
-            { department: 'B.Sc', total: 150, placed: 100 }
-          ],
-          recent_placements: students.slice(0, 5).map(s => ({
+          total_students: totalStudents,
+          total_companies: totalCompanies,
+          total_placed: totalPlaced,
+          students_selected: totalPlaced,
+          total_offer_letters: totalPlaced,
+          eligible_students: targetStudents.filter(s => (s.backlogs || 0) === 0).length,
+          total_drives: totalDrives,
+          placement_percentage: pct,
+          average_package: avgPkg,
+          highest_package: maxPkg,
+          department_stats: department_stats,
+          recent_placements: targetStudents.slice(0, 5).map(s => ({
             student_name: s.name,
             register_number: s.register_number,
-            company_name: s.company_name || 'Upcoming',
+            company_name: s.company_name || 'Campus Drive',
             package_amount: s.package_amount || '8.0',
             current_stage: s.placement_status === 'selected' ? 'Selected' : 'Applied'
           }))
@@ -312,14 +494,94 @@
       }
 
       if (path.includes('/dashboard/sections')) {
+        const sectionName = params.get('section') || 'Section A';
+        const students = getStoredStudents().filter(s => (s.section || '').includes(sectionName.replace('Section ', '')) || s.section === sectionName);
+        const placed = students.filter(s => ['selected', 'placed', 'joined'].includes((s.placement_status || '').toLowerCase())).length;
+        const pct = students.length > 0 ? parseFloat(((placed / students.length) * 100).toFixed(1)) : 0.0;
         return {
-          section: 'Section A',
-          total_students: 120,
-          placed_students: 88,
-          placement_rate: 73.3,
-          average_package: '8.2',
-          highest_package: '24.0',
-          students: getStoredStudents().slice(0, 5)
+          section: sectionName,
+          total_students: students.length,
+          placed_students: placed,
+          placement_rate: pct,
+          average_package: students.length > 0 ? '8.2' : '0.0',
+          highest_package: students.length > 0 ? '24.0' : '0.0',
+          students: students.slice(0, 5)
+        };
+      }
+
+      // --- AI HUB ENDPOINTS FALLBACK ---
+      if (path.includes('/ai/chatbot')) {
+        const queryText = (body && body.query) ? body.query.trim() : 'placement overview';
+        const students = getStoredStudents();
+        const companies = getStoredCompanies();
+        const placedCount = students.filter(s => ['selected', 'placed', 'joined'].includes((s.placement_status||'').toLowerCase())).length;
+
+        let botReply = `**Placement Pro AI Assistant Response:**\n\nRegarding your question about "*${queryText}*":\n\n` +
+          `• **Total Students Registered**: ${students.length}\n` +
+          `• **Active Corporate Drives**: ${companies.length}\n` +
+          `• **Total Placed Candidates**: ${placedCount}\n` +
+          `• **Highest Package Offered**: 28.5 ₹ LPA\n\n` +
+          `PESIAMS academic departments (BCA, BBA, B.Com, B.Sc) are actively participating in campus hiring. You can run **Resume Scoring** or view **Skill Gap Analysis** for detailed candidate insights.`;
+
+        return { success: true, response: botReply, text: botReply };
+      }
+
+      if (path.includes('/ai/analyze-resume')) {
+        return {
+          section1_ats: {
+            ats_score: 82,
+            detected_skills: ["Python", "SQL", "React", "Data Structures", "Git"],
+            keyword_optimization: [
+              { category: "Programming", found: 4, total: 5 },
+              { category: "Web Frameworks", found: 3, total: 4 },
+              { category: "Database & Cloud", found: 2, total: 3 }
+            ],
+            formatting_check: {
+              overall: "pass",
+              checks: [
+                { item: "Standard Font Usage", status: "pass" },
+                { item: "Section Header Hierarchy", status: "pass" },
+                { item: "Single Column Layout", status: "pass" }
+              ]
+            },
+            critical_fixes: ["Add measurable impact metrics (e.g. 'Improved efficiency by 25%')."]
+          },
+          section2_ai: {
+            ai_generated_pct: 12,
+            human_written_pct: 88,
+            tone: "Professional & Authentic",
+            phrases_to_rewrite: ["Responsible for managing data entry workflows"]
+          },
+          section3_recruiter: {
+            readability_score: "High",
+            verdict: "Strong Candidate for Placement Drives"
+          }
+        };
+      }
+
+      if (path.includes('/ai/recommend-drives') || path.includes('/ai/recommendations')) {
+        const students = getStoredStudents();
+        return {
+          recommendations: students.slice(0, 5).map(s => ({
+            student_id: s.id,
+            name: s.name,
+            register_number: s.register_number,
+            department: s.department_name,
+            match_score: Math.floor(85 + Math.random() * 12),
+            reasons: ["Meets minimum CGPA criteria", "Has required technical skill matrix"]
+          }))
+        };
+      }
+
+      if (path.includes('/ai/interview-prep')) {
+        return {
+          technical_questions: [
+            { question: "Explain the difference between SQL JOIN types and indexing.", topic: "Database Systems" },
+            { question: "How does Python handle memory management and garbage collection?", topic: "Core Python" }
+          ],
+          hr_questions: [
+            { question: "Describe a situation where you had to work under tight project deadlines.", topic: "Behavioral" }
+          ]
         };
       }
 
@@ -368,19 +630,6 @@
 
       if (path.includes('/drives/repeat-alerts')) return { alerts: [] };
       if (path.includes('/notifications')) return { notifications: [] };
-      if (path.includes('/recycle-bin/reset')) {
-        return { success: true, students_moved: 45, companies_moved: 12, message: 'Soft reset completed!' };
-      }
-      if (path.includes('/recycle-bin/hard-reset')) {
-        return { success: true, message: 'Hard Reset completed!' };
-      }
-      if (path.includes('/recycle-bin')) {
-        if (method === 'DELETE') return { success: true, message: 'Recycle bin item deleted permanently.' };
-        return [
-          { id: 101, item_type: 'Student', name: 'Aarav Sharma (1PE23BCA001)', deleted_at: '2026-09-01 14:30:00' },
-          { id: 102, item_type: 'Company', name: 'Google (Campus Drive 2026)', deleted_at: '2026-09-01 15:45:00' }
-        ];
-      }
 
       if (method === 'GET') return [];
       return { success: true, message: 'Operation completed in preview mode' };
