@@ -1,3 +1,4 @@
+# pyrefly: ignore [untyped-import]
 import pymysql
 import os
 
@@ -10,6 +11,7 @@ conn = pymysql.connect(
     password="password",
     database="PESIams_placement",
     charset='utf8mb4',
+    # pyrefly: ignore [implicit-import]
     cursorclass=pymysql.cursors.DictCursor
 )
 

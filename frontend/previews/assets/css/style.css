@@ -1351,13 +1351,96 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 2px;
 }
 
-.sg-training-gap {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #FCA5A5;
-  background: rgba(239, 68, 68, 0.2);
-  padding: 0.1rem 0.5rem;
-  border-radius: 999px;
-  white-space: nowrap;
+/* ==========================================================================
+   RESPONSIVE DESIGN & MOBILE MULTITASKING / SPLIT-SCREEN LAYOUT FIXES
+   ========================================================================== */
+
+/* Universal text containment to prevent text/numbers spilling out of boxes */
+.kpi-value, .kpi-title, .kpi-subtext, .audit-gauge-score, .pp-card, .table, td, th, .badge-pill-success, .badge-pill-warning, .badge-pill-danger, .badge-pill-info {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+/* Fluid responsive typography for numbers in cards */
+.kpi-value {
+  font-size: clamp(1.25rem, 4vw, 2.15rem) !important;
+  line-height: 1.25;
+}
+
+/* Mobile & Multitasking Window Modes (Width <= 768px) */
+@media (max-width: 768px) {
+  #sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: 260px !important;
+    z-index: 1050;
+    box-shadow: 0 0 20px rgba(0,0,0,0.15);
+  }
+
+  #sidebar.show-mobile {
+    transform: translateX(0) !important;
+  }
+
+  #top-header {
+    left: 0 !important;
+    margin-left: 0 !important;
+    padding: 0 1rem !important;
+    height: 60px !important;
+  }
+
+  #main-wrapper {
+    margin-left: 0 !important;
+    margin-top: 60px !important;
+    padding: 1rem !important;
+  }
+
+  .header-search-container {
+    width: 100% !important;
+    max-width: 180px;
+  }
+
+  .audit-gauge-ring {
+    width: 120px !important;
+    height: 120px !important;
+  }
+
+  .audit-gauge-score {
+    font-size: 1.5rem !important;
+  }
+
+  .pp-card {
+    padding: 1rem !important;
+    border-radius: 12px !important;
+  }
+
+  /* Table responsiveness on split-screen */
+  .table-responsive {
+    border-radius: 10px;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Extra Small Devices & Android Multitasking Tiles (Width <= 480px) */
+@media (max-width: 480px) {
+  .header-search-container {
+    display: none;
+  }
+
+  .header-actions {
+    gap: 0.5rem !important;
+  }
+
+  .btn {
+    font-size: 0.825rem !important;
+    padding: 0.4rem 0.75rem !important;
+  }
+
+  .kpi-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
 }
 

@@ -61,7 +61,7 @@ if (!$student_id) {
             
             <div class="mb-3">
               <label for="docFile" class="form-label small font-weight-600 text-muted">FILE</label>
-              <input type="file" class="form-control" id="docFile" name="doc_file" required accept=".pdf,.doc,.docx,.jpg,.png">
+              <input type="file" class="form-control" id="docFile" name="doc_file" autocomplete="off" required accept=".pdf,.doc,.docx,.jpg,.png">
               <div class="form-text small text-muted">Max 20MB. PDF, Word, JPG, PNG allowed.</div>
             </div>
             

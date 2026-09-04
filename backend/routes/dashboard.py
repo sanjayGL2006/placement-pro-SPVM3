@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
-from database import get_cursor
-from routes.auth import token_required
+from ..database import get_cursor
+from .auth import token_required
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
