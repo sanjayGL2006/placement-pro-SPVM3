@@ -102,9 +102,9 @@
 
               <!-- Graphical Selectable Buttons -->
               <div class="row g-3">
-                <!-- Light Mode (Active) -->
+                <!-- Light Mode -->
                 <div class="col-12 col-md-4">
-                  <div class="theme-option-card active" onclick="selectTheme(this)">
+                  <div class="theme-option-card" id="themeCardLight" onclick="selectTheme('light')">
                     <div class="theme-preview-box bg-white d-flex align-items-center justify-content-center">
                       <i class="fa-solid fa-sun text-warning" style="font-size: 1.5rem;"></i>
                     </div>
@@ -115,7 +115,7 @@
 
                 <!-- Dark Mode -->
                 <div class="col-12 col-md-4">
-                  <div class="theme-option-card" onclick="selectTheme(this)">
+                  <div class="theme-option-card" id="themeCardDark" onclick="selectTheme('dark')">
                     <div class="theme-preview-box bg-dark d-flex align-items-center justify-content-center">
                       <i class="fa-solid fa-moon text-light" style="font-size: 1.5rem;"></i>
                     </div>
@@ -126,7 +126,7 @@
 
                 <!-- System -->
                 <div class="col-12 col-md-4">
-                  <div class="theme-option-card" onclick="selectTheme(this)">
+                  <div class="theme-option-card" id="themeCardSystem" onclick="selectTheme('system')">
                     <div class="theme-preview-box bg-light d-flex align-items-center justify-content-center">
                       <i class="fa-solid fa-desktop text-primary" style="font-size: 1.5rem;"></i>
                     </div>
@@ -448,13 +448,16 @@
       if (res.isConfirmed) {
         try {
           const resApi = await API.post('/recycle-bin/reset', { type });
-          const studentsMoved = resApi.students_moved !== undefined ? resApi.students_moved : 45;
-          const companiesMoved = resApi.companies_moved !== undefined ? resApi.companies_moved : 12;
+          const studentsMoved = resApi.students_moved !== undefined ? resApi.students_moved : 0;
+          const companiesMoved = resApi.companies_moved !== undefined ? resApi.companies_moved : 0;
           showToast(`Soft reset completed! Moved ${studentsMoved} students and ${companiesMoved} companies to trash.`);
           loadTrash();
+          window.dispatchEvent(new Event('pp_data_changed'));
+          localStorage.setItem('pp_last_sync', Date.now().toString());
         } catch (err) {
           showToast(err.message || 'Soft reset simulation completed', 'info');
           loadTrash();
+          window.dispatchEvent(new Event('pp_data_changed'));
         }
       }
     }
@@ -475,9 +478,12 @@
           const resApi = await API.post('/recycle-bin/hard-reset');
           showToast(resApi.message || 'Hard Reset completed! All data and places have been emptied.');
           loadTrash();
+          window.dispatchEvent(new Event('pp_data_changed'));
+          localStorage.setItem('pp_last_sync', Date.now().toString());
         } catch (err) {
           showToast(err.message || 'Hard Reset completed!', 'info');
           loadTrash();
+          window.dispatchEvent(new Event('pp_data_changed'));
         }
       }
     }
@@ -487,6 +493,8 @@
         await API.post(`/recycle-bin/restore/${id}`);
         showToast('Record restored successfully!');
         loadTrash();
+        window.dispatchEvent(new Event('pp_data_changed'));
+        localStorage.setItem('pp_last_sync', Date.now().toString());
       } catch (err) {
         showToast('Record restored successfully!', 'info');
         loadTrash();
@@ -539,16 +547,52 @@
       }
     }
 
+    // --- Appearance Theme Handler ---
+    function selectTheme(theme) {
+      localStorage.setItem('app_theme', theme);
+      if (window.applyAppTheme) {
+        window.applyAppTheme(theme);
+      } else {
+        let effective = theme;
+        if (theme === 'system') {
+          effective = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', effective);
+        if (document.body) document.body.setAttribute('data-theme', effective);
+      }
+      updateThemeCardsUI(theme);
+      showToast(`Appearance updated to ${theme.charAt(0).toUpperCase() + theme.slice(1)} mode.`);
+    }
+
+    function updateThemeCardsUI(theme) {
+      const t = theme || localStorage.getItem('app_theme') || 'system';
+      ['light', 'dark', 'system'].forEach(k => {
+        const el = document.getElementById(`themeCard${k.charAt(0).toUpperCase() + k.slice(1)}`);
+        if (el) {
+          if (k === t) el.classList.add('active');
+          else el.classList.remove('active');
+        }
+      });
+    }
+
     function loadAutoUpdateSettings() {
       const autoUpdate = localStorage.getItem('setting_auto_update') !== 'false';
       const interval = localStorage.getItem('setting_update_interval') || '30000';
       const connectUpcoming = localStorage.getItem('setting_connect_upcoming') !== 'false';
       const leadDays = localStorage.getItem('setting_upcoming_lead_days') || '3';
+      const emailDigest = localStorage.getItem('setting_email_digest') !== 'false';
+      const smsAlerts = localStorage.getItem('setting_sms_alerts') === 'true';
+      const pushNotifs = localStorage.getItem('setting_push_notifs') !== 'false';
 
       if (document.getElementById('switchAutoUpdate')) document.getElementById('switchAutoUpdate').checked = autoUpdate;
       if (document.getElementById('selectUpdateInterval')) document.getElementById('selectUpdateInterval').value = interval;
       if (document.getElementById('switchConnectUpcoming')) document.getElementById('switchConnectUpcoming').checked = connectUpcoming;
       if (document.getElementById('selectUpcomingLeadDays')) document.getElementById('selectUpcomingLeadDays').value = leadDays;
+      if (document.getElementById('switchEmailDigest')) document.getElementById('switchEmailDigest').checked = emailDigest;
+      if (document.getElementById('switchSmsAlerts')) document.getElementById('switchSmsAlerts').checked = smsAlerts;
+      if (document.getElementById('switchPush')) document.getElementById('switchPush').checked = pushNotifs;
+
+      updateThemeCardsUI();
     }
 
     function saveAutoUpdateSettings(showToastMsg = false) {
@@ -556,11 +600,21 @@
       const interval = document.getElementById('selectUpdateInterval') ? document.getElementById('selectUpdateInterval').value : '30000';
       const connectUpcoming = document.getElementById('switchConnectUpcoming') ? document.getElementById('switchConnectUpcoming').checked : true;
       const leadDays = document.getElementById('selectUpcomingLeadDays') ? document.getElementById('selectUpcomingLeadDays').value : '3';
+      const emailDigest = document.getElementById('switchEmailDigest') ? document.getElementById('switchEmailDigest').checked : true;
+      const smsAlerts = document.getElementById('switchSmsAlerts') ? document.getElementById('switchSmsAlerts').checked : false;
+      const pushNotifs = document.getElementById('switchPush') ? document.getElementById('switchPush').checked : true;
 
       localStorage.setItem('setting_auto_update', autoUpdate ? 'true' : 'false');
       localStorage.setItem('setting_update_interval', interval);
       localStorage.setItem('setting_connect_upcoming', connectUpcoming ? 'true' : 'false');
       localStorage.setItem('setting_upcoming_lead_days', leadDays);
+      localStorage.setItem('setting_email_digest', emailDigest ? 'true' : 'false');
+      localStorage.setItem('setting_sms_alerts', smsAlerts ? 'true' : 'false');
+      localStorage.setItem('setting_push_notifs', pushNotifs ? 'true' : 'false');
+
+      if (pushNotifs && 'Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
 
       if (showToastMsg) {
         showToast('Notification & Auto-Update settings saved successfully!');

@@ -471,8 +471,9 @@
       try {
         const result = await API.post('/ai/chatbot', { query: text });
         loader.remove();
-        // Replace regex formatting
-        let responseStr = result.response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Safe string coercion
+        const rawText = (result && (result.response || result.message || result.text || result.answer)) || 'I have processed your query, but received an empty response.';
+        let responseStr = String(rawText).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         responseStr = responseStr.replace(/\*(.*?)\*/g, '<em>$1</em>');
         responseStr = responseStr.replace(/\n/g, '<br>');
         appendChatMessage(responseStr, 'bot');

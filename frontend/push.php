@@ -417,8 +417,9 @@
       }
 
       tbody.innerHTML = list.map(s => {
-        const skillsHtml = s.skills 
-          ? s.skills.split(',').slice(0, 3).map(sk => `<span class="skill-pill">${sk.trim()}</span>`).join('')
+        const skillsArray = Array.isArray(s.skills) ? s.skills : (typeof s.skills === 'string' ? s.skills.split(',') : []);
+        const skillsHtml = skillsArray.length 
+          ? skillsArray.slice(0, 3).map(sk => `<span class="skill-pill">${String(sk).trim()}</span>`).join('')
           : '<span class="text-muted small">-</span>';
 
         const statusBadge = s.placement_status === 'selected' || s.placement_status === 'joined'
@@ -620,8 +621,9 @@
         const s = await API.get(`/students/${id}`);
         document.getElementById('detailModalTitle').innerText = `${s.name} — Profile Tracker`;
 
-        const skillsHtml = s.skills 
-          ? s.skills.split(',').map(sk => `<span class="skill-pill">${sk.trim()}</span>`).join('')
+        const modalSkills = Array.isArray(s.skills) ? s.skills : (typeof s.skills === 'string' ? s.skills.split(',') : []);
+        const skillsHtml = modalSkills.length 
+          ? modalSkills.map(sk => `<span class="skill-pill">${String(sk).trim()}</span>`).join('')
           : '<span class="text-muted small">-</span>';
 
         let historyHtml = '<p class="text-muted small">No active recruitment drive history recorded.</p>';

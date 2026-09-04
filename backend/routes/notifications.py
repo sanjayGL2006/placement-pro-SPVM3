@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify
-from ..database import get_cursor, commit
+try:
+    from database import get_cursor, commit
+except ImportError:
+    from ..database import get_cursor, commit
 from .auth import token_required
 
 notifications_bp = Blueprint("notifications", __name__)

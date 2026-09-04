@@ -105,7 +105,7 @@
       const cardsHtml = list.map(c => {
         const statusVal = c.status || 'Live';
         const statusClass = c.statusClass || 'success';
-        const initials = c.initials || c.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const initials = c.initials || (c.name ? c.name.split(' ').map(n => n[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() : 'CD');
         const color = c.color || '#4F46E5';
         
         let visitStr = 'TBD';

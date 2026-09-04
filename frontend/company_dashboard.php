@@ -268,8 +268,10 @@
     async function loadCompanyDetails() {
       try {
         const c = await API.get(`/companies/${companyId}`);
-        document.getElementById('dashHeaderTitle').innerText = `${c.name} — Recruitment Drive Dashboard`;
-        document.getElementById('compName').innerText = c.name;
+        if (!c) throw new Error('Company details not found');
+        const compName = c.name || 'Campus Recruiter';
+        document.getElementById('dashHeaderTitle').innerText = `${compName} — Recruitment Drive Dashboard`;
+        document.getElementById('compName').innerText = compName;
         document.getElementById('compIndustry').innerText = c.industry || 'IT Services';
         document.getElementById('compLocation').innerText = c.location || 'TBD';
         document.getElementById('compHrEmail').innerText = c.hr_email || 'hr@company.com';
@@ -277,11 +279,11 @@
         document.getElementById('compPackage').innerText = c.package_amount ? `${c.package_amount} LPA` : (c.avg_package ? `${c.avg_package} LPA` : '0 LPA');
         document.getElementById('compVisitDate').innerText = c.visit_date ? new Date(c.visit_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'}) : 'TBD';
 
-        const initials = c.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        document.getElementById('compInitials').innerText = initials;
+        const initials = compName ? compName.split(' ').map(n => n[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() : 'CD';
+        document.getElementById('compInitials').innerText = initials || 'CD';
 
         // Render Roster
-        renderRoster(c.selected_students);
+        renderRoster(c.selected_students || []);
       } catch (err) {
         showToast('Failed to load drive details: ' + err.message, 'danger');
       }

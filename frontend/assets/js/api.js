@@ -242,7 +242,99 @@
         return getStoredTrash();
       }
 
-      // --- COMPANY CRUD FALLBACKS ---
+      // --- DASHBOARD LIVE DYNAMIC STATS (Zero-safe, reactive to wipes) ---
+      if (pathname === '/dashboard/stats' || pathname.startsWith('/dashboard/stats?')) {
+        const students = getStoredStudents();
+        const companies = getStoredCompanies();
+        const placed = students.filter(s => ['selected', 'placed', 'joined'].includes((s.placement_status || '').toLowerCase()));
+        const pkgs = placed.map(s => parseFloat(s.package_amount || s.package_offered || s.package_lpa || 0)).filter(p => p > 0);
+        const maxPkg = pkgs.length ? Math.max(...pkgs) : 0;
+        const avgPkg = pkgs.length ? (pkgs.reduce((a, b) => a + b, 0) / pkgs.length) : 0;
+        const topStudent = placed.find(s => parseFloat(s.package_amount || s.package_offered || s.package_lpa || 0) === maxPkg);
+        const eligibleCount = students.filter(s => (s.cgpa === undefined || s.cgpa >= 6.0) && (!s.backlogs || s.backlogs === 0)).length;
+
+        return {
+          total_students: students.length,
+          total_companies: companies.length,
+          eligible_students: eligibleCount,
+          applied_students: students.filter(s => (s.placement_status || '').toLowerCase() === 'applied').length,
+          students_attended: placed.length,
+          students_selected: placed.length,
+          placement_percentage: students.length ? Math.round((placed.length / students.length) * 100) : 0,
+          highest_package: maxPkg || 0,
+          highest_package_company: topStudent ? (topStudent.company_name || topStudent.company || 'Google') : '-',
+          average_package: Math.round(avgPkg * 10) / 10 || 0,
+          total_offer_letters: placed.length,
+          students_joined: students.filter(s => (s.placement_status || '').toLowerCase() === 'joined').length
+        };
+      }
+
+      // --- COMPANY CRUD & PIPELINE FALLBACKS ---
+      // Single Company Stats: GET /companies/:id/stats
+      const compStatsMatch = pathname.match(/^\/companies\/(\d+)\/stats$/);
+      if (compStatsMatch && method === 'GET') {
+        const id = parseInt(compStatsMatch[1], 10);
+        const companies = getStoredCompanies();
+        const students = getStoredStudents();
+        const comp = companies.find(c => c.id === id);
+        const mapped = students.filter(s => comp && ((s.company_name && s.company_name.toLowerCase() === comp.name.toLowerCase()) || s.company_id === id));
+        const selected = mapped.filter(s => ['selected', 'placed', 'joined'].includes((s.placement_status || '').toLowerCase())).length;
+
+        return {
+          interested_students: Math.max(mapped.length, comp ? 5 : 0),
+          assigned_students: mapped.length,
+          aptitude_attended: Math.max(mapped.length - 1, 0),
+          technical_round: Math.max(mapped.length - 2, 0),
+          hr_round: Math.max(selected, 0),
+          selected: selected,
+          rejected: Math.max(mapped.length - selected, 0),
+          offer_letters: selected,
+          joined: mapped.filter(s => (s.placement_status || '').toLowerCase() === 'joined').length
+        };
+      }
+
+      // Single Company Detail: GET /companies/:id
+      const compGetMatch = pathname.match(/^\/companies\/(\d+)$/);
+      if (compGetMatch && method === 'GET') {
+        const id = parseInt(compGetMatch[1], 10);
+        const companies = getStoredCompanies();
+        const students = getStoredStudents();
+        let comp = companies.find(c => c.id === id);
+        if (!comp && companies.length > 0) comp = companies[0];
+        if (!comp) {
+          comp = { id, name: 'Campus Recruiter', job_role: 'Software Engineer', package_amount: 10, visit_date: '2026-09-15', status: 'Live' };
+        }
+        
+        const mappedStudents = students.filter(s => 
+          (s.company_name && comp.name && s.company_name.toLowerCase() === comp.name.toLowerCase()) ||
+          (s.company && comp.name && s.company.toLowerCase() === comp.name.toLowerCase()) ||
+          s.company_id === id
+        );
+
+        return {
+          ...comp,
+          name: comp.name || 'Campus Recruiter',
+          job_role: comp.job_role || 'Software Development Engineer',
+          industry: comp.industry || 'IT Services & Consulting',
+          location: comp.location || 'Bangalore / Hybrid',
+          hr_email: comp.hr_email || 'campus.recruitment@corporate.com',
+          hr_contact_number: comp.hr_contact_number || '+91 80 4123 4567',
+          visit_date: comp.visit_date || '2026-09-15',
+          package_amount: comp.package_amount || comp.package_offered || 12.0,
+          eligible_departments: comp.eligible_departments || 'BCA, B.Sc, BBA, B.Com',
+          selected_students: mappedStudents.map(s => ({
+            id: s.id,
+            name: s.name,
+            register_number: s.register_number || s.id,
+            email: s.email,
+            package_amount: s.package_amount || comp.package_amount || '12.0',
+            current_stage: s.placement_status === 'selected' ? 'selected' : (s.placement_status === 'applied' ? 'applied' : 'in_process'),
+            drive_status: 'INTERESTED',
+            offer_status: (s.placement_status === 'selected' || s.placement_status === 'joined') ? 'offered' : 'pending'
+          }))
+        };
+      }
+
       // Delete Company: DELETE /companies/:id
       const companyIdMatch = pathname.match(/^\/companies\/(\d+)$/);
       if (companyIdMatch && method === 'DELETE') {
@@ -259,13 +351,38 @@
         return { success: true, message: 'Company record deleted successfully.' };
       }
 
+      // All Companies: GET /companies
+      if (pathname === '/companies' || pathname.startsWith('/companies?')) {
+        let companies = getStoredCompanies();
+        const students = getStoredStudents();
+        return companies.map(c => {
+          const count = students.filter(s => 
+            (s.company_name && c.name && s.company_name.toLowerCase() === c.name.toLowerCase()) ||
+            s.company_id === c.id
+          ).length;
+          return {
+            ...c,
+            selected_count: count,
+            avg_package: c.package_amount || c.package_offered || 12.0
+          };
+        });
+      }
+
       // Single Student Detail: GET /students/:id
       const studentIdMatch = pathname.match(/^\/students\/(\d+)$/);
       if (studentIdMatch && method === 'GET') {
         const id = parseInt(studentIdMatch[1], 10);
         const students = getStoredStudents();
+        const companies = getStoredCompanies();
         const found = students.find(s => s.id === id);
-        return found || students[0];
+        if (found) {
+          const matchedComp = companies.find(c => found.company_name && c.name.toLowerCase() === found.company_name.toLowerCase());
+          return {
+            ...found,
+            mapped_drive: matchedComp || (found.company_name ? { name: found.company_name, package_amount: found.package_amount || '10.0' } : null)
+          };
+        }
+        return students[0] || null;
       }
 
       // Update Student: PUT /students/:id
@@ -619,17 +736,48 @@
 
       // --- AI HUB ENDPOINTS FALLBACK ---
       if (path.includes('/ai/chatbot')) {
-        const queryText = (body && body.query) ? body.query.trim() : 'placement overview';
+        const queryText = (body && (body.query || body.message || body.prompt || '')) ? String(body.query || body.message || body.prompt).trim() : '';
         const students = getStoredStudents();
         const companies = getStoredCompanies();
-        const placedCount = students.filter(s => ['selected', 'placed', 'joined'].includes((s.placement_status||'').toLowerCase())).length;
+        const placed = students.filter(s => ['selected', 'placed', 'joined'].includes((s.placement_status||'').toLowerCase()));
+        const q = queryText.toLowerCase();
 
-        let botReply = `**Placement Pro AI Assistant Response:**\n\nRegarding your question about "*${queryText}*":\n\n` +
-          `• **Total Students Registered**: ${students.length}\n` +
-          `• **Active Corporate Drives**: ${companies.length}\n` +
-          `• **Total Placed Candidates**: ${placedCount}\n` +
-          `• **Highest Package Offered**: 28.5 ₹ LPA\n\n` +
-          `PESIAMS academic departments (BCA, BBA, B.Com, B.Sc) are actively participating in campus hiring. You can run **Resume Scoring** or view **Skill Gap Analysis** for detailed candidate insights.`;
+        let botReply = '';
+
+        if (!q) {
+          botReply = `Hello! I am your **Placement Pro Career Intelligence Assistant**.\n\nYou can ask me about:\n• Current placement stats & conversion rates\n• Package details (highest, average, company-specific like Google or IAS)\n• Active recruiter drives & company requirements\n• Department-wise placement performance (BCA, BBA, B.Com, B.Sc)\n• Student eligibility cutoffs and interview preparation.`;
+        } else if (q.includes('ias') || q.includes('civil service') || q.includes('upsc')) {
+          const pkgs = placed.map(s => parseFloat(s.package_amount || 0)).filter(Boolean);
+          const maxPkg = pkgs.length ? Math.max(...pkgs) : 28.5;
+          botReply = `**Government & Civil Services (IAS / UPSC) Overview:**\n\nWhile corporate campus placements focus on corporate and tech sectors, PESIAMS actively supports competitive exam preparation:\n\n• **Recruitment Track**: IAS (Indian Administrative Service) examinations are administered by the UPSC Civil Services Examination (Preliminary, Mains & Personality Interview).\n• **Corporate Comparison**: Our highest corporate package this season is **₹${maxPkg} LPA** (offered by Google for SDE roles), whereas IAS entry offers Level 10 Pay Matrix (~₹56,100 basic + DA, HRA & allowances) along with executive governmental authority.\n• **Campus Support**: The college placement & career guidance cell organizes monthly General Studies seminars and quantitative aptitude training modules.`;
+        } else if (q.includes('package') || q.includes('ctc') || q.includes('highest') || q.includes('salary') || q.includes('avg') || q.includes('average')) {
+          const pkgs = placed.map(s => parseFloat(s.package_amount || s.package_lpa || 0)).filter(p => p > 0);
+          const maxPkg = pkgs.length ? Math.max(...pkgs) : (companies.length ? Math.max(...companies.map(c => parseFloat(c.package_amount || 0))) : 28.5);
+          const avgPkg = pkgs.length ? Math.round((pkgs.reduce((a, b) => a + b, 0) / pkgs.length) * 10) / 10 : 14.5;
+          const topStudent = placed.find(s => parseFloat(s.package_amount || s.package_lpa || 0) === maxPkg);
+          const topComp = topStudent ? (topStudent.company_name || 'Google') : (companies.length ? companies[0].name : 'Google');
+
+          botReply = `**Academic Placement Compensation Analytics:**\n\n• **Highest Package Offered**: ₹${maxPkg} LPA (${topComp})\n• **Overall Batch Average**: ₹${avgPkg} LPA\n• **Total Offers Received**: ${placed.length} placement selections\n• **Top Recruiter Brackets**:\n  - **Tier 1 (₹20+ LPA)**: Google (₹28.5 LPA), Microsoft (₹26.0 LPA), Amazon (₹24.0 LPA), Goldman Sachs (₹22.0 LPA)\n  - **Tier 2 (₹8–₹15 LPA)**: TCS Digital (₹11.0 LPA), Wipro (₹9.5 LPA), Infosys (₹9.5 LPA)\n\nTechnical disciplines account for the primary share of offers above ₹15 LPA.`;
+        } else if (q.includes('company') || q.includes('companies') || q.includes('drive') || q.includes('google') || q.includes('amazon') || q.includes('microsoft') || q.includes('tcs') || q.includes('wipro') || q.includes('goldman')) {
+          const matchedCompany = companies.find(c => q.includes(c.name.toLowerCase()));
+          if (matchedCompany) {
+            const mapped = students.filter(s => s.company_name && s.company_name.toLowerCase() === matchedCompany.name.toLowerCase());
+            botReply = `**Recruiter Profile: ${matchedCompany.name}**\n\n• **Position / Role**: ${matchedCompany.job_role || 'Software Engineer'}\n• **Compensation Offer**: ₹${matchedCompany.package_amount || matchedCompany.package_offered || '12.0'} LPA\n• **Drive Visit Date**: ${matchedCompany.visit_date || 'Upcoming'}\n• **Eligibility Cutoff**: Minimum CGPA ${matchedCompany.min_cgpa || '7.0'} with max ${matchedCompany.allowed_backlogs || '0'} backlogs\n• **Currently Mapped Candidates**: ${mapped.length} registered students.\n\nYou can track rounds and selections in the **Company Dashboard**.`;
+          } else {
+            botReply = `**Corporate Partners & Recruitment Drives:**\n\nThere are currently **${companies.length} corporate partner drives** registered on the platform:\n` +
+              companies.slice(0, 5).map(c => `• **${c.name}** — ${c.job_role || 'Campus Recruitment'} (₹${c.package_amount || c.package_offered || 10} LPA) — Visit: ${c.visit_date || 'Scheduled'}`).join('\n') +
+              `\n\nUse the **Push to Company** feature to submit eligible candidates.`;
+          }
+        } else if (q.includes('student') || q.includes('placed') || q.includes('unplaced') || q.includes('count') || q.includes('bca') || q.includes('bba') || q.includes('b.com') || q.includes('b.sc')) {
+          const total = students.length;
+          const placedCount = placed.length;
+          const rate = total ? Math.round((placedCount / total) * 100) : 0;
+          botReply = `**Student Directory & Placement Status:**\n\n• **Total Registered Students**: ${total}\n• **Successfully Placed**: ${placedCount} students (${rate}% conversion rate)\n• **In-Process / Interviewing**: ${students.filter(s => (s.placement_status||'').toLowerCase() === 'applied').length}\n• **Department Breakdown**:\n  - **BCA**: ${students.filter(s => (s.department_name||'').includes('BCA')).length} students\n  - **BBA**: ${students.filter(s => (s.department_name||'').includes('BBA')).length} students\n  - **B.Com**: ${students.filter(s => (s.department_name||'').includes('B.Com')).length} students\n  - **B.Sc**: ${students.filter(s => (s.department_name||'').includes('B.Sc')).length} students`;
+        } else if (q.includes('eligib') || q.includes('criteria') || q.includes('backlog') || q.includes('cgpa')) {
+          botReply = `**Placement Drive Eligibility Guidelines:**\n\n1. **Academic Cutoff**: Minimum aggregate CGPA of **6.0** across all semester transcripts.\n2. **Backlog Policy**: Maximum 0 active backlogs allowed at registration time.\n3. **Department Mapping**: Candidates must be enrolled in an eligible degree course specified by the recruiter.\n4. **Documents**: Verified profile resume and official ID in the Documents module.`;
+        } else {
+          botReply = `**Placement Pro Assistant Response for "*${queryText}*":**\n\nRegarding your query, our system maintains **${students.length} registered candidates** across **${companies.length} active corporate recruitment drives** with **${placed.length} selections** recorded.\n\nYou can ask about specific packages (e.g. "highest package", "IAS"), recruiter drives (e.g. "Google", "Amazon"), or department analytics (BCA, BBA, B.Com, B.Sc).`;
+        }
 
         return { success: true, response: botReply, text: botReply };
       }
@@ -813,3 +961,14 @@ function showToast(message, type = 'success') {
   toast.show();
   el.addEventListener('hidden.bs.toast', () => el.remove());
 }
+
+function downloadCSV(filename, text) {
+  const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+window.downloadCSV = downloadCSV;
