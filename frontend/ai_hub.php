@@ -138,7 +138,7 @@
               
               <!-- Input Bar -->
               <form id="chatForm" onsubmit="submitChat(event)" class="d-flex gap-2">
-                <input type="text" id="chatInput" name="chat_input" aria-label="Type placement query here" class="form-control form-control-pp flex-grow-1" placeholder="Type placement query here..." required>
+                <input type="text" id="chatInput" name="chat_input" autocomplete="off" aria-label="Type placement query here" class="form-control form-control-pp flex-grow-1" placeholder="Type placement query here..." required>
                 <button type="submit" class="btn btn-pp-primary px-4" aria-label="Send message"><i class="fa-solid fa-paper-plane"></i></button>
               </form>
             </div>

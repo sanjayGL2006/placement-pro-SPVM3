@@ -1,7 +1,19 @@
-import sqlite3
 import os
 import tempfile
 from flask import g
+import sqlite3
+# PostgreSQL support
+try:
+    # pyrefly: ignore [untyped-import]
+    import psycopg2
+    # pyrefly: ignore [untyped-import]
+    from psycopg2 import pool as pg_pool
+    # pyrefly: ignore [untyped-import]
+    from psycopg2 import extras
+    # pyrefly: ignore [untyped-import]
+    from psycopg2.extras import RealDictCursor
+except ImportError:
+    pg_pool = None  # psycopg2 not installed, will fallback to SQLite
 
 
 def _is_serverless():
@@ -27,6 +39,9 @@ def _default_db_dir():
 
 
 DB_PATH = os.environ.get("DATABASE_PATH") or os.path.join(_default_db_dir(), "placement_pro.db")
+
+# PostgreSQL connection URL (e.g., postgres://user:pass@host:5432/dbname)
+POSTGRES_URL = os.getenv("POSTGRES_URL")
 
 
 def _schema_path():
@@ -135,17 +150,44 @@ def init_db_pool(app):
 def close_db_pool(exc=None):
     conn = g.pop("db_conn", None)
     if conn is not None:
-        conn.close()
+        # Return PostgreSQL connection to pool if applicable
+        if POSTGRES_URL and pg_pool and hasattr(g, "pg_pool"):
+            g.pg_pool.putconn(conn._conn)
+        else:
+            conn.close()
 
 
 def get_conn():
     if "db_conn" not in g:
-        if not os.path.exists(DB_PATH) or os.path.getsize(DB_PATH) == 0:
-            init_sqlite_db()
-        raw_conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        raw_conn.execute("PRAGMA foreign_keys = ON;")
-        raw_conn.row_factory = sqlite3.Row
-        g.db_conn = DictConnection(raw_conn)
+        # Use PostgreSQL if URL is provided and psycopg2 is available
+        if POSTGRES_URL and pg_pool:
+            if not hasattr(g, "pg_pool"):
+                # Initialize a threaded connection pool (min 1, max 10)
+                g.pg_pool = pg_pool.ThreadedConnectionPool(1, 10, dsn=POSTGRES_URL)
+            conn = g.pg_pool.getconn()
+            # psycopg2 returns connection with dict cursor support via RealDictCursor
+            # We'll wrap it in a simple adapter for compatibility
+            class PGDictConnection:
+                def __init__(self, conn):
+                    self._conn = conn
+                def cursor(self, *args, **kwargs):
+                     return conn.cursor(cursor_factory=RealDictCursor)
+                def commit(self):
+                    self._conn.commit()
+                def rollback(self):
+                    self._conn.rollback()
+                def close(self):
+                    self._conn.close()
+            g.db_conn = PGDictConnection(conn)
+        else:
+            # Fallback to SQLite
+            if not os.path.exists(DB_PATH) or os.path.getsize(DB_PATH) == 0:
+                init_sqlite_db()
+            # pyrefly: ignore [unknown-name]
+            raw_conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+            raw_conn.execute("PRAGMA foreign_keys = ON;")
+            raw_conn.row_factory = sqlite3.Row
+            g.db_conn = DictConnection(raw_conn)
     return g.db_conn
 
 

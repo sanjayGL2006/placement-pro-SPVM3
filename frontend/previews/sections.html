@@ -102,11 +102,15 @@
 </aside>
 
 <header id="top-header">
-  <!-- Search Bar -->
-  <div class="header-search-container">
-    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-    <input type="text" placeholder="Search students, companies, records..." id="globalSearchInput" name="global_search" autocomplete="off" aria-label="Search students, companies, records">
-
+  <div class="d-flex align-items-center gap-2">
+    <button class="btn btn-sm btn-light border d-md-none me-1" id="mobileMenuToggle" aria-label="Toggle Navigation Sidebar">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <!-- Search Bar -->
+    <div class="header-search-container">
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      <input type="text" placeholder="Search students, companies, records..." id="globalSearchInput" name="global_search" autocomplete="off" aria-label="Search students, companies, records">
+    </div>
   </div>
 
   <!-- Header Right Actions -->
@@ -158,6 +162,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const badge = document.getElementById('notifBadge');
   const container = document.getElementById('notifListContainer');
   const markAllBtn = document.getElementById('notifMarkAllRead');
+
+  const menuToggle = document.getElementById('mobileMenuToggle');
+  const sidebar = document.getElementById('sidebar');
+  if (menuToggle && sidebar) {
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('show-mobile');
+    });
+    document.addEventListener('click', (e) => {
+      if (sidebar.classList.contains('show-mobile') && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+        sidebar.classList.remove('show-mobile');
+      }
+    });
+  }
 
   async function loadNotifications() {
     try {

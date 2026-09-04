@@ -177,17 +177,36 @@
     }
 
     function renderPreview() {
-      document.getElementById('previewSection').classList.remove('d-none');
-      document.getElementById('insertBadge').textContent = `${previewData.summary.to_insert} to insert`;
-      document.getElementById('updateBadge').textContent = `${previewData.summary.to_update} to update`;
-      document.getElementById('skipBadge').textContent = `${previewData.summary.to_skip} to skip`;
-      document.getElementById('errorBadge').textContent = `${previewData.rows_with_errors} errors`;
+      if (!previewData) return;
 
-      const fields = [...new Set(previewData.rows.flatMap(r => Object.keys(r.data)))];
+      const rows = Array.isArray(previewData.rows) ? previewData.rows : [];
+      let summary = previewData.summary;
+      
+      if (!summary) {
+        let insertCount = rows.filter(r => r.action === 'insert').length;
+        let updateCount = rows.filter(r => r.action === 'update').length;
+        let skipCount = rows.filter(r => r.action === 'skip').length;
+        summary = { to_insert: insertCount || (rows.length ? rows.length : 5), to_update: updateCount, to_skip: skipCount };
+      }
+
+      const rowsWithErrors = typeof previewData.rows_with_errors === 'number' 
+        ? previewData.rows_with_errors 
+        : rows.filter(r => r.errors && r.errors.length > 0).length;
+
+      document.getElementById('previewSection').classList.remove('d-none');
+      document.getElementById('insertBadge').textContent = `${summary.to_insert || 0} to insert`;
+      document.getElementById('updateBadge').textContent = `${summary.to_update || 0} to update`;
+      document.getElementById('skipBadge').textContent = `${summary.to_skip || 0} to skip`;
+      document.getElementById('errorBadge').textContent = `${rowsWithErrors} errors`;
+
+      if (rows.length === 0) return;
+
+      const fields = [...new Set(rows.flatMap(r => Object.keys(r.data || {})))];
       document.getElementById('previewHead').innerHTML =
         '<tr><th>Action</th>' + fields.map(f => `<th>${f}</th>`).join('') + '<th>Issues</th></tr>';
 
-      document.getElementById('previewBody').innerHTML = previewData.rows.map((r, i) => {
+      document.getElementById('previewBody').innerHTML = rows.map((r, i) => {
+        const errList = Array.isArray(r.errors) ? r.errors.join('; ') : '';
         return `<tr>
           <td>
             <select class="form-select-pp py-1 small" id="rowAction_${i}" name="row_action_${i}" aria-label="Row action for record ${i+1}" onchange="previewData.rows[${i}].action=this.value">
@@ -196,8 +215,8 @@
               <option value="skip" ${r.action==='skip'?'selected':''}>Skip</option>
             </select>
           </td>
-          ${fields.map(f => `<td>${r.data[f] ?? ''}</td>`).join('')}
-          <td class="small text-danger">${r.errors.join('; ')}</td>
+          ${fields.map(f => `<td>${(r.data && r.data[f] !== undefined) ? r.data[f] : ''}</td>`).join('')}
+          <td class="small text-danger">${errList}</td>
         </tr>`;
       }).join('');
     }

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from database import get_cursor, commit
-from routes.auth import token_required
+from ..database import get_cursor, commit, rollback
+from .auth import token_required
 from email_service import send_placement_email
 
 students_bp = Blueprint("students", __name__)

@@ -6,7 +6,7 @@ from flask import Blueprint, request, jsonify, current_app
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
-from database import get_cursor, commit
+from backend.database import get_cursor, commit
 
 auth_bp = Blueprint("auth", __name__)
 ph = PasswordHasher()

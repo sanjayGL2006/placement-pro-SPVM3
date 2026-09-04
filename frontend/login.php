@@ -105,15 +105,15 @@
           <form id="registerForm">
             <div class="mb-3">
               <label for="regName" class="form-label font-weight-600 text-uppercase text-muted small" style="font-size: 0.75rem;">FULL NAME</label>
-              <input type="text" class="form-control form-control-pp" id="regName" required placeholder="e.g. Dr. Rajesh Kumar">
+              <input type="text" class="form-control form-control-pp" id="regName" name="reg_name" autocomplete="name" required placeholder="e.g. Dr. Rajesh Kumar">
             </div>
             <div class="mb-3">
               <label for="regEmail" class="form-label font-weight-600 text-uppercase text-muted small" style="font-size: 0.75rem;">WORK EMAIL</label>
-              <input type="email" class="form-control form-control-pp" id="regEmail" required placeholder="name@pesiams.edu.in">
+              <input type="email" class="form-control form-control-pp" id="regEmail" name="reg_email" autocomplete="email" required placeholder="name@pesiams.edu.in">
             </div>
             <div class="mb-3">
               <label for="regPassword" class="form-label font-weight-600 text-uppercase text-muted small" style="font-size: 0.75rem;">PASSWORD</label>
-              <input type="password" class="form-control form-control-pp" id="regPassword" required placeholder="Minimum 6 characters">
+              <input type="password" class="form-control form-control-pp" id="regPassword" name="reg_password" autocomplete="new-password" required placeholder="Minimum 6 characters">
             </div>
             <div class="mb-3">
               <label for="regRole" class="form-label font-weight-600 text-uppercase text-muted small" style="font-size: 0.75rem;">PORTAL ROLE</label>
