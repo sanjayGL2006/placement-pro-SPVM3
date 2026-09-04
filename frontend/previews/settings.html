@@ -113,6 +113,11 @@
 
   <!-- Header Right Actions -->
   <div class="header-actions">
+    <!-- PWA Installation Button (Android & Windows) -->
+    <button class="btn-pwa-install d-none me-1" id="pwaHeaderInstallBtn" title="Install Placement Pro on Android or Windows" aria-label="Install Application">
+      <i class="fa-solid fa-download"></i> <span class="d-none d-sm-inline">Install App</span>
+    </button>
+
     <!-- Help / Question Mark -->
     <button class="header-icon-btn" title="Help & Documentation">
       <i class="fa-regular fa-circle-question"></i>
@@ -240,40 +245,66 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(loadNotifications, 30000);
 });
 
-// --- PWA Installation Logic ---
+// --- Global Theme & Mode Initializer ---
 (function() {
-  // Inject manifest dynamically
+  function applyTheme(theme) {
+    let effective = theme;
+    if (theme === 'system' || !theme) {
+      effective = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', effective);
+    if (document.body) document.body.setAttribute('data-theme', effective);
+  }
+  const savedTheme = localStorage.getItem('app_theme') || 'system';
+  applyTheme(savedTheme);
+
+  if (window.matchMedia) {
+    try {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        const current = localStorage.getItem('app_theme') || 'system';
+        if (current === 'system') applyTheme('system');
+      });
+    } catch(e) {}
+  }
+  window.applyAppTheme = applyTheme;
+})();
+
+// --- PWA Installation Logic (Android & Windows) ---
+(function() {
   const manifestLink = document.createElement('link');
   manifestLink.rel = 'manifest';
   manifestLink.href = 'manifest.json';
   document.head.appendChild(manifestLink);
 
-  // Register Service Worker
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('service-worker.js')
-        .then(reg => console.log('Service Worker registered', reg))
-        .catch(err => console.error('Service Worker registration failed', err));
+        .then(reg => console.log('PWA Service Worker active', reg))
+        .catch(err => console.info('Service Worker note:', err.message));
     });
   }
 
-  // Handle Install Prompt
-  let deferredPrompt;
+  let deferredPrompt = null;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
   window.addEventListener('DOMContentLoaded', () => {
+    const headerBtn = document.getElementById('pwaHeaderInstallBtn');
     const pwaBanner = document.createElement('div');
     pwaBanner.id = 'pwaInstallBanner';
     pwaBanner.className = 'fixed-bottom bg-primary text-white p-3 shadow d-none d-flex justify-content-between align-items-center';
     pwaBanner.style.zIndex = '9999';
     pwaBanner.innerHTML = `
-      <div>
-        <strong>Install Placement Pro App</strong>
-        <p class="mb-0 small" id="pwaInstruction">Add to your home screen for a better experience.</p>
+      <div class="d-flex align-items-center gap-3">
+        <i class="fa-solid fa-cloud-arrow-down" style="font-size: 1.75rem;"></i>
+        <div>
+          <strong class="d-block" style="font-size: 0.95rem;">Install Placement Pro App</strong>
+          <p class="mb-0 small text-white-50" id="pwaInstruction">Install as a desktop or mobile application for faster access.</p>
+        </div>
       </div>
-      <div>
-        <button id="pwaInstallBtn" class="btn btn-light btn-sm font-weight-bold me-2">Install</button>
-        <button id="pwaDismissBtn" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-times"></i></button>
+      <div class="d-flex align-items-center gap-2">
+        <button id="pwaInstallBtn" class="btn btn-light btn-sm font-weight-bold px-3 py-1.5"><i class="fa-solid fa-download me-1"></i> Install</button>
+        <button id="pwaDismissBtn" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-xmark"></i></button>
       </div>
     `;
     document.body.appendChild(pwaBanner);
@@ -281,36 +312,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnInstall = document.getElementById('pwaInstallBtn');
     const btnDismiss = document.getElementById('pwaDismissBtn');
 
-    btnDismiss.addEventListener('click', () => {
-      pwaBanner.classList.add('d-none');
-      localStorage.setItem('pwaDismissed', 'true');
-    });
+    if (btnDismiss) {
+      btnDismiss.addEventListener('click', () => {
+        pwaBanner.classList.add('d-none');
+        localStorage.setItem('pwaDismissed', 'true');
+      });
+    }
 
-    if (localStorage.getItem('pwaDismissed') !== 'true') {
+    async function triggerInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          pwaBanner.classList.add('d-none');
+          if (headerBtn) headerBtn.classList.add('d-none');
+        }
+        deferredPrompt = null;
+      } else if (isIOS) {
+        alert('To install Placement Pro on iOS: Tap the Share button in Safari, then select "Add to Home Screen".');
+      } else {
+        alert('To install Placement Pro: Click the install icon in your browser address bar (top-right) or use Chrome/Edge Menu > Install Placement Pro.');
+      }
+    }
+
+    if (btnInstall) btnInstall.addEventListener('click', triggerInstall);
+    if (headerBtn) headerBtn.addEventListener('click', triggerInstall);
+
+    if (!isStandalone) {
       if (isIOS) {
-        // iOS doesn't support beforeinstallprompt, show instructional banner
-        const isStandalone = window.navigator.standalone === true;
-        if (!isStandalone) {
+        if (headerBtn) headerBtn.classList.remove('d-none');
+        if (localStorage.getItem('pwaDismissed') !== 'true') {
           pwaBanner.classList.remove('d-none');
-          btnInstall.style.display = 'none';
-          document.getElementById('pwaInstruction').innerText = 'Tap Share button below, then "Add to Home Screen".';
+          if (btnInstall) btnInstall.innerHTML = '<i class="fa-solid fa-info me-1"></i> How to Install';
+          document.getElementById('pwaInstruction').innerText = 'Tap Share button in Safari, then "Add to Home Screen".';
         }
       } else {
         window.addEventListener('beforeinstallprompt', (e) => {
           e.preventDefault();
           deferredPrompt = e;
-          if (pwaBanner) pwaBanner.classList.remove('d-none');
-        });
-
-        btnInstall.addEventListener('click', async () => {
-          if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-              console.log('User accepted PWA install');
-            }
-            deferredPrompt = null;
-            pwaBanner.classList.add('d-none');
+          if (headerBtn) headerBtn.classList.remove('d-none');
+          if (localStorage.getItem('pwaDismissed') !== 'true') {
+            pwaBanner.classList.remove('d-none');
           }
         });
       }
@@ -556,9 +598,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
               <!-- Graphical Selectable Buttons -->
               <div class="row g-3">
-                <!-- Light Mode (Active) -->
+                <!-- Light Mode -->
                 <div class="col-12 col-md-4">
-                  <div class="theme-option-card active" onclick="selectTheme(this)">
+                  <div class="theme-option-card" id="themeCardLight" onclick="selectTheme('light')">
                     <div class="theme-preview-box bg-white d-flex align-items-center justify-content-center">
                       <i class="fa-solid fa-sun text-warning" style="font-size: 1.5rem;"></i>
                     </div>
@@ -569,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <!-- Dark Mode -->
                 <div class="col-12 col-md-4">
-                  <div class="theme-option-card" onclick="selectTheme(this)">
+                  <div class="theme-option-card" id="themeCardDark" onclick="selectTheme('dark')">
                     <div class="theme-preview-box bg-dark d-flex align-items-center justify-content-center">
                       <i class="fa-solid fa-moon text-light" style="font-size: 1.5rem;"></i>
                     </div>
@@ -580,7 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <!-- System -->
                 <div class="col-12 col-md-4">
-                  <div class="theme-option-card" onclick="selectTheme(this)">
+                  <div class="theme-option-card" id="themeCardSystem" onclick="selectTheme('system')">
                     <div class="theme-preview-box bg-light d-flex align-items-center justify-content-center">
                       <i class="fa-solid fa-desktop text-primary" style="font-size: 1.5rem;"></i>
                     </div>
@@ -902,13 +944,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.isConfirmed) {
         try {
           const resApi = await API.post('/recycle-bin/reset', { type });
-          const studentsMoved = resApi.students_moved !== undefined ? resApi.students_moved : 45;
-          const companiesMoved = resApi.companies_moved !== undefined ? resApi.companies_moved : 12;
+          const studentsMoved = resApi.students_moved !== undefined ? resApi.students_moved : 0;
+          const companiesMoved = resApi.companies_moved !== undefined ? resApi.companies_moved : 0;
           showToast(`Soft reset completed! Moved ${studentsMoved} students and ${companiesMoved} companies to trash.`);
           loadTrash();
+          window.dispatchEvent(new Event('pp_data_changed'));
+          localStorage.setItem('pp_last_sync', Date.now().toString());
         } catch (err) {
           showToast(err.message || 'Soft reset simulation completed', 'info');
           loadTrash();
+          window.dispatchEvent(new Event('pp_data_changed'));
         }
       }
     }
@@ -929,9 +974,12 @@ document.addEventListener('DOMContentLoaded', () => {
           const resApi = await API.post('/recycle-bin/hard-reset');
           showToast(resApi.message || 'Hard Reset completed! All data and places have been emptied.');
           loadTrash();
+          window.dispatchEvent(new Event('pp_data_changed'));
+          localStorage.setItem('pp_last_sync', Date.now().toString());
         } catch (err) {
           showToast(err.message || 'Hard Reset completed!', 'info');
           loadTrash();
+          window.dispatchEvent(new Event('pp_data_changed'));
         }
       }
     }
@@ -941,6 +989,8 @@ document.addEventListener('DOMContentLoaded', () => {
         await API.post(`/recycle-bin/restore/${id}`);
         showToast('Record restored successfully!');
         loadTrash();
+        window.dispatchEvent(new Event('pp_data_changed'));
+        localStorage.setItem('pp_last_sync', Date.now().toString());
       } catch (err) {
         showToast('Record restored successfully!', 'info');
         loadTrash();
@@ -993,16 +1043,52 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // --- Appearance Theme Handler ---
+    function selectTheme(theme) {
+      localStorage.setItem('app_theme', theme);
+      if (window.applyAppTheme) {
+        window.applyAppTheme(theme);
+      } else {
+        let effective = theme;
+        if (theme === 'system') {
+          effective = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', effective);
+        if (document.body) document.body.setAttribute('data-theme', effective);
+      }
+      updateThemeCardsUI(theme);
+      showToast(`Appearance updated to ${theme.charAt(0).toUpperCase() + theme.slice(1)} mode.`);
+    }
+
+    function updateThemeCardsUI(theme) {
+      const t = theme || localStorage.getItem('app_theme') || 'system';
+      ['light', 'dark', 'system'].forEach(k => {
+        const el = document.getElementById(`themeCard${k.charAt(0).toUpperCase() + k.slice(1)}`);
+        if (el) {
+          if (k === t) el.classList.add('active');
+          else el.classList.remove('active');
+        }
+      });
+    }
+
     function loadAutoUpdateSettings() {
       const autoUpdate = localStorage.getItem('setting_auto_update') !== 'false';
       const interval = localStorage.getItem('setting_update_interval') || '30000';
       const connectUpcoming = localStorage.getItem('setting_connect_upcoming') !== 'false';
       const leadDays = localStorage.getItem('setting_upcoming_lead_days') || '3';
+      const emailDigest = localStorage.getItem('setting_email_digest') !== 'false';
+      const smsAlerts = localStorage.getItem('setting_sms_alerts') === 'true';
+      const pushNotifs = localStorage.getItem('setting_push_notifs') !== 'false';
 
       if (document.getElementById('switchAutoUpdate')) document.getElementById('switchAutoUpdate').checked = autoUpdate;
       if (document.getElementById('selectUpdateInterval')) document.getElementById('selectUpdateInterval').value = interval;
       if (document.getElementById('switchConnectUpcoming')) document.getElementById('switchConnectUpcoming').checked = connectUpcoming;
       if (document.getElementById('selectUpcomingLeadDays')) document.getElementById('selectUpcomingLeadDays').value = leadDays;
+      if (document.getElementById('switchEmailDigest')) document.getElementById('switchEmailDigest').checked = emailDigest;
+      if (document.getElementById('switchSmsAlerts')) document.getElementById('switchSmsAlerts').checked = smsAlerts;
+      if (document.getElementById('switchPush')) document.getElementById('switchPush').checked = pushNotifs;
+
+      updateThemeCardsUI();
     }
 
     function saveAutoUpdateSettings(showToastMsg = false) {
@@ -1010,11 +1096,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const interval = document.getElementById('selectUpdateInterval') ? document.getElementById('selectUpdateInterval').value : '30000';
       const connectUpcoming = document.getElementById('switchConnectUpcoming') ? document.getElementById('switchConnectUpcoming').checked : true;
       const leadDays = document.getElementById('selectUpcomingLeadDays') ? document.getElementById('selectUpcomingLeadDays').value : '3';
+      const emailDigest = document.getElementById('switchEmailDigest') ? document.getElementById('switchEmailDigest').checked : true;
+      const smsAlerts = document.getElementById('switchSmsAlerts') ? document.getElementById('switchSmsAlerts').checked : false;
+      const pushNotifs = document.getElementById('switchPush') ? document.getElementById('switchPush').checked : true;
 
       localStorage.setItem('setting_auto_update', autoUpdate ? 'true' : 'false');
       localStorage.setItem('setting_update_interval', interval);
       localStorage.setItem('setting_connect_upcoming', connectUpcoming ? 'true' : 'false');
       localStorage.setItem('setting_upcoming_lead_days', leadDays);
+      localStorage.setItem('setting_email_digest', emailDigest ? 'true' : 'false');
+      localStorage.setItem('setting_sms_alerts', smsAlerts ? 'true' : 'false');
+      localStorage.setItem('setting_push_notifs', pushNotifs ? 'true' : 'false');
+
+      if (pushNotifs && 'Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
 
       if (showToastMsg) {
         showToast('Notification & Auto-Update settings saved successfully!');

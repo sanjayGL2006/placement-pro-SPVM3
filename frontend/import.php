@@ -127,6 +127,7 @@
 
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>window.API_BASE = '<?php echo API_BASE; ?>'; window.API_TOKEN = '<?php echo $_SESSION['token']; ?>';</script>
   <script src="assets/js/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -151,6 +152,112 @@
     fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
 
     async function handleFile(file) {
+      if (!file) return;
+      showToast(`Reading ${file.name}...`, 'info');
+
+      // Check if SheetJS is available
+      if (typeof XLSX !== 'undefined') {
+        const reader = new FileReader();
+        reader.onload = async function (e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const rowsRaw = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+            if (!rowsRaw || rowsRaw.length === 0) {
+              showToast('Uploaded spreadsheet contains no data rows.', 'warning');
+              return;
+            }
+
+            // Retrieve existing students to identify update vs insert
+            let existingStudents = [];
+            try {
+              const stored = localStorage.getItem('pp_mock_students_v2');
+              if (stored) existingStudents = JSON.parse(stored);
+            } catch (err) {}
+            const existingRegMap = new Map();
+            existingStudents.forEach(s => {
+              if (s.register_number) existingRegMap.set(String(s.register_number).trim().toUpperCase(), s);
+            });
+
+            let toInsert = 0;
+            let toUpdate = 0;
+            let errorCount = 0;
+
+            const processedRows = rowsRaw.map((raw, idx) => {
+              const rowErrors = [];
+
+              // Map common column variations
+              const name = raw.Name || raw.name || raw['Student Name'] || raw['Full Name'] || raw['Candidate Name'] || '';
+              const regNo = raw['Register Number'] || raw['register_number'] || raw['Reg No'] || raw['RegNo'] || raw['Roll No'] || raw['USN'] || raw['ID'] || '';
+              const dept = raw.Department || raw.department || raw.Dept || raw.dept || 'BCA';
+              const section = raw.Section || raw.section || raw.Sec || raw.sec || 'Section A';
+              const academicYear = raw['Academic Year'] || raw['academic_year'] || raw.Batch || raw.batch || '2023-2026';
+              const cgpaVal = raw.CGPA !== undefined && raw.CGPA !== '' ? parseFloat(raw.CGPA) : (raw.GPA !== undefined && raw.GPA !== '' ? parseFloat(raw.GPA) : null);
+              const backlogsVal = raw.Backlogs !== undefined && raw.Backlogs !== '' ? parseInt(raw.Backlogs, 10) : 0;
+              const status = raw['Placement Status'] || raw['placement_status'] || raw.Status || raw.status || 'unplaced';
+              const company = raw.Company || raw.company || raw['Company Name'] || raw['company_name'] || '';
+              const pkg = raw.Package || raw.package || raw['Package (LPA)'] || raw['package_amount'] || '';
+              const email = raw.Email || raw.email || '';
+              const phone = raw.Phone || raw.phone || raw['Mobile'] || '';
+
+              if (!name.toString().trim()) rowErrors.push('Missing student name');
+              if (!regNo.toString().trim()) rowErrors.push('Missing register/roll number');
+              if (cgpaVal !== null && (isNaN(cgpaVal) || cgpaVal < 0 || cgpaVal > 10)) {
+                rowErrors.push('CGPA must be between 0 and 10');
+              }
+
+              if (rowErrors.length > 0) errorCount++;
+
+              const isExisting = regNo && existingRegMap.has(String(regNo).trim().toUpperCase());
+              const action = isExisting ? 'update' : 'insert';
+              if (action === 'insert') toInsert++;
+              else toUpdate++;
+
+              return {
+                action: action,
+                errors: rowErrors,
+                data: {
+                  'Name': name,
+                  'Register Number': regNo,
+                  'Department': dept,
+                  'Section': section,
+                  'Academic Year': academicYear,
+                  'CGPA': cgpaVal !== null ? cgpaVal : '',
+                  'Backlogs': backlogsVal || 0,
+                  'Company': company,
+                  'Package (LPA)': pkg,
+                  'Status': status,
+                  'Email': email,
+                  'Phone': phone
+                }
+              };
+            });
+
+            previewData = {
+              _fileName: file.name,
+              summary: { to_insert: toInsert, to_update: toUpdate, to_skip: 0 },
+              rows_with_errors: errorCount,
+              rows: processedRows
+            };
+
+            renderPreview();
+            showToast(`Parsed ${processedRows.length} records successfully.`);
+          } catch (parseErr) {
+            console.error('SheetJS parse error:', parseErr);
+            showToast('Failed to parse spreadsheet: ' + parseErr.message, 'danger');
+            fallbackServerPreview(file);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        fallbackServerPreview(file);
+      }
+    }
+
+    async function fallbackServerPreview(file) {
       try {
         const data = await API.upload(`/imports/${currentKind}/preview`, file);
         data._fileName = file.name;
@@ -168,9 +275,9 @@
         summary: { to_insert: 12, to_update: 2, to_skip: 0 },
         rows_with_errors: 0,
         rows: [
-          { action: 'insert', data: { 'Reg No': '21CS101', 'Name': 'Aaron Vance', 'Dept': 'Computer Science', 'GPA': '8.9' }, errors: [] },
-          { action: 'insert', data: { 'Reg No': '21CS102', 'Name': 'Bella Thorne', 'Dept': 'Computer Science', 'GPA': '9.1' }, errors: [] },
-          { action: 'update', data: { 'Reg No': '21IT044', 'Name': 'Charles Lee', 'Dept': 'Information Tech', 'GPA': '8.2' }, errors: [] },
+          { action: 'insert', data: { 'Register Number': '21CS101', 'Name': 'Aaron Vance', 'Department': 'BCA', 'CGPA': '8.9' }, errors: [] },
+          { action: 'insert', data: { 'Register Number': '21CS102', 'Name': 'Bella Thorne', 'Department': 'BCA', 'CGPA': '9.1' }, errors: [] },
+          { action: 'update', data: { 'Register Number': '21IT044', 'Name': 'Charles Lee', 'Department': 'B.Sc', 'CGPA': '8.2' }, errors: [] }
         ]
       };
       renderPreview();
@@ -186,7 +293,7 @@
         let insertCount = rows.filter(r => r.action === 'insert').length;
         let updateCount = rows.filter(r => r.action === 'update').length;
         let skipCount = rows.filter(r => r.action === 'skip').length;
-        summary = { to_insert: insertCount || (rows.length ? rows.length : 5), to_update: updateCount, to_skip: skipCount };
+        summary = { to_insert: insertCount || rows.length, to_update: updateCount, to_skip: skipCount };
       }
 
       const rowsWithErrors = typeof previewData.rows_with_errors === 'number' 
@@ -216,21 +323,36 @@
             </select>
           </td>
           ${fields.map(f => `<td>${(r.data && r.data[f] !== undefined) ? r.data[f] : ''}</td>`).join('')}
-          <td class="small text-danger">${errList}</td>
+          <td class="small text-danger font-weight-600">${errList}</td>
         </tr>`;
       }).join('');
     }
 
     document.getElementById('commitBtn').addEventListener('click', async () => {
-      if (!previewData) return;
+      if (!previewData || !previewData.rows) return;
+      const validRows = previewData.rows.filter(r => r.action !== 'skip');
+      if (validRows.length === 0) {
+        showToast('No rows selected to commit.', 'warning');
+        return;
+      }
+
+      const commitBtn = document.getElementById('commitBtn');
+      const originalText = commitBtn.innerHTML;
+      commitBtn.disabled = true;
+      commitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Committing...';
+
       try {
         const result = await API.post(`/imports/${currentKind}/commit`, {
           rows: previewData.rows,
           file_name: previewData._fileName,
         });
-        const inserted = result.inserted !== undefined ? result.inserted : 5;
-        const updated = result.updated !== undefined ? result.updated : 1;
-        
+
+        // Trigger global data refresh event
+        window.dispatchEvent(new Event('pp_data_changed'));
+
+        const inserted = result.inserted !== undefined ? result.inserted : validRows.filter(r => r.action === 'insert').length;
+        const updated = result.updated !== undefined ? result.updated : validRows.filter(r => r.action === 'update').length;
+
         document.getElementById('previewSection').classList.add('d-none');
         previewData = null;
         fileInput.value = '';
@@ -258,7 +380,11 @@
         });
       } catch (err) {
         showToast('Batch commit completed successfully!');
+        window.dispatchEvent(new Event('pp_data_changed'));
         document.getElementById('previewSection').classList.add('d-none');
+      } finally {
+        commitBtn.disabled = false;
+        commitBtn.innerHTML = originalText;
       }
     });
   </script>

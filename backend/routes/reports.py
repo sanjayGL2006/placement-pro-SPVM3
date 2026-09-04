@@ -11,7 +11,10 @@ def _safe_md5(*args, **kwargs):
 hashlib.md5 = _safe_md5
 
 from flask import Blueprint, request, jsonify, send_file
-from ..database import get_cursor
+try:
+    from database import get_cursor
+except ImportError:
+    from ..database import get_cursor
 from .auth import token_required
 
 reports_bp = Blueprint("reports", __name__)

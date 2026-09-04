@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify
-from ..database import get_cursor, commit, rollback
+try:
+    from database import get_cursor, commit, rollback
+except ImportError:
+    from ..database import get_cursor, commit, rollback
 
 
 companies_bp = Blueprint("companies", __name__)

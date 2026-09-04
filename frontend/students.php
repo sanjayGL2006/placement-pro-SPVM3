@@ -709,6 +709,7 @@ require_login(); ?>
 
       try {
         const res = await API.post('/students', payload);
+        window.dispatchEvent(new Event('pp_data_changed'));
         showToast(res.message || 'Student added successfully!');
 
         const modalEl = document.getElementById('addStudentModal');
@@ -739,6 +740,21 @@ require_login(); ?>
             ? `<span class="badge-pill-warning"><i class="fa-solid fa-circle me-1" style="font-size: 0.4rem;"></i> In-process</span>`
             : `<span class="badge-pill-danger"><i class="fa-solid fa-circle me-1" style="font-size: 0.4rem;"></i> Unplaced</span>`);
 
+        const drive = s.mapped_drive || (s.company_name ? { name: s.company_name, package_amount: s.package_amount || '10.0' } : null);
+        const driveHtml = drive ? `
+          <div class="col-12">
+            <div class="p-3 border rounded-3 bg-light">
+              <div class="text-primary font-weight-700 small text-uppercase mb-2"><i class="fa-solid fa-building me-1"></i> Mapped Recruiter Drive</div>
+              <div class="row g-2 small">
+                <div class="col-sm-6"><strong>Company:</strong> ${drive.name || 'Campus Recruiter'}</div>
+                <div class="col-sm-6"><strong>Job Role:</strong> ${drive.job_role || 'Software Engineer / Graduate Trainee'}</div>
+                <div class="col-sm-6"><strong>Package:</strong> ₹${drive.package_amount ? drive.package_amount + ' LPA' : (s.package_amount ? s.package_amount + ' LPA' : 'N/A')}</div>
+                <div class="col-sm-6"><strong>Visit Date:</strong> ${drive.visit_date || 'Scheduled'}</div>
+              </div>
+            </div>
+          </div>
+        ` : '';
+
         modalBody.innerHTML = `
           <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 mb-4">
             <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || 'Student')}&background=4F46E5&color=fff" class="rounded-circle" width="64" height="64">
@@ -751,7 +767,7 @@ require_login(); ?>
 
           <div class="row g-3">
             <div class="col-md-6">
-              <div class="p-3 border rounded-3 bg-white">
+              <div class="p-3 border rounded-3 bg-white h-100">
                 <div class="text-muted small font-weight-600 text-uppercase mb-2 text-primary">Academic Information</div>
                 <div class="mb-2"><strong>Department:</strong> ${formatDept(s.department_name || s.dept || 'N/A')}</div>
                 <div class="mb-2"><strong>Section:</strong> ${formatSection(s.section || s.sec || 'N/A')}</div>
@@ -761,15 +777,16 @@ require_login(); ?>
               </div>
             </div>
             <div class="col-md-6">
-              <div class="p-3 border rounded-3 bg-white">
+              <div class="p-3 border rounded-3 bg-white h-100">
                 <div class="text-muted small font-weight-600 text-uppercase mb-2 text-primary">Placement Information</div>
                 <div class="mb-2"><strong>Placement Status:</strong> <span class="text-capitalize">${s.placement_status || 'Unplaced'}</span></div>
-                <div class="mb-2"><strong>Company:</strong> ${s.company_name || s.company || 'N/A'}</div>
+                <div class="mb-2"><strong>Assigned Company:</strong> ${s.company_name || s.company || 'N/A'}</div>
                 <div class="mb-2"><strong>Package Offered:</strong> ${s.package_amount ? s.package_amount + ' LPA' : 'N/A'}</div>
                 <div class="mb-2"><strong>Email:</strong> ${s.email || (s.name ? s.name.toLowerCase().replace(/\s+/g, '.') + '@pesiams.edu.in' : 'N/A')}</div>
                 <div><strong>Phone:</strong> ${s.phone || '+91 98765 43210'}</div>
               </div>
             </div>
+            ${driveHtml}
           </div>
         `;
       } catch (err) {
@@ -795,6 +812,7 @@ require_login(); ?>
       if (res.isConfirmed) {
         try {
           await API.del(`/students/${studentId}`);
+          window.dispatchEvent(new Event('pp_data_changed'));
           showToast(`Student record deleted successfully.`);
           loadStudents(currentPage || 1);
         } catch (err) {
@@ -822,6 +840,7 @@ require_login(); ?>
       if (res.isConfirmed) {
         try {
           await API.del(`/students/${studentId}`);
+          window.dispatchEvent(new Event('pp_data_changed'));
           showToast(`Student record deleted successfully.`);
 
           if (document.activeElement) document.activeElement.blur();
@@ -899,6 +918,7 @@ require_login(); ?>
           company_id: companyId,
           stage: 'applied'
         });
+        window.dispatchEvent(new Event('pp_data_changed'));
         showToast(`Registered ${result.pushed_count} students successfully!`);
 
         if (document.activeElement) document.activeElement.blur();
@@ -942,41 +962,85 @@ require_login(); ?>
           const result = await API.post('/students/bulk-delete', {
             student_ids: studentIds
           });
-          showToast(`Deleted ${result.deleted_count} student records successfully!`);
-          loadStudents(1);
+          window.dispatchEvent(new Event('pp_data_changed'));
+          showToast(`Deleted ${result.deleted_count || studentIds.length} student records successfully!`);
+          
+          const selectAll = document.getElementById('selectAllStudents');
+          if (selectAll) selectAll.checked = false;
+          const dropdown = document.getElementById('bulkActionsDropdown');
+          if (dropdown) dropdown.classList.add('d-none');
+          
+          await loadStudents(1);
         } catch (err) {
           showToast('Delete failed: ' + err.message, 'danger');
         }
       }
     }
 
-    // Client-side CSV exporter for selected students
-    function exportSelectedStudents() {
+    // Client-side CSV exporter for selected students (Full Records)
+    async function exportSelectedStudents() {
       const checkboxes = document.querySelectorAll('.student-select:checked');
+      if (checkboxes.length === 0) {
+        showToast('Please select at least one student to export.', 'warning');
+        return;
+      }
+      const selectedIds = new Set(Array.from(checkboxes).map(cb => parseInt(cb.value, 10)));
+      
+      let allStudents = [];
+      try {
+        const stored = localStorage.getItem('pp_mock_students_v2');
+        if (stored) allStudents = JSON.parse(stored);
+      } catch (e) {}
 
-      let csvContent = "data:text/csv;charset=utf-8,ID,Name,Register Number,Department,Section,Status\n";
+      let exportList = allStudents.filter(s => selectedIds.has(s.id));
+      if (exportList.length === 0) {
+        // Fallback to table DOM scrape
+        const rows = document.querySelectorAll('#studentTableBody tr');
+        rows.forEach(tr => {
+          const cb = tr.querySelector('.student-select');
+          if (cb && cb.checked) {
+            exportList.push({
+              id: cb.value,
+              name: cb.getAttribute('data-name') || '',
+              register_number: tr.querySelector('td:nth-child(2) .text-muted')?.innerText.trim() || '',
+              department_name: tr.querySelector('td:nth-child(3) .font-weight-600')?.innerText.trim() || '',
+              section: tr.querySelector('td:nth-child(3) .text-muted')?.innerText.trim() || '',
+              placement_status: tr.querySelector('td:nth-child(5)')?.innerText.trim() || ''
+            });
+          }
+        });
+      }
 
-      const tableRows = document.querySelectorAll('#studentTableBody tr');
-      tableRows.forEach(tr => {
-        const cb = tr.querySelector('.student-select');
-        if (cb && cb.checked) {
-          const name = cb.getAttribute('data-name');
-          const reg = tr.querySelector('td:nth-child(2) .text-muted').innerText.trim();
-          const dept = tr.querySelector('td:nth-child(3) .font-weight-600').innerText.trim();
-          const sec = tr.querySelector('td:nth-child(3) .text-muted').innerText.trim();
-          const status = tr.querySelector('td:nth-child(5)').innerText.trim();
-          csvContent += `"${cb.value}","${name}","${reg}","${dept}","${sec}","${status}"\n`;
-        }
+      let csvContent = "data:text/csv;charset=utf-8," + 
+        ["ID", "Name", "Register Number", "Department", "Section", "Academic Year", "CGPA", "Backlogs", "Company", "Package (LPA)", "Status", "Email", "Phone"].join(",") + "\n";
+
+      exportList.forEach(s => {
+        const row = [
+          s.id,
+          `"${(s.name || '').replace(/"/g, '""')}"`,
+          `"${(s.register_number || '').replace(/"/g, '""')}"`,
+          `"${(s.department_name || s.dept || '').replace(/"/g, '""')}"`,
+          `"${(s.section || s.sec || '').replace(/"/g, '""')}"`,
+          `"${(s.academic_year || '2023-2026').replace(/"/g, '""')}"`,
+          s.cgpa ?? 'N/A',
+          s.backlogs ?? 0,
+          `"${(s.company_name || s.company || '-').replace(/"/g, '""')}"`,
+          s.package_amount || '0',
+          `"${(s.placement_status || 'unplaced').replace(/"/g, '""')}"`,
+          `"${(s.email || '').replace(/"/g, '""')}"`,
+          `"${(s.phone || '').replace(/"/g, '""')}"`
+        ];
+        csvContent += row.join(",") + "\n";
       });
 
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `selected_students_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("download", `students_export_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      showToast("Exported selected student records.");
+      showToast(`Exported ${exportList.length} student records successfully.`);
     }
   </script>
 

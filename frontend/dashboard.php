@@ -140,28 +140,32 @@
       <div class="col-12 col-lg-4">
         <div class="pp-card h-100">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="h6 font-weight-700 mb-0">Section-wise</h5>
-            <span class="badge-pill-info">1.8k Placed</span>
+            <h5 class="h6 font-weight-700 mb-0">Department Placements</h5>
+            <span class="badge-pill-info" id="donutPlacedBadge">0 Placed</span>
           </div>
           <div class="position-relative d-flex justify-content-center align-items-center" style="height: 200px;">
             <canvas id="sectionDonutChart"></canvas>
             <div class="position-absolute text-center">
-              <div class="h4 font-weight-800 mb-0">1.8k</div>
+              <div class="h4 font-weight-800 mb-0" id="donutPlacedCenter">0</div>
               <div class="text-muted small">Placed</div>
             </div>
           </div>
           <div class="mt-3 pt-3 border-top d-flex justify-content-around text-center">
             <div>
-              <div class="small text-muted mb-1"><i class="fa-solid fa-circle me-1" style="color: #4F46E5;"></i> CS/IT</div>
-              <div class="font-weight-700">950</div>
+              <div class="small text-muted mb-1"><i class="fa-solid fa-circle me-1" style="color: #4F46E5;"></i> BCA</div>
+              <div class="font-weight-700" id="secStatBCA">0</div>
             </div>
             <div>
-              <div class="small text-muted mb-1"><i class="fa-solid fa-circle me-1" style="color: #10B981;"></i> Electronics</div>
-              <div class="font-weight-700">520</div>
+              <div class="small text-muted mb-1"><i class="fa-solid fa-circle me-1" style="color: #10B981;"></i> BBA</div>
+              <div class="font-weight-700" id="secStatBBA">0</div>
             </div>
             <div>
-              <div class="small text-muted mb-1"><i class="fa-solid fa-circle me-1" style="color: #F59E0B;"></i> Mechanical</div>
-              <div class="font-weight-700">380</div>
+              <div class="small text-muted mb-1"><i class="fa-solid fa-circle me-1" style="color: #F59E0B;"></i> B.Com</div>
+              <div class="font-weight-700" id="secStatBCom">0</div>
+            </div>
+            <div>
+              <div class="small text-muted mb-1"><i class="fa-solid fa-circle me-1" style="color: #6366F1;"></i> B.Sc</div>
+              <div class="font-weight-700" id="secStatBSc">0</div>
             </div>
           </div>
         </div>
@@ -265,13 +269,13 @@
   <script>
     // Initialize Company Hiring Bar Chart
     const ctxBar = document.getElementById('companyHiringChart').getContext('2d');
-    new Chart(ctxBar, {
+    const companyHiringChartInstance = new Chart(ctxBar, {
       type: 'bar',
       data: {
-        labels: ['Goldman Sachs', 'Amazon', 'TCS Digital', 'Infosys', 'Wipro', 'Accenture'],
+        labels: ['Google', 'Amazon', 'TCS Digital', 'Infosys', 'Wipro', 'Microsoft'],
         datasets: [{
           label: 'Offers Made',
-          data: [42, 65, 120, 180, 140, 210],
+          data: [0, 0, 0, 0, 0, 0],
           backgroundColor: '#4F46E5',
           borderRadius: 6,
         }]
@@ -281,21 +285,21 @@
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          y: { grid: { color: '#F3F4F6' }, ticks: { color: '#6B7280' } },
+          y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { color: '#6B7280' } },
           x: { grid: { display: false }, ticks: { color: '#6B7280' } }
         }
       }
     });
 
-    // Initialize Section Donut Chart
+    // Initialize Department Donut Chart
     const ctxDonut = document.getElementById('sectionDonutChart').getContext('2d');
-    new Chart(ctxDonut, {
+    const sectionDonutInstance = new Chart(ctxDonut, {
       type: 'doughnut',
       data: {
-        labels: ['CS/IT', 'Electronics', 'Mechanical'],
+        labels: ['BCA', 'BBA', 'B.Com', 'B.Sc'],
         datasets: [{
-          data: [950, 520, 380],
-          backgroundColor: ['#4F46E5', '#10B981', '#F59E0B'],
+          data: [0, 0, 0, 0],
+          backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6366F1'],
           borderWidth: 0,
         }]
       },
@@ -307,7 +311,7 @@
       }
     });
 
-    // Fetch API Stats if backend available
+    // Fetch API Stats dynamically
     async function fetchStats() {
       try {
         const stats = await API.get('/dashboard/stats');
@@ -322,6 +326,8 @@
         }
         if (stats && stats.placement_percentage !== undefined) {
           document.getElementById('valPlacementRate').innerText = stats.placement_percentage + '%';
+          const pBar = document.querySelector('.kpi-card .progress-bar');
+          if (pBar) pBar.style.width = stats.placement_percentage + '%';
         }
         if (stats && stats.highest_package !== undefined) {
           document.getElementById('valHighestPackage').innerText = '₹' + Number(stats.highest_package).toLocaleString() + ' LPA';
@@ -332,10 +338,51 @@
         if (stats && stats.average_package !== undefined) {
           document.getElementById('valAvgPackage').innerText = '₹' + Number(stats.average_package).toLocaleString() + ' LPA';
         }
+
+        // Fetch students and companies to update charts dynamically
+        const students = await API.get('/students?per_page=500');
+        const sList = (students && students.students) ? students.students : (Array.isArray(students) ? students : []);
+        
+        const bcaPlaced = sList.filter(s => (s.department_name||'').includes('BCA') && ['selected', 'placed', 'joined'].includes((s.placement_status||'').toLowerCase())).length;
+        const bbaPlaced = sList.filter(s => (s.department_name||'').includes('BBA') && ['selected', 'placed', 'joined'].includes((s.placement_status||'').toLowerCase())).length;
+        const bcomPlaced = sList.filter(s => (s.department_name||'').includes('B.Com') && ['selected', 'placed', 'joined'].includes((s.placement_status||'').toLowerCase())).length;
+        const bscPlaced = sList.filter(s => (s.department_name||'').includes('B.Sc') && ['selected', 'placed', 'joined'].includes((s.placement_status||'').toLowerCase())).length;
+        const totalPlaced = bcaPlaced + bbaPlaced + bcomPlaced + bscPlaced;
+
+        if (sectionDonutInstance) {
+          sectionDonutInstance.data.datasets[0].data = totalPlaced > 0 ? [bcaPlaced, bbaPlaced, bcomPlaced, bscPlaced] : [0, 0, 0, 0];
+          sectionDonutInstance.update();
+        }
+
+        const badgeEl = document.getElementById('donutPlacedBadge');
+        if (badgeEl) badgeEl.innerText = `${totalPlaced} Placed`;
+        const centerEl = document.getElementById('donutPlacedCenter');
+        if (centerEl) centerEl.innerText = totalPlaced;
+        const bcaEl = document.getElementById('secStatBCA');
+        if (bcaEl) bcaEl.innerText = bcaPlaced;
+        const bbaEl = document.getElementById('secStatBBA');
+        if (bbaEl) bbaEl.innerText = bbaPlaced;
+        const bcomEl = document.getElementById('secStatBCom');
+        if (bcomEl) bcomEl.innerText = bcomPlaced;
+        const bscEl = document.getElementById('secStatBSc');
+        if (bscEl) bscEl.innerText = bscPlaced;
+
+        // Update Company Hiring Chart
+        const companies = await API.get('/companies');
+        const cList = Array.isArray(companies) ? companies.slice(0, 6) : [];
+        if (cList.length > 0 && companyHiringChartInstance) {
+          companyHiringChartInstance.data.labels = cList.map(c => c.name);
+          companyHiringChartInstance.data.datasets[0].data = cList.map(c => c.selected_count || 0);
+          companyHiringChartInstance.update();
+        }
       } catch (err) {
-        console.log('Using mock dashboard specs:', err.message);
+        console.log('Dashboard sync notice:', err.message);
       }
     }
+
+    // Live subscription to data changes (instant sync on reset/wipe/import)
+    window.addEventListener('storage', fetchStats);
+    window.addEventListener('pp_data_changed', fetchStats);
     
     // Fetch Repeat Shortlist Alerts
     async function fetchAlerts() {
