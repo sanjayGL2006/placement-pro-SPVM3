@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "pesiamsplacement",
     "public": "frontend/previews",
     "ignore": [
       "firebase.json",

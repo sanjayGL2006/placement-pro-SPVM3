@@ -51,12 +51,14 @@
           <span>Push to Company</span>
         </a>
       </li>
+      
       <li>
         <a href="import.html" class="nav-item-link active">
           <i class="fa-solid fa-cloud-arrow-up"></i>
           <span>Import</span>
         </a>
       </li>
+      
       <li>
         <a href="sections.html" class="nav-item-link ">
           <i class="fa-solid fa-layer-group"></i>
@@ -449,7 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script src="../assets/js/auth.js"></script>
 <script src="../assets/js/api.js"></script>
-<script type="module" src="../assets/js/firebase-init.js"></script>
+<!-- Firebase removed: using local PHP session auth only -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('postJobForm');
@@ -478,7 +480,9 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        await API.post('/companies', payload);
+        const newComp = await API.post('/companies', payload);
+        window.dispatchEvent(new Event('pp_data_changed'));
+        localStorage.setItem('pp_last_sync', Date.now().toString());
         
         Swal.fire({
           title: 'Success!',
@@ -493,6 +497,8 @@ document.addEventListener('DOMContentLoaded', () => {
           
           if (typeof loadCompanies === 'function') {
             loadCompanies();
+          } else if (typeof fetchStats === 'function') {
+            fetchStats();
           } else {
             window.location.reload();
           }
@@ -728,7 +734,17 @@ document.addEventListener('DOMContentLoaded', () => {
                   'Package (LPA)': pkg,
                   'Status': status,
                   'Email': email,
-                  'Phone': phone
+                  'Phone': phone,
+                  'name': name,
+                  'register_number': regNo,
+                  'department': dept,
+                  'section': section,
+                  'academic_year': academicYear,
+                  'cgpa': cgpaVal !== null ? cgpaVal : '',
+                  'backlogs': backlogsVal || 0,
+                  'company': company,
+                  'package': pkg,
+                  'placement_status': status
                 }
               };
             });

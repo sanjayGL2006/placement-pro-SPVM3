@@ -1,12 +1,18 @@
+# pyrefly: ignore [missing-import]
 import unittest
+# pyrefly: ignore [missing-import]
 import json
+# pyrefly: ignore [missing-import]
 import os
+# pyrefly: ignore [missing-import]
 import sys
 
 # Add backend dir to sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# pyrefly: ignore [missing-import]
 from app import create_app
+# pyrefly: ignore [missing-import]
 from database import init_sqlite_db, get_conn, commit
 
 class PlacementProTestCase(unittest.TestCase):

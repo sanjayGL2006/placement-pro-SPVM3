@@ -12,3 +12,14 @@ lxml>=6.1.2
 pdfplumber>=0.11.0
 reportlab>=4.0.0
 gunicorn>=21.2.0
+
+# ML Libraries
+torch>=2.0.0
+torchvision>=0.15.0
+spacy>=3.7.0
+transformers>=4.38.0
+datasets>=2.18.0
+peft>=0.10.0
+trl>=0.8.0
+bitsandbytes>=0.43.0
+accelerate>=0.28.0

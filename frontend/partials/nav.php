@@ -92,7 +92,7 @@ require_once __DIR__ . '/header.php';
 
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/api.js"></script>
-<script type="module" src="assets/js/firebase-init.js"></script>
+<!-- Firebase removed: using local PHP session auth only -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('postJobForm');
@@ -121,7 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        await API.post('/companies', payload);
+        const newComp = await API.post('/companies', payload);
+        window.dispatchEvent(new Event('pp_data_changed'));
+        localStorage.setItem('pp_last_sync', Date.now().toString());
         
         Swal.fire({
           title: 'Success!',
@@ -136,6 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
           
           if (typeof loadCompanies === 'function') {
             loadCompanies();
+          } else if (typeof fetchStats === 'function') {
+            fetchStats();
           } else {
             window.location.reload();
           }

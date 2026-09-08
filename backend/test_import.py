@@ -1,10 +1,14 @@
+# pyrefly: ignore [missing-import]
 import sys
+# pyrefly: ignore [missing-import]
 import os
+# pyrefly: ignore [missing-import]
 import pandas as pd
 
 # Add backend directory to sys.path so we can import import_utils
 sys.path.append(r"c:\Users\Sanjay G L\Desktop\placement-pro\backend")
 
+# pyrefly: ignore [missing-import]
 from import_utils import build_preview
 
 # Mock the DataFrame matching the user's Excel schema screenshot

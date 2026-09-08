@@ -1,0 +1,18 @@
+The default credentials that the frontend uses (as hardcoded in login.php) are:
+
+Placement Coordinator (Default):
+
+Email: coordinator@pesiams.edu.in
+Password: Coordinator@2026
+Principal:
+
+Email: principal@pesiams.edu.in
+Password: Principal@2026
+Department Staff:
+
+Email: staff.bca@pesiams.edu.in
+Password: Staff@2026
+Access Code: PES-BCA-2026
+WARNING
+
+Database Not Running! If you try to log in right now, you will get a

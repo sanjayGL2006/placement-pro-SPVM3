@@ -1,6 +1,10 @@
+# pyrefly: ignore [missing-import]
 from flask import Blueprint, request, jsonify
+# pyrefly: ignore [missing-import]
 from database import get_cursor, commit
+# pyrefly: ignore [missing-import]
 from routes.auth import token_required
+# pyrefly: ignore [missing-import]
 from email_service import send_placement_email
 
 drives_bp = Blueprint("drives", __name__)

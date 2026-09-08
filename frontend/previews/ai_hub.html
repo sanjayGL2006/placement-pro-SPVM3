@@ -124,12 +124,14 @@
           <span>Push to Company</span>
         </a>
       </li>
+      
       <li>
         <a href="import.html" class="nav-item-link ">
           <i class="fa-solid fa-cloud-arrow-up"></i>
           <span>Import</span>
         </a>
       </li>
+      
       <li>
         <a href="sections.html" class="nav-item-link ">
           <i class="fa-solid fa-layer-group"></i>
@@ -522,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script src="../assets/js/auth.js"></script>
 <script src="../assets/js/api.js"></script>
-<script type="module" src="../assets/js/firebase-init.js"></script>
+<!-- Firebase removed: using local PHP session auth only -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('postJobForm');
@@ -551,7 +553,9 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        await API.post('/companies', payload);
+        const newComp = await API.post('/companies', payload);
+        window.dispatchEvent(new Event('pp_data_changed'));
+        localStorage.setItem('pp_last_sync', Date.now().toString());
         
         Swal.fire({
           title: 'Success!',
@@ -566,6 +570,8 @@ document.addEventListener('DOMContentLoaded', () => {
           
           if (typeof loadCompanies === 'function') {
             loadCompanies();
+          } else if (typeof fetchStats === 'function') {
+            fetchStats();
           } else {
             window.location.reload();
           }
@@ -1184,10 +1190,11 @@ document.addEventListener('DOMContentLoaded', () => {
               <tbody>
         `;
         
-        if (data.recommendations.length === 0) {
-          tableHtml += `<tr><td colspan="6" class="text-center py-4 text-muted small">No students found.</td></tr>`;
+        const recs = (data && Array.isArray(data.recommendations)) ? data.recommendations : (Array.isArray(data) ? data : []);
+        if (recs.length === 0) {
+          tableHtml += `<tr><td colspan="6" class="text-center py-4 text-muted small">No students found for this drive.</td></tr>`;
         } else {
-          data.recommendations.forEach((r, idx) => {
+          recs.forEach((r, idx) => {
             const eligibilityBadge = r.is_eligible 
               ? '<span class="badge-pill-success"><i class="fa-solid fa-circle-check"></i> Eligible</span>'
               : '<span class="badge-pill-danger"><i class="fa-solid fa-circle-xmark"></i> Ineligible</span>';

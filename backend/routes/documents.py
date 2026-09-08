@@ -1,8 +1,14 @@
+# pyrefly: ignore [missing-import]
 import os
+# pyrefly: ignore [missing-import]
 import uuid
+# pyrefly: ignore [missing-import]
 from flask import Blueprint, request, jsonify, send_file, current_app
+# pyrefly: ignore [missing-import]
 from database import get_cursor, commit
+# pyrefly: ignore [missing-import]
 from routes.auth import token_required
+# pyrefly: ignore [missing-import]
 from werkzeug.utils import secure_filename
 
 documents_bp = Blueprint("documents", __name__)

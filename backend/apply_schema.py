@@ -1,5 +1,7 @@
 # pyrefly: ignore [untyped-import]
+# pyrefly: ignore [missing-import]
 import pymysql
+# pyrefly: ignore [missing-import]
 import os
 
 with open("schema.sql", "r") as f:

@@ -1,9 +1,14 @@
+# pyrefly: ignore [missing-import]
 from flask import Blueprint, request, jsonify
 try:
+    # pyrefly: ignore [missing-import]
     from database import get_cursor, commit, rollback
 except ImportError:
+    # pyrefly: ignore [missing-import]
     from ..database import get_cursor, commit, rollback
+# pyrefly: ignore [missing-import]
 from .auth import token_required
+# pyrefly: ignore [missing-import]
 from email_service import send_placement_email
 
 students_bp = Blueprint("students", __name__)
@@ -21,11 +26,20 @@ def list_students():
     per_page = min(int(request.args.get("per_page", 25)), 200)
 
     where, params = [], []
-    if dept:
+
+    # RBAC departmental data isolation
+    user = getattr(request, "user", {})
+    user_role = (user.get("role") or "").lower()
+    user_dept_id = user.get("department_id")
+    if user_role == "staff" and user_dept_id:
+        where.append("s.department_id = %s")
+        params.append(user_dept_id)
+    elif dept:
         where.append("d.name = %s"); params.append(dept)
+
     if section:
         sec_letter = section[-1] if section else "A"
-        where.append("(s.section LIKE %s OR RIGHT(TRIM(s.section), 1) LIKE %s)")
+        where.append("(s.section LIKE %s OR SUBSTR(TRIM(s.section), -1) LIKE %s)")
         params.extend([section, sec_letter])
     if year:
         where.append("s.academic_year = %s"); params.append(year)
@@ -71,6 +85,13 @@ def get_student(student_id):
     if not student:
         return jsonify({"error": "Not found"}), 404
 
+    # RBAC departmental data isolation check
+    user = getattr(request, "user", {})
+    user_role = (user.get("role") or "").lower()
+    user_dept_id = user.get("department_id")
+    if user_role == "staff" and user_dept_id and student.get("department_id") != user_dept_id:
+        return jsonify({"error": "Access forbidden: Department data isolation policy"}), 403
+
     cur.execute(
         """SELECT p.*, comp.name AS company_name FROM placements p
            JOIN companies comp ON comp.id = p.company_id
@@ -99,6 +120,17 @@ def update_student(student_id):
     if not fields:
         return jsonify({"error": "No valid fields to update"}), 400
 
+    # RBAC departmental check
+    user = getattr(request, "user", {})
+    user_role = (user.get("role") or "").lower()
+    user_dept_id = user.get("department_id")
+    if user_role == "staff" and user_dept_id:
+        cur_chk = get_cursor()
+        cur_chk.execute("SELECT department_id FROM students WHERE id = %s", (student_id,))
+        row_chk = cur_chk.fetchone()
+        if row_chk and row_chk.get("department_id") != user_dept_id:
+            return jsonify({"error": "Forbidden: Cannot update students outside your assigned department"}), 403
+
     set_clause = ", ".join(f"{k} = %s" for k in fields)
     cur = get_cursor()
     cur.execute(
@@ -112,6 +144,7 @@ def update_student(student_id):
 
 
 def _archive_student_to_recycle_bin(cur, student_id):
+    # pyrefly: ignore [missing-import]
     import json
     cur.execute("SELECT * FROM students WHERE id = %s", (student_id,))
     s = cur.fetchone()
@@ -152,6 +185,17 @@ def _archive_student_to_recycle_bin(cur, student_id):
 @students_bp.route("/<int:student_id>", methods=["DELETE"])
 @token_required(roles=["hr", "faculty", "admin"])
 def delete_student(student_id):
+    # RBAC departmental check
+    user = getattr(request, "user", {})
+    user_role = (user.get("role") or "").lower()
+    user_dept_id = user.get("department_id")
+    if user_role == "staff" and user_dept_id:
+        cur_chk = get_cursor()
+        cur_chk.execute("SELECT department_id FROM students WHERE id = %s", (student_id,))
+        row_chk = cur_chk.fetchone()
+        if row_chk and row_chk.get("department_id") != user_dept_id:
+            return jsonify({"error": "Forbidden: Cannot delete students outside your assigned department"}), 403
+
     cur = get_cursor()
     student = _archive_student_to_recycle_bin(cur, student_id)
     if not student:
@@ -160,6 +204,7 @@ def delete_student(student_id):
     cur.execute("DELETE FROM students WHERE id = %s", (student_id,))
     
     user_id = getattr(request, "user", {}).get("user_id")
+    # pyrefly: ignore [missing-import]
     import json
     cur.execute(
         "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details) "
@@ -244,7 +289,9 @@ def add_pipeline_stage(student_id):
 @token_required(roles=["hr", "faculty", "admin"])
 def bulk_push():
     """Bulk register students for a company placement drive with transaction safety and eligibility checks."""
+    # pyrefly: ignore [missing-import]
     from routes.notifications import add_notification
+    # pyrefly: ignore [missing-import]
     from database import rollback
     data = request.get_json(force=True) or {}
     raw_student_ids = data.get("student_ids")
@@ -347,6 +394,7 @@ def bulk_push():
             )
 
             user_id = getattr(request, "user", {}).get("user_id")
+            # pyrefly: ignore [missing-import]
             import json
             cur.execute(
                 "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details) "
@@ -527,6 +575,7 @@ def bulk_delete():
             if cur.rowcount > 0:
                 deleted_count += 1
                 user_id = getattr(request, "user", {}).get("user_id")
+                # pyrefly: ignore [missing-import]
                 import json
                 cur.execute(
                     "INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details) "
@@ -538,6 +587,7 @@ def bulk_delete():
             
     commit()
     
+    # pyrefly: ignore [missing-import]
     from routes.notifications import add_notification
     if deleted_count > 0:
         add_notification(

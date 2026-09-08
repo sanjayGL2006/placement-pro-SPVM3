@@ -82,12 +82,14 @@
           <span>Push to Company</span>
         </a>
       </li>
+      
       <li>
         <a href="import.html" class="nav-item-link ">
           <i class="fa-solid fa-cloud-arrow-up"></i>
           <span>Import</span>
         </a>
       </li>
+      
       <li>
         <a href="sections.html" class="nav-item-link ">
           <i class="fa-solid fa-layer-group"></i>
@@ -480,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script src="../assets/js/auth.js"></script>
 <script src="../assets/js/api.js"></script>
-<script type="module" src="../assets/js/firebase-init.js"></script>
+<!-- Firebase removed: using local PHP session auth only -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('postJobForm');
@@ -509,7 +511,9 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        await API.post('/companies', payload);
+        const newComp = await API.post('/companies', payload);
+        window.dispatchEvent(new Event('pp_data_changed'));
+        localStorage.setItem('pp_last_sync', Date.now().toString());
         
         Swal.fire({
           title: 'Success!',
@@ -524,6 +528,8 @@ document.addEventListener('DOMContentLoaded', () => {
           
           if (typeof loadCompanies === 'function') {
             loadCompanies();
+          } else if (typeof fetchStats === 'function') {
+            fetchStats();
           } else {
             window.location.reload();
           }
@@ -776,7 +782,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('compPackage').innerText = c.package_amount ? `${c.package_amount} LPA` : (c.avg_package ? `${c.avg_package} LPA` : '0 LPA');
         document.getElementById('compVisitDate').innerText = c.visit_date ? new Date(c.visit_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'}) : 'TBD';
 
-        const initials = compName ? compName.split(' ').map(n => n[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() : 'CD';
+        const initials = (typeof compName === 'string' && compName.trim()) 
+          ? compName.trim().split(/\s+/).map(n => n[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() 
+          : 'CD';
         document.getElementById('compInitials').innerText = initials || 'CD';
 
         // Render Roster

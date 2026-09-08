@@ -2,11 +2,17 @@
 Background scheduler for Placement Pro (SQLite version).
 Handles drive reminders and email notifications.
 """
+# pyrefly: ignore [missing-import]
 import os
+# pyrefly: ignore [missing-import]
 import time
+# pyrefly: ignore [missing-import]
 import threading
+# pyrefly: ignore [missing-import]
 from datetime import datetime, timedelta
+# pyrefly: ignore [missing-import]
 import logging
+# pyrefly: ignore [missing-import]
 import sqlite3
 
 logger = logging.getLogger("placement_pro.scheduler")

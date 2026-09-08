@@ -279,7 +279,9 @@
         document.getElementById('compPackage').innerText = c.package_amount ? `${c.package_amount} LPA` : (c.avg_package ? `${c.avg_package} LPA` : '0 LPA');
         document.getElementById('compVisitDate').innerText = c.visit_date ? new Date(c.visit_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'}) : 'TBD';
 
-        const initials = compName ? compName.split(' ').map(n => n[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() : 'CD';
+        const initials = (typeof compName === 'string' && compName.trim()) 
+          ? compName.trim().split(/\s+/).map(n => n[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() 
+          : 'CD';
         document.getElementById('compInitials').innerText = initials || 'CD';
 
         // Render Roster

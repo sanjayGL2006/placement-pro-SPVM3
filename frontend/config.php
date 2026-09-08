@@ -20,8 +20,11 @@ function require_login() {
 
 function require_role($roles) {
     require_login();
-    if (!in_array($_SESSION['user']['role'], $roles)) {
+    // Normalize to lowercase for case-insensitive comparison
+    $userRole = strtolower($_SESSION['user']['role'] ?? '');
+    $allowedRoles = array_map('strtolower', $roles);
+    if (!in_array($userRole, $allowedRoles)) {
         http_response_code(403);
-        die('Access denied for role: ' . htmlspecialchars($_SESSION['user']['role']));
+        die('Access denied for role: ' . htmlspecialchars($_SESSION['user']['role'] ?? 'unknown'));
     }
 }

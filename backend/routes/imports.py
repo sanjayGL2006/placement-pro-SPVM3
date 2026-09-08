@@ -1,8 +1,13 @@
+# pyrefly: ignore [missing-import]
 import json
+# pyrefly: ignore [missing-import]
 from flask import Blueprint, request, jsonify
 
+# pyrefly: ignore [missing-import]
 from database import get_cursor, commit, rollback
+# pyrefly: ignore [missing-import]
 from routes.auth import token_required
+# pyrefly: ignore [missing-import]
 from import_utils import read_tabular_file, build_preview
 
 imports_bp = Blueprint("imports", __name__)
@@ -79,7 +84,7 @@ def commit_students():
     def dept_id(name):
         if not name:
             return None
-        name = name.strip()
+        name = str(name).strip()
         if name in dept_cache:
             return dept_cache[name]
         cur.execute("SELECT id FROM departments WHERE LOWER(name) = LOWER(%s)", (name,))
@@ -87,50 +92,136 @@ def commit_students():
         if row:
             dept_cache[name] = row["id"]
         else:
-            # Dynamically create the department
-            cur.execute("INSERT INTO departments (name) VALUES (%s) RETURNING id", (name,))
-            dept_cache[name] = cur.fetchone()["id"]
+            cur.execute("INSERT INTO departments (name) VALUES (%s)", (name,))
+            cur.execute("SELECT id FROM departments WHERE LOWER(name) = LOWER(%s)", (name,))
+            r_new = cur.fetchone()
+            dept_cache[name] = r_new["id"] if r_new else cur.lastrowid
         return dept_cache[name]
 
-    for r in rows:
-        data = r.get("data", {})
-        action = r.get("action", "skip")
-        if action == "skip" or not data.get("register_number"):
-            skipped += 1
-            continue
+    def normalize_row_data(d):
+        if not isinstance(d, dict):
+            return {}
+        lookup = {str(k).strip().lower().replace(" ", "_").replace(".", "").replace("-", "_"): v for k, v in d.items() if v is not None}
+        def pick(*keys, default=None):
+            for k in keys:
+                nk = k.lower().replace(" ", "_").replace(".", "").replace("-", "_")
+                if nk in lookup and str(lookup[nk]).strip() != "":
+                    return lookup[nk]
+            return default
+
+        reg_no = pick("register_number", "register_no", "reg_number", "reg_no", "regno", "usn", "roll_no", "roll_number", "id")
+        name = pick("name", "student_name", "full_name", "candidate_name", default="Candidate")
+        dept = pick("department", "department_name", "dept", "dept_name", "course", "branch", default="BCA")
+        section = pick("section", "sec", default="Section A")
+        academic_year = pick("academic_year", "batch", "batch_year", "year", default="2023-2026")
+        gender = pick("gender", "sex", default="Other")
+        dob = pick("date_of_birth", "dob", default=None)
+        phone = pick("mobile_number", "mobile", "phone", "contact", default="")
+        email = pick("email", "email_address", "mail", default="")
+        address = pick("address", default="")
+        cgpa = pick("cgpa", "gpa", default=None)
+        percentage = pick("percentage", "percent", "marks", default=None)
+        backlogs = pick("backlogs", "active_backlogs", "arrears", default=0)
+        skills = pick("skills", "skill_set", "technical_skills", default="")
+        resume = pick("resume_link", "resume", "cv", default="")
+        status = pick("placement_status", "status", default="not_placed")
+        eligible = pick("eligible_status", "eligible", default=True)
+        company = pick("company", "company_name", "placed_company", default=None)
+        package = pick("package", "package_amount", "package_lpa", "ctc", default=None)
+
         try:
+            cgpa_val = float(cgpa) if cgpa is not None and str(cgpa).strip() != "" else None
+        except (ValueError, TypeError):
+            cgpa_val = None
+
+        try:
+            backlogs_val = int(backlogs) if backlogs is not None and str(backlogs).strip() != "" else 0
+        except (ValueError, TypeError):
+            backlogs_val = 0
+
+        status_norm = str(status).strip().lower() if status else "not_placed"
+        if status_norm in ("placed", "selected", "offer"):
+            status_norm = "selected"
+        elif status_norm in ("applied", "in-process", "in_process"):
+            status_norm = "applied"
+        else:
+            status_norm = "not_placed"
+
+        return {
+            "register_number": str(reg_no).strip() if reg_no else None,
+            "name": str(name).strip() if name else "Candidate",
+            "department": str(dept).strip(),
+            "section": str(section).strip(),
+            "academic_year": str(academic_year).strip(),
+            "gender": str(gender).strip(),
+            "date_of_birth": dob,
+            "mobile_number": str(phone).strip(),
+            "email": str(email).strip(),
+            "address": str(address).strip(),
+            "cgpa": cgpa_val,
+            "percentage": percentage,
+            "backlogs": backlogs_val,
+            "skills": str(skills).strip() if skills else "",
+            "resume_link": str(resume).strip() if resume else "",
+            "placement_status": status_norm,
+            "eligible_status": True if str(eligible).strip().lower() in ("true", "1", "yes", "y", "eligible") else False,
+            "company": str(company).strip() if company else None,
+            "package": package
+        }
+
+    for r in rows:
+        raw_data = r.get("data", {})
+        norm = normalize_row_data(raw_data)
+        action = r.get("action")
+        if not action or action not in ("insert", "update", "skip"):
+            action = "insert"
+
+        if action == "skip" or not norm.get("register_number"):
+            if not norm.get("register_number"):
+                error_log.append({"row": r, "error": "Missing register/roll number"})
+                errors += 1
+            else:
+                skipped += 1
+            continue
+
+        try:
+            reg_no = norm["register_number"]
+            d_id = dept_id(norm["department"])
             fields = {
-                "register_number": data.get("register_number"),
-                "name": data.get("name"),
-                "department_id": dept_id(data.get("department")),
-                "section": data.get("section"),
-                "academic_year": data.get("academic_year"),
-                "gender": data.get("gender"),
-                "date_of_birth": data.get("date_of_birth"),
-                "mobile_number": data.get("mobile_number"),
-                "email": data.get("email"),
-                "address": data.get("address"),
-                "cgpa": data.get("cgpa"),
-                "percentage": data.get("percentage"),
-                "backlogs": data.get("backlogs") or 0,
-                "skills": data.get("skills"),
-                "resume_link": data.get("resume_link"),
-                "placement_status": data.get("placement_status") or "not_placed",
-                "eligible_status": True if data.get("eligible_status") in (None, "", "yes", "Yes", True) else False,
+                "register_number": reg_no,
+                "name": norm["name"],
+                "department_id": d_id,
+                "section": norm["section"],
+                "academic_year": norm["academic_year"],
+                "gender": norm["gender"],
+                "date_of_birth": norm["date_of_birth"],
+                "mobile_number": norm["mobile_number"],
+                "email": norm["email"],
+                "address": norm["address"],
+                "cgpa": norm["cgpa"],
+                "percentage": norm["percentage"],
+                "backlogs": norm["backlogs"],
+                "skills": norm["skills"],
+                "resume_link": norm["resume_link"],
+                "placement_status": norm["placement_status"],
+                "eligible_status": norm["eligible_status"],
             }
-            if action == "insert":
+
+            cur.execute("SELECT id FROM students WHERE register_number = %s", (reg_no,))
+            existing_student = cur.fetchone()
+
+            if action == "insert" and not existing_student:
                 cols = ", ".join(fields.keys())
                 placeholders = ", ".join(["%s"] * len(fields))
                 cur.execute(
-                    f"INSERT INTO students ({cols}) VALUES ({placeholders}) "
-                    f"ON CONFLICT (register_number) DO NOTHING",
+                    f"INSERT INTO students ({cols}) VALUES ({placeholders})",
                     list(fields.values()),
                 )
                 inserted += 1
-            elif action == "update":
+            elif action == "update" or existing_student:
                 set_clause = ", ".join(f"{k} = %s" for k in fields if k != "register_number")
                 values = [v for k, v in fields.items() if k != "register_number"]
-                values.append(fields["register_number"])
+                values.append(reg_no)
                 cur.execute(
                     f"UPDATE students SET {set_clause}, updated_at = NOW() WHERE register_number = %s",
                     values,
@@ -138,31 +229,33 @@ def commit_students():
                 updated += 1
 
             # Auto-link company placement if present
-            company_name = data.get("company")
-            if company_name and fields["placement_status"] in ("selected", "joined"):
-                # Get or create company
+            company_name = norm.get("company")
+            if company_name and norm["placement_status"] in ("selected", "joined"):
                 cur.execute("SELECT id FROM companies WHERE LOWER(name) = LOWER(%s)", (company_name.strip(),))
                 crow = cur.fetchone()
                 if crow:
                     company_id = crow["id"]
                 else:
-                    cur.execute("INSERT INTO companies (name, industry) VALUES (%s, 'Others') RETURNING id", (company_name.strip(),))
-                    company_id = cur.fetchone()["id"]
-                
-                # Get student ID
-                cur.execute("SELECT id FROM students WHERE register_number = %s", (fields["register_number"],))
+                    cur.execute("INSERT INTO companies (name, industry) VALUES (%s, 'Others')", (company_name.strip(),))
+                    cur.execute("SELECT id FROM companies WHERE LOWER(name) = LOWER(%s)", (company_name.strip(),))
+                    c_created = cur.fetchone()
+                    company_id = c_created["id"] if c_created else cur.lastrowid
+
+                cur.execute("SELECT id FROM students WHERE register_number = %s", (reg_no,))
                 srow = cur.fetchone()
-                if srow:
+                if srow and company_id:
                     student_id = srow["id"]
-                    cur.execute(
-                        "INSERT INTO placements (student_id, company_id, offer_status, current_stage) "
-                        "VALUES (%s, %s, 'accepted', 'selected') "
-                        "ON CONFLICT (student_id, company_id) DO NOTHING",
-                        (student_id, company_id)
-                    )
+                    cur.execute("SELECT id FROM placements WHERE student_id = %s AND company_id = %s", (student_id, company_id))
+                    p_existing = cur.fetchone()
+                    if not p_existing:
+                        cur.execute(
+                            "INSERT INTO placements (student_id, company_id, offer_status, current_stage) "
+                            "VALUES (%s, %s, 'accepted', 'selected')",
+                            (student_id, company_id)
+                        )
         except Exception as e:
             errors += 1
-            error_log.append({"register_number": data.get("register_number"), "error": str(e)})
+            error_log.append({"register_number": norm.get("register_number"), "error": str(e)})
 
     cur.execute(
         "INSERT INTO import_history (imported_by, import_type, file_name, total_rows, "
@@ -324,6 +417,7 @@ def commit_companies():
 
 def re_split(raw):
     """Split a 'students_selected' cell on common delimiters (comma, semicolon, newline)."""
+    # pyrefly: ignore [missing-import]
     import re
     return re.split(r"[,;\n]+", str(raw))
 

@@ -465,8 +465,12 @@ require_login(); ?>
 
     function renderStudents(list, total, page, perPage) {
       // Clear selected list on refresh
-      document.getElementById('selectAllStudents').checked = false;
-      document.getElementById('bulkActionsDropdown').classList.add('d-none');
+      const selectAllEl = document.getElementById('selectAllStudents');
+      if (selectAllEl) selectAllEl.checked = false;
+      const bulkActionsEl = document.getElementById('bulkActionsDropdown');
+      if (bulkActionsEl) bulkActionsEl.classList.add('d-none');
+      const countEl = document.getElementById('selectedCountText');
+      if (countEl) countEl.innerText = '0';
 
       if (!list || list.length === 0) {
         document.getElementById('showingText').innerText = `Showing 0 of 0 students`;
@@ -630,13 +634,14 @@ require_login(); ?>
 
       try {
         await API.put(`/students/${studentId}`, payload);
+        window.dispatchEvent(new Event('pp_data_changed'));
         showToast('Student profile updated successfully!');
 
         const modalEl = document.getElementById('editStudentModal');
         const modalInstance = bootstrap.Modal.getInstance(modalEl);
         if (modalInstance) modalInstance.hide();
 
-        loadStudents(1);
+        loadStudents(currentPage || 1);
       } catch (err) {
         showToast('Failed to save changes: ' + err.message, 'danger');
       }
@@ -668,6 +673,11 @@ require_login(); ?>
     document.addEventListener('DOMContentLoaded', async () => {
       await initFilters();
       loadStudents(1);
+    });
+
+    // Auto-refresh when student data is modified elsewhere
+    window.addEventListener('pp_data_changed', () => {
+      loadStudents(currentPage || 1);
     });
 
     // Bulk selection count and dropdown control
@@ -862,14 +872,23 @@ require_login(); ?>
       }
     });
 
+    // Helper: Safely get selected student IDs as an array
+    function getSelectedStudentIds() {
+      const checkboxes = document.querySelectorAll('.student-select:checked');
+      if (!checkboxes || checkboxes.length === 0) return [];
+      
+      const ids = Array.from(checkboxes).map(cb => parseInt(cb.value, 10)).filter(id => !isNaN(id));
+      return Array.isArray(ids) ? ids : [];
+    }
+
     // Open Bulk Push Modal
     async function openBulkPushModal() {
-      const checkboxes = document.querySelectorAll('.student-select:checked');
-      if (checkboxes.length === 0) {
-        showToast('Please select at least one student to push to recruiter drive.', 'warning');
+      const studentIds = getSelectedStudentIds();
+      if (!studentIds || !studentIds.length) {
+        showToast('Please select at least one student.', 'warning');
         return;
       }
-      document.getElementById('bulkPushCount').innerText = checkboxes.length;
+      document.getElementById('bulkPushCount').innerText = studentIds.length;
 
       try {
         const companies = await API.get('/companies');
@@ -893,10 +912,10 @@ require_login(); ?>
       const companySelect = document.getElementById('bulkPushCompanySelect');
       const companyIdVal = companySelect ? companySelect.value : '';
       const companyId = parseInt(companyIdVal, 10);
-      const checkboxes = document.querySelectorAll('.student-select:checked');
-      const studentIds = Array.from(checkboxes).map(cb => parseInt(cb.value, 10)).filter(id => !isNaN(id));
+      
+      const studentIds = getSelectedStudentIds();
 
-      if (!studentIds.length) {
+      if (!studentIds || !studentIds.length) {
         showToast('Please select at least one student.', 'warning');
         return;
       }
@@ -939,10 +958,9 @@ require_login(); ?>
 
     // Trigger Bulk Delete
     async function triggerBulkDelete() {
-      const checkboxes = document.querySelectorAll('.student-select:checked');
-      const studentIds = Array.from(checkboxes).map(cb => parseInt(cb.value, 10)).filter(id => !isNaN(id));
+      const studentIds = getSelectedStudentIds();
 
-      if (!studentIds.length) {
+      if (!studentIds || !studentIds.length) {
         showToast('Please select at least one student.', 'warning');
         return;
       }
@@ -979,12 +997,12 @@ require_login(); ?>
 
     // Client-side CSV exporter for selected students (Full Records)
     async function exportSelectedStudents() {
-      const checkboxes = document.querySelectorAll('.student-select:checked');
-      if (checkboxes.length === 0) {
+      const ids = getSelectedStudentIds();
+      if (!ids || !ids.length) {
         showToast('Please select at least one student to export.', 'warning');
         return;
       }
-      const selectedIds = new Set(Array.from(checkboxes).map(cb => parseInt(cb.value, 10)));
+      const selectedIds = new Set(ids);
       
       let allStudents = [];
       try {

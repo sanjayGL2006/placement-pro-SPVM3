@@ -1,4 +1,4 @@
-<?php require_once 'config.php'; require_role(['hr','faculty','admin']); ?>
+<?php require_once 'config.php'; require_role(['principal','hod','coordinator','placement_coordinator','admin']); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -231,7 +231,17 @@
                   'Package (LPA)': pkg,
                   'Status': status,
                   'Email': email,
-                  'Phone': phone
+                  'Phone': phone,
+                  'name': name,
+                  'register_number': regNo,
+                  'department': dept,
+                  'section': section,
+                  'academic_year': academicYear,
+                  'cgpa': cgpaVal !== null ? cgpaVal : '',
+                  'backlogs': backlogsVal || 0,
+                  'company': company,
+                  'package': pkg,
+                  'placement_status': status
                 }
               };
             });

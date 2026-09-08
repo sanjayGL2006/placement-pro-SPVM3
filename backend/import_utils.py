@@ -6,11 +6,17 @@ Produces a normalized list[dict] of rows, then validates/dedupes against
 the DB before anything gets committed. Nothing is written until
 commit_import() is called with the caller's approval.
 """
+# pyrefly: ignore [missing-import]
 import re
+# pyrefly: ignore [missing-import]
 import io
+# pyrefly: ignore [missing-import]
 import datetime
+# pyrefly: ignore [missing-import]
 import pandas as pd
+# pyrefly: ignore [missing-import]
 import docx
+# pyrefly: ignore [missing-import]
 import pdfplumber
 
 

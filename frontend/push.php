@@ -376,7 +376,7 @@
         else if (sortVal === 'reg_asc') { sort_by = 'register_number'; sort_order = 'asc'; }
         else if (sortVal === 'reg_desc') { sort_by = 'register_number'; sort_order = 'desc'; }
 
-        const res = await API.get(`/eligible-for/${driveId}?page=${page}&per_page=${perPage}&search=${search}&department=${dept}&section=${section}&skills=${skills}&sort_by=${sort_by}&sort_order=${sort_order}`);
+        const res = await API.get(`/students/eligible-for/${driveId}?page=${page}&per_page=${perPage}&search=${search}&department=${dept}&section=${section}&skills=${skills}&sort_by=${sort_by}&sort_order=${sort_order}`);
         
         eligibleStudentsList = res.students;
         renderRosterTable(res.students, res.total, page, perPage);
@@ -389,17 +389,26 @@
 
     // Render Company requirements card
     function renderRequirements(c) {
-      document.getElementById('reqCompanyName').innerText = c.name;
+      if (!c) return;
+      document.getElementById('reqCompanyName').innerText = c.name || 'Recruitment Drive';
       document.getElementById('reqJobRole').innerText = `Job Role: ${c.job_role || 'SDE'}`;
       document.getElementById('reqPackage').innerText = c.package_amount ? `${c.package_amount} LPA` : 'TBD';
-      document.getElementById('reqMinCgpa').innerText = c.min_cgpa ? c.min_cgpa.toFixed(2) : '0.00';
+      document.getElementById('reqMinCgpa').innerText = c.min_cgpa ? Number(c.min_cgpa).toFixed(2) : '0.00';
       document.getElementById('reqMaxBacklogs').innerText = c.allowed_backlogs ?? '0';
 
       const deptsContainer = document.getElementById('reqEligibleDepts');
-      if (c.eligible_departments) {
-        deptsContainer.innerHTML = c.eligible_departments.split(',').map(d => `<span class="badge-dept">${d.trim()}</span>`).join('');
-      } else {
-        deptsContainer.innerHTML = `<span class="badge-dept">All Departments</span>`;
+      if (deptsContainer) {
+        let depts = [];
+        if (Array.isArray(c.eligible_departments)) {
+          depts = c.eligible_departments;
+        } else if (typeof c.eligible_departments === 'string' && c.eligible_departments.trim()) {
+          depts = c.eligible_departments.split(',');
+        }
+        if (depts.length > 0) {
+          deptsContainer.innerHTML = depts.map(d => `<span class="badge-dept">${String(d).trim()}</span>`).join('');
+        } else {
+          deptsContainer.innerHTML = `<span class="badge-dept">All Departments</span>`;
+        }
       }
     }
 
@@ -527,8 +536,12 @@
     // Open Push confirmation Modal
     function openPushModal() {
       const driveSelect = document.getElementById('driveSelect');
-      const compName = driveSelect.options[driveSelect.selectedIndex].text.split('—')[0].trim();
-      const driveName = driveSelect.options[driveSelect.selectedIndex].text.split('—')[1].trim();
+      const optText = (driveSelect && driveSelect.selectedIndex >= 0 && driveSelect.options[driveSelect.selectedIndex]) 
+        ? driveSelect.options[driveSelect.selectedIndex].text 
+        : '';
+      const parts = optText.split(/[—–-]/);
+      const compName = (parts[0] || optText || 'Company Drive').trim();
+      const driveName = (parts[1] || 'Campus Recruitment Drive').trim();
 
       document.getElementById('modalStudentCount').innerText = selectedStudentIds.size;
       document.getElementById('modalCompanyName').value = compName;

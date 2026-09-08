@@ -1,5 +1,7 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
+$sidebarRole = strtolower($_SESSION['user']['role'] ?? '');
+$canImport = in_array($sidebarRole, ['principal', 'hod', 'coordinator', 'placement_coordinator', 'admin']);
 ?>
 <aside id="sidebar">
   <div>
@@ -38,12 +40,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
           <span>Push to Company</span>
         </a>
       </li>
+      <?php if ($canImport): ?>
       <li>
         <a href="import.php" class="nav-item-link <?php echo ($currentPage == 'import.php') ? 'active' : ''; ?>">
           <i class="fa-solid fa-cloud-arrow-up"></i>
           <span>Import</span>
         </a>
       </li>
+      <?php endif; ?>
       <li>
         <a href="sections.php" class="nav-item-link <?php echo ($currentPage == 'sections.php') ? 'active' : ''; ?>">
           <i class="fa-solid fa-layer-group"></i>

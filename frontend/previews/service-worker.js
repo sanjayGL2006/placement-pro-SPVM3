@@ -1,5 +1,5 @@
 // Basic Service Worker for Placement Pro
-const CACHE_NAME = 'placement-pro-cache-v3';
+const CACHE_NAME = 'placement-pro-cache-v6';
 
 // Force immediate activation — replace old broken service worker
 self.addEventListener('install', event => {
@@ -18,15 +18,35 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Only intercept GET requests
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   // Don't intercept navigation requests — let them go to the server
   if (event.request.mode === 'navigate') {
     return;
   }
 
-  // Only cache static assets (CSS, JS, images, fonts)
-  const url = new URL(event.request.url);
-  const isStaticAsset = /\.(css|js|png|jpg|jpeg|gif|svg|woff2?|ttf|eot|ico)$/i.test(url.pathname);
+  let url;
+  try {
+    url = new URL(event.request.url);
+  } catch (err) {
+    return;
+  }
 
+  // Ignore chrome-extension://, moz-extension://, blob:, data:, etc.
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+
+  // Do not cache API requests
+  if (url.pathname.includes('/api/')) {
+    return;
+  }
+
+  // Only cache static assets (CSS, JS, images, fonts)
+  const isStaticAsset = /\.(css|js|png|jpg|jpeg|gif|svg|woff2?|ttf|eot|ico)$/i.test(url.pathname);
   if (!isStaticAsset) {
     return;
   }
@@ -35,9 +55,13 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        if (response.ok) {
+        if (response && response.ok && (response.type === 'basic' || response.type === 'cors')) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, clone).catch(err => {
+              // Ignore any unsupported put operations silently
+            });
+          }).catch(() => {});
         }
         return response;
       })

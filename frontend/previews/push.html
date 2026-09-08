@@ -96,12 +96,14 @@
           <span>Push to Company</span>
         </a>
       </li>
+      
       <li>
         <a href="import.html" class="nav-item-link ">
           <i class="fa-solid fa-cloud-arrow-up"></i>
           <span>Import</span>
         </a>
       </li>
+      
       <li>
         <a href="sections.html" class="nav-item-link ">
           <i class="fa-solid fa-layer-group"></i>
@@ -494,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script src="../assets/js/auth.js"></script>
 <script src="../assets/js/api.js"></script>
-<script type="module" src="../assets/js/firebase-init.js"></script>
+<!-- Firebase removed: using local PHP session auth only -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('postJobForm');
@@ -523,7 +525,9 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        await API.post('/companies', payload);
+        const newComp = await API.post('/companies', payload);
+        window.dispatchEvent(new Event('pp_data_changed'));
+        localStorage.setItem('pp_last_sync', Date.now().toString());
         
         Swal.fire({
           title: 'Success!',
@@ -538,6 +542,8 @@ document.addEventListener('DOMContentLoaded', () => {
           
           if (typeof loadCompanies === 'function') {
             loadCompanies();
+          } else if (typeof fetchStats === 'function') {
+            fetchStats();
           } else {
             window.location.reload();
           }
@@ -872,7 +878,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (sortVal === 'reg_asc') { sort_by = 'register_number'; sort_order = 'asc'; }
         else if (sortVal === 'reg_desc') { sort_by = 'register_number'; sort_order = 'desc'; }
 
-        const res = await API.get(`/eligible-for/${driveId}?page=${page}&per_page=${perPage}&search=${search}&department=${dept}&section=${section}&skills=${skills}&sort_by=${sort_by}&sort_order=${sort_order}`);
+        const res = await API.get(`/students/eligible-for/${driveId}?page=${page}&per_page=${perPage}&search=${search}&department=${dept}&section=${section}&skills=${skills}&sort_by=${sort_by}&sort_order=${sort_order}`);
         
         eligibleStudentsList = res.students;
         renderRosterTable(res.students, res.total, page, perPage);
@@ -885,17 +891,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render Company requirements card
     function renderRequirements(c) {
-      document.getElementById('reqCompanyName').innerText = c.name;
+      if (!c) return;
+      document.getElementById('reqCompanyName').innerText = c.name || 'Recruitment Drive';
       document.getElementById('reqJobRole').innerText = `Job Role: ${c.job_role || 'SDE'}`;
       document.getElementById('reqPackage').innerText = c.package_amount ? `${c.package_amount} LPA` : 'TBD';
-      document.getElementById('reqMinCgpa').innerText = c.min_cgpa ? c.min_cgpa.toFixed(2) : '0.00';
+      document.getElementById('reqMinCgpa').innerText = c.min_cgpa ? Number(c.min_cgpa).toFixed(2) : '0.00';
       document.getElementById('reqMaxBacklogs').innerText = c.allowed_backlogs ?? '0';
 
       const deptsContainer = document.getElementById('reqEligibleDepts');
-      if (c.eligible_departments) {
-        deptsContainer.innerHTML = c.eligible_departments.split(',').map(d => `<span class="badge-dept">${d.trim()}</span>`).join('');
-      } else {
-        deptsContainer.innerHTML = `<span class="badge-dept">All Departments</span>`;
+      if (deptsContainer) {
+        let depts = [];
+        if (Array.isArray(c.eligible_departments)) {
+          depts = c.eligible_departments;
+        } else if (typeof c.eligible_departments === 'string' && c.eligible_departments.trim()) {
+          depts = c.eligible_departments.split(',');
+        }
+        if (depts.length > 0) {
+          deptsContainer.innerHTML = depts.map(d => `<span class="badge-dept">${String(d).trim()}</span>`).join('');
+        } else {
+          deptsContainer.innerHTML = `<span class="badge-dept">All Departments</span>`;
+        }
       }
     }
 
@@ -1023,8 +1038,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Open Push confirmation Modal
     function openPushModal() {
       const driveSelect = document.getElementById('driveSelect');
-      const compName = driveSelect.options[driveSelect.selectedIndex].text.split('—')[0].trim();
-      const driveName = driveSelect.options[driveSelect.selectedIndex].text.split('—')[1].trim();
+      const optText = (driveSelect && driveSelect.selectedIndex >= 0 && driveSelect.options[driveSelect.selectedIndex]) 
+        ? driveSelect.options[driveSelect.selectedIndex].text 
+        : '';
+      const parts = optText.split(/[—–-]/);
+      const compName = (parts[0] || optText || 'Company Drive').trim();
+      const driveName = (parts[1] || 'Campus Recruitment Drive').trim();
 
       document.getElementById('modalStudentCount').innerText = selectedStudentIds.size;
       document.getElementById('modalCompanyName').value = compName;

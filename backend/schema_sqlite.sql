@@ -8,8 +8,10 @@ CREATE TABLE IF NOT EXISTS users (
     email           TEXT UNIQUE NOT NULL,
     password_hash   TEXT NOT NULL,
     role            TEXT NOT NULL DEFAULT 'faculty',
+    department_id   INTEGER,
     is_active       BOOLEAN NOT NULL DEFAULT 1,
-    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES departments(id)
 );
 
 CREATE TABLE IF NOT EXISTS departments (
@@ -167,6 +169,15 @@ CREATE TABLE IF NOT EXISTS recycle_bin (
     deleted_at      DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS department_access_codes (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    department_id   INTEGER UNIQUE NOT NULL,
+    access_code     TEXT NOT NULL,
+    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_by      INTEGER DEFAULT 1,
+    FOREIGN KEY (department_id) REFERENCES departments(id)
+);
+
 -- Seed departments
 INSERT OR IGNORE INTO departments (id, name) VALUES
     (1, 'BCA'), (2, 'BBA'), (3, 'BBA - Hospitality & Hotel Management'), (4, 'B.Com'), (5, 'B.Sc');
@@ -176,9 +187,22 @@ INSERT OR IGNORE INTO courses (id, department_id, name, stream) VALUES
     (2, 5, 'B.Sc - Physics', 'Physics'),
     (3, 5, 'B.Sc - Chemistry', 'Chemistry');
 
--- Seed Admin User (password: admin123)
-INSERT OR IGNORE INTO users (id, name, email, password_hash, role, is_active) VALUES
-    (1, 'SPVM3 Tech Solution by Sanjay G L', 'admin@college.edu', '$argon2id$v=19$m=65536,t=3,p=4$oMT4cuTV6jXvmErYy9EMVw$U/B45qAVcz3xQvuz5+0yydtJQXN3eLe8ab70IXtkcsE', 'admin', 1);
+-- Seed Access Codes
+INSERT OR IGNORE INTO department_access_codes (id, department_id, access_code) VALUES
+    (1, 1, 'PES-BCA-2026'),
+    (2, 2, 'PES-BBA-2026'),
+    (3, 3, 'PES-BHM-2026'),
+    (4, 4, 'PES-BCOM-2026'),
+    (5, 5, 'PES-BSC-2026');
+
+-- Seed Users
+INSERT OR IGNORE INTO users (id, name, email, password_hash, role, department_id, is_active) VALUES
+    (1, 'SPVM3 Tech Solution by Sanjay G L', 'admin@college.edu', '$argon2id$v=19$m=65536,t=3,p=4$oMT4cuTV6jXvmErYy9EMVw$U/B45qAVcz3xQvuz5+0yydtJQXN3eLe8ab70IXtkcsE', 'coordinator', NULL, 1),
+    (2, 'Dr. Principal', 'principal@pesiams.edu.in', '$argon2id$v=19$m=65536,t=3,p=4$0V0i8J4eO/E7qF3e7mQzrg$uE5uR0vK21QZ7wFq9u+2+w', 'principal', NULL, 1),
+    (3, 'Placement Coordinator', 'coordinator@pesiams.edu.in', '$argon2id$v=19$m=65536,t=3,p=4$0V0i8J4eO/E7qF3e7mQzrg$uE5uR0vK21QZ7wFq9u+2+w', 'coordinator', NULL, 1),
+    (4, 'BCA Department Staff', 'staff.bca@pesiams.edu.in', '$argon2id$v=19$m=65536,t=3,p=4$0V0i8J4eO/E7qF3e7mQzrg$uE5uR0vK21QZ7wFq9u+2+w', 'staff', 1, 1),
+    (5, 'B.Sc Department Staff', 'staff.bsc@pesiams.edu.in', '$argon2id$v=19$m=65536,t=3,p=4$0V0i8J4eO/E7qF3e7mQzrg$uE5uR0vK21QZ7wFq9u+2+w', 'staff', 5, 1);
+
 
 
 -- Seed Companies

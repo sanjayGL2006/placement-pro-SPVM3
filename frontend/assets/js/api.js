@@ -126,6 +126,7 @@
         const res = await fetch(this.base + path, {
           method,
           headers,
+          credentials: 'include',
           body: isForm ? body : (body ? JSON.stringify(body) : null),
         });
 
@@ -242,6 +243,273 @@
         return getStoredTrash();
       }
 
+      // --- AI HUB ENDPOINTS ---
+      // 1. Campus Drive Recommender: GET /ai/eligibility-recommendation
+      if (pathname === '/ai/eligibility-recommendation' && method === 'GET') {
+        const companyId = parseInt(params.get('company_id') || '0', 10);
+        const companies = getStoredCompanies();
+        const students = getStoredStudents();
+        const company = companies.find(c => c.id === companyId) || companies[0] || {
+          id: companyId,
+          name: 'Target Company',
+          min_cgpa: 6.5,
+          max_backlogs: 0,
+          required_skills: 'Python, SQL, JavaScript, React'
+        };
+
+        const minCgpa = parseFloat(company.min_cgpa || 6.0);
+        const maxBacklogs = parseInt(company.max_backlogs !== undefined ? company.max_backlogs : 1, 10);
+
+        let reqSkills = [];
+        if (typeof company.required_skills === 'string') {
+          reqSkills = company.required_skills.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+        } else if (Array.isArray(company.required_skills)) {
+          reqSkills = company.required_skills.map(s => String(s).trim().toLowerCase()).filter(Boolean);
+        }
+        if (reqSkills.length === 0) {
+          reqSkills = ['python', 'sql', 'javascript', 'communication'];
+        }
+
+        const recommendations = students.map(s => {
+          const studentCgpa = parseFloat(s.cgpa || 0);
+          const studentBacklogs = parseInt(s.active_backlogs || s.backlogs || 0, 10);
+          const isEligible = studentCgpa >= minCgpa && studentBacklogs <= maxBacklogs;
+
+          let studSkills = [];
+          if (typeof s.skills === 'string') {
+            studSkills = s.skills.split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+          } else if (Array.isArray(s.skills)) {
+            studSkills = s.skills.map(x => String(x).trim().toLowerCase()).filter(Boolean);
+          }
+          if (studSkills.length === 0) {
+            studSkills = ['c', 'python', 'communication'];
+          }
+
+          const matched = reqSkills.filter(r => studSkills.some(st => st.includes(r) || r.includes(st)));
+          const missing = reqSkills.filter(r => !studSkills.some(st => st.includes(r) || r.includes(st)));
+
+          const skillScore = reqSkills.length > 0 ? (matched.length / reqSkills.length) * 50 : 30;
+          const cgpaScore = Math.min((studentCgpa / 10) * 40, 40);
+          const backlogBonus = studentBacklogs === 0 ? 10 : 0;
+          let fitScore = Math.round(skillScore + cgpaScore + backlogBonus);
+          if (!isEligible) fitScore = Math.min(fitScore, 48);
+
+          return {
+            student_id: s.id,
+            name: s.name || 'Student',
+            register_number: s.register_number || s.usn || `PES${s.id}`,
+            cgpa: studentCgpa.toFixed(2),
+            department: s.department || s.department_name || 'BCA',
+            section: s.section || 'A',
+            is_eligible: isEligible,
+            fit_score: Math.min(100, Math.max(15, fitScore)),
+            matched_skills: matched.map(m => m.charAt(0).toUpperCase() + m.slice(1)),
+            missing_skills: missing.map(m => m.charAt(0).toUpperCase() + m.slice(1))
+          };
+        });
+
+        // Sort by fit_score descending
+        recommendations.sort((a, b) => b.fit_score - a.fit_score);
+
+        return {
+          success: true,
+          company_id: companyId,
+          company_name: company.name,
+          recommendations: recommendations
+        };
+      }
+
+      // 2. AI Chatbot: POST /ai/chatbot
+      if (pathname === '/ai/chatbot' && method === 'POST') {
+        const query = (body && (body.query || body.message || body.text) || '').toLowerCase();
+        let answer = "Placement Pro AI Assistant is here to assist you with student placements, corporate drive eligibility, and interview preparations.";
+        if (query.includes('eligible') || query.includes('criteria') || query.includes('cgpa')) {
+          answer = "Eligibility rules require meeting the company's minimum CGPA (typically 6.5 - 7.5) and maximum active backlogs (typically 0). Check the **Drive Recommender** tab to view sorted match scores for any active drive!";
+        } else if (query.includes('resume') || query.includes('ats')) {
+          answer = "Our ATS Resume Audit evaluates keyword density, formatting hygiene, and AI content proportion. Switch to the **Resume Analyzer** tab to paste a resume for instant scoring.";
+        } else if (query.includes('company') || query.includes('drive') || query.includes('wipro') || query.includes('tcs') || query.includes('infosys')) {
+          answer = "Active drives are listed under Companies. You can register qualified candidates directly from the **Drive Recommender** or push batch notifications via the Push section.";
+        } else if (query.includes('interview') || query.includes('question') || query.includes('prep')) {
+          answer = "Customized technical and HR questions can be generated instantly on the **Interview Prep** tab. Select a company and student to get tailored suggestions!";
+        } else {
+          answer = `Thanks for your question: *"${body ? (body.query || 'query') : ''}"*. Placement Pro AI helps automate student eligibility checks, predict placement matches, and streamline campus recruitment.`;
+        }
+        return { success: true, response: answer, message: answer };
+      }
+
+      // 3. Resume Analyzer: POST /ai/analyze-resume
+      if (pathname === '/ai/analyze-resume' && method === 'POST') {
+        const text = (body && body.resume_text) ? body.resume_text : '';
+        const lower = text.toLowerCase();
+        const knownSkills = ['Python', 'Java', 'SQL', 'React', 'Node.js', 'Machine Learning', 'Docker', 'Kubernetes', 'AWS', 'Git', 'Data Structures', 'C++', 'JavaScript', 'HTML/CSS'];
+        const detected = knownSkills.filter(s => lower.includes(s.toLowerCase()));
+        if (detected.length === 0) detected.push('Communication', 'Problem Solving', 'Python');
+
+        const score = Math.min(95, Math.max(45, 40 + (detected.length * 7)));
+        const aiPct = text.length > 500 ? Math.floor(Math.random() * 15) + 5 : 12;
+
+        return {
+          success: true,
+          section1_ats: {
+            ats_score: score,
+            detected_skills: detected,
+            keyword_optimization: [
+              { category: 'Core Technologies', found: Math.min(detected.length, 5), total: 5 },
+              { category: 'Tools & DevOps', found: Math.min(Math.floor(detected.length / 2), 3), total: 3 },
+              { category: 'Soft Skills', found: 3, total: 4 }
+            ],
+            formatting_check: {
+              overall: score >= 65 ? 'pass' : 'warn',
+              checks: [
+                { item: 'Standard Contact Details', status: 'pass' },
+                { item: 'Action Verbs in Experience', status: score >= 70 ? 'pass' : 'warn' },
+                { item: 'Quantifiable Metrics & KPIs', status: lower.includes('%') || lower.includes('increased') ? 'pass' : 'warn' }
+              ]
+            },
+            critical_fixes: score < 60 ? ['Add more industry-specific technical keywords', 'Include measurable project impacts with metrics (%)'] : []
+          },
+          section2_ai: {
+            ai_content_pct: aiPct,
+            human_content_pct: 100 - aiPct,
+            tone_analysis: 'Well-articulated professional tone with authentic project experiences.',
+            phrases_to_rewrite: [
+              { original: 'Spearheaded innovative paradigm shifts', suggested_rewrite: 'Led technical architecture and boosted query efficiency by 35%' }
+            ]
+          },
+          section3_recruiter: {
+            readability_impact: 'High clarity and structured headings suitable for technical recruiters.',
+            final_verdict: score >= 75 ? 'Ready to submit — High ATS Profile' : 'Minor tweaks suggested before campus submission'
+          }
+        };
+      }
+
+      // 4. Interview Prep: POST /ai/interview-prep
+      if (pathname === '/ai/interview-prep' && method === 'POST') {
+        const role = (body && body.job_role) || 'Software Engineer';
+        return {
+          success: true,
+          role: role,
+          technical_questions: [
+            {
+              question: `Explain how you would architect a scalable backend system for ${role}.`,
+              suggested_answer: 'Discuss component modularity, API gateways, database query optimization with indexing, and caching.'
+            },
+            {
+              question: 'How do you identify and resolve performance bottlenecks in full-stack applications?',
+              suggested_answer: 'Profile slow queries using EXPLAIN ANALYZE, monitor network payloads, and optimize rendering loops.'
+            },
+            {
+              question: 'Which design patterns or coding standards have you applied in real projects?',
+              suggested_answer: 'Highlight patterns like Repository pattern, Singleton, and MVC, explaining how they enhance maintainability.'
+            }
+          ],
+          hr_questions: [
+            {
+              question: 'Describe a challenging project conflict you experienced and how you resolved it collaboratively.',
+              tip: 'Use the STAR method (Situation, Task, Action, Result) focusing on team communication, empathy, and positive outcomes.'
+            },
+            {
+              question: 'What are your key professional goals for the next 3 years in this organization?',
+              tip: 'Demonstrate enthusiasm for technical growth, mentorship, and contributing to company business objectives.'
+            }
+          ]
+        };
+      }
+
+      // --- AUTH & RBAC FALLBACK ENDPOINTS ---
+      if (pathname === '/auth/access-codes' && method === 'GET') {
+        const storedCodes = localStorage.getItem('pp_access_codes');
+        if (storedCodes) return JSON.parse(storedCodes);
+        const defaults = [
+          { id: 1, department_id: 1, department_name: 'BCA', access_code: 'PES-BCA-2026', updated_at: '2026-09-05T10:00:00Z' },
+          { id: 2, department_id: 2, department_name: 'BBA', access_code: 'PES-BBA-2026', updated_at: '2026-09-05T10:00:00Z' },
+          { id: 3, department_id: 3, department_name: 'BBA - Hospitality & Hotel Management', access_code: 'PES-BHM-2026', updated_at: '2026-09-05T10:00:00Z' },
+          { id: 4, department_id: 4, department_name: 'B.Com', access_code: 'PES-BCOM-2026', updated_at: '2026-09-05T10:00:00Z' },
+          { id: 5, department_id: 5, department_name: 'B.Sc', access_code: 'PES-BSC-2026', updated_at: '2026-09-05T10:00:00Z' }
+        ];
+        localStorage.setItem('pp_access_codes', JSON.stringify(defaults));
+        return defaults;
+      }
+
+      if (pathname === '/auth/access-codes/regenerate' && method === 'POST') {
+        const deptId = body ? body.department_id : 1;
+        let codes = JSON.parse(localStorage.getItem('pp_access_codes') || '[]');
+        const idx = codes.findIndex(c => c.department_id === deptId);
+        const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const deptName = idx !== -1 ? codes[idx].department_name : 'DEPT';
+        const slug = deptName.replace(/[^A-Za-z]/g, '').substring(0, 4).toUpperCase();
+        const newCode = `PES-${slug}-2026-${rand}`;
+        if (idx !== -1) {
+          codes[idx].access_code = newCode;
+          codes[idx].updated_at = new Date().toISOString();
+        }
+        localStorage.setItem('pp_access_codes', JSON.stringify(codes));
+        return { success: true, department_id: deptId, department_name: deptName, new_access_code: newCode, message: `New access code generated for ${deptName}. Old code is now invalidated.` };
+      }
+
+      if (pathname === '/auth/users' && method === 'GET') {
+        const storedUsers = localStorage.getItem('pp_institutional_users');
+        if (storedUsers) return JSON.parse(storedUsers);
+        const defaults = [
+          { id: 1, name: 'Placement Admin', email: 'admin@college.edu', role: 'coordinator', department_name: 'All Institutional Records', is_active: 1, last_login: '2026-09-05T12:00:00Z' },
+          { id: 2, name: 'Dr. Principal', email: 'principal@pesiams.edu.in', role: 'principal', department_name: 'All Institutional Records', is_active: 1, last_login: '2026-09-05T11:45:00Z' },
+          { id: 3, name: 'Placement Coordinator', email: 'coordinator@pesiams.edu.in', role: 'coordinator', department_name: 'All Institutional Records', is_active: 1, last_login: '2026-09-05T12:30:00Z' },
+          { id: 4, name: 'BCA Department Staff', email: 'staff.bca@pesiams.edu.in', role: 'staff', department_name: 'BCA', is_active: 1, last_login: '2026-09-05T09:15:00Z' },
+          { id: 5, name: 'B.Sc Department Staff', email: 'staff.bsc@pesiams.edu.in', role: 'staff', department_name: 'B.Sc', is_active: 1, last_login: '2026-09-05T08:30:00Z' }
+        ];
+        localStorage.setItem('pp_institutional_users', JSON.stringify(defaults));
+        return defaults;
+      }
+
+      if (pathname === '/auth/users' && method === 'POST') {
+        let users = JSON.parse(localStorage.getItem('pp_institutional_users') || '[]');
+        const deptNames = { 1: 'BCA', 2: 'BBA', 3: 'BBA - Hospitality & Hotel Management', 4: 'B.Com', 5: 'B.Sc' };
+        const newUser = {
+          id: Date.now(),
+          name: body.name,
+          email: body.email,
+          role: body.role,
+          department_id: body.department_id,
+          department_name: body.department_id ? deptNames[body.department_id] : 'All Institutional Records',
+          is_active: 1,
+          last_login: null
+        };
+        users.push(newUser);
+        localStorage.setItem('pp_institutional_users', JSON.stringify(users));
+        return { success: true, id: newUser.id, message: `User account for ${newUser.name} created successfully.` };
+      }
+
+      if (pathname === '/auth/audit-logs' && method === 'GET') {
+        return [
+          { id: 104, created_at: new Date().toISOString(), user_name: 'Placement Coordinator', user_email: 'coordinator@pesiams.edu.in', action: 'user_login', details: { role: 'coordinator', department: 'Institutional' }, ip_address: '127.0.0.1' },
+          { id: 103, created_at: new Date(Date.now() - 3600000).toISOString(), user_name: 'BCA Department Staff', user_email: 'staff.bca@pesiams.edu.in', action: 'user_login', details: { role: 'staff', department: 'BCA' }, ip_address: '127.0.0.1' },
+          { id: 102, created_at: new Date(Date.now() - 7200000).toISOString(), user_name: 'Dr. Principal', user_email: 'principal@pesiams.edu.in', action: 'user_login', details: { role: 'principal' }, ip_address: '127.0.0.1' },
+          { id: 101, created_at: new Date(Date.now() - 14400000).toISOString(), user_name: 'Placement Coordinator', user_email: 'coordinator@pesiams.edu.in', action: 'export_report', details: { format: 'excel' }, ip_address: '127.0.0.1' }
+        ];
+      }
+
+      if (pathname === '/reports/diversity' && method === 'GET') {
+        return {
+          department_diversity: [
+            { department: 'BCA', male_students: 180, female_students: 140, male_placed: 150, female_placed: 120, total_students: 320, total_placed: 270, overall_placement_rate: '84.4%' },
+            { department: 'BBA', male_students: 110, female_students: 90, male_placed: 85, female_placed: 75, total_students: 200, total_placed: 160, overall_placement_rate: '80.0%' },
+            { department: 'BBA - Hospitality & Hotel Management', male_students: 45, female_students: 35, male_placed: 35, female_placed: 30, total_students: 80, total_placed: 65, overall_placement_rate: '81.25%' },
+            { department: 'B.Com', male_students: 130, female_students: 120, male_placed: 100, female_placed: 95, total_students: 250, total_placed: 195, overall_placement_rate: '78.0%' },
+            { department: 'B.Sc', male_students: 95, female_students: 85, male_placed: 80, female_placed: 75, total_students: 180, total_placed: 155, overall_placement_rate: '86.1%' }
+          ]
+        };
+      }
+
+      if (pathname === '/reports/yearly-stats' && method === 'GET') {
+        return [
+          { academic_year: '2021-2022', companies_visited: 42, total_registered: 380, total_placed: 312, placement_percentage: 82.1, avg_package: 6.8, highest_package: 24.0 },
+          { academic_year: '2022-2023', companies_visited: 56, total_registered: 420, total_placed: 365, placement_percentage: 86.9, avg_package: 8.2, highest_package: 28.5 },
+          { academic_year: '2023-2024', companies_visited: 68, total_registered: 490, total_placed: 432, placement_percentage: 88.2, avg_package: 9.8, highest_package: 32.0 },
+          { academic_year: '2024-2025', companies_visited: 75, total_registered: 530, total_placed: 478, placement_percentage: 90.2, avg_package: 11.5, highest_package: 38.0 },
+          { academic_year: '2025-2026', companies_visited: 84, total_registered: 580, total_placed: 524, placement_percentage: 90.3, avg_package: 14.2, highest_package: 44.0 }
+        ];
+      }
+
       // --- DASHBOARD LIVE DYNAMIC STATS (Zero-safe, reactive to wipes) ---
       if (pathname === '/dashboard/stats' || pathname.startsWith('/dashboard/stats?')) {
         const students = getStoredStudents();
@@ -335,6 +603,32 @@
         };
       }
 
+      // Company Stats & Funnel: GET /companies/:id/stats
+      const companyStatsMatch = pathname.match(/^\/companies\/(\d+)\/stats$/);
+      if (companyStatsMatch && method === 'GET') {
+        const id = parseInt(companyStatsMatch[1], 10);
+        const companies = getStoredCompanies();
+        const comp = companies.find(c => c.id === id) || { name: 'Recruiter Drive' };
+        const students = getStoredStudents();
+        const assigned = students.filter(s => s.company_name && s.company_name.toLowerCase() === comp.name.toLowerCase());
+        const totalAssigned = Math.max(assigned.length, 6);
+        const selectedCount = Math.max(assigned.filter(s => ['selected', 'joined', 'placed'].includes(s.placement_status)).length, 2);
+        const hrCount = Math.max(selectedCount + 1, Math.floor(totalAssigned * 0.5));
+        const techCount = Math.max(hrCount + 1, Math.floor(totalAssigned * 0.75));
+        const aptCount = totalAssigned;
+        return {
+          interested_students: totalAssigned,
+          assigned_students: totalAssigned,
+          aptitude_attended: aptCount,
+          technical_round: techCount,
+          hr_round: hrCount,
+          selected: selectedCount,
+          rejected: Math.max(totalAssigned - selectedCount, 0),
+          offer_letters: selectedCount,
+          joined: Math.max(selectedCount - 1, 1)
+        };
+      }
+
       // Delete Company: DELETE /companies/:id
       const companyIdMatch = pathname.match(/^\/companies\/(\d+)$/);
       if (companyIdMatch && method === 'DELETE') {
@@ -349,6 +643,41 @@
         companies = companies.filter(c => c.id !== id);
         saveStoredCompanies(companies);
         return { success: true, message: 'Company record deleted successfully.' };
+      }
+
+      // Create Company: POST /companies
+      if (pathname === '/companies' && method === 'POST') {
+        const cData = body || {};
+        const companies = getStoredCompanies();
+        const pkg = parseFloat(cData.package_amount || cData.package_offered || 0);
+        const newComp = {
+          id: Date.now(),
+          name: (cData.name || 'New Company').trim(),
+          industry: cData.industry || 'IT Services',
+          state: cData.state || '',
+          location: cData.location || 'Bengaluru',
+          hr_name: cData.hr_name || '',
+          hr_email: cData.hr_email || '',
+          hr_contact_number: cData.hr_contact_number || '',
+          visit_date: cData.visit_date || null,
+          last_date: cData.last_date || null,
+          package_amount: pkg,
+          package_offered: pkg,
+          avg_package: pkg,
+          min_package: parseFloat(cData.min_package || pkg),
+          max_package: parseFloat(cData.max_package || pkg),
+          eligible_departments: cData.eligible_departments || 'BCA, B.Sc, BBA, B.Com',
+          min_cgpa: parseFloat(cData.min_cgpa || 0),
+          allowed_backlogs: parseInt(cData.allowed_backlogs || 0, 10),
+          hiring_count: parseInt(cData.hiring_count || 0, 10),
+          job_role: cData.job_role || 'Software Development Engineer',
+          status: 'Active',
+          statusClass: 'success',
+          description: cData.description || cData.job_description || ''
+        };
+        companies.unshift(newComp);
+        saveStoredCompanies(companies);
+        return newComp;
       }
 
       // All Companies: GET /companies
@@ -847,83 +1176,95 @@
         const studentCount = students.length;
         const companyCount = companies.length;
 
+        // Zero-safe return when data has been wiped
+        if (studentCount === 0 || companyCount === 0) {
+          return {
+            summary: {
+              total_student_skills: 0,
+              total_demand_skills: 0,
+              coverage_percentage: 0,
+              critical_gaps: 0,
+              students_with_skills: studentCount,
+              companies_analyzed: companyCount
+            },
+            top_demanded_skills: [],
+            top_student_skills: [],
+            skill_gaps: [],
+            skills_matrix: [],
+            department_breakdown: [],
+            dept_breakdown: [],
+            training_recommendations: [],
+            suggested_workshops: [],
+            surplus_skills: []
+          };
+        }
+
+        // Tally dynamic student skills
+        const studentSkillsMap = {};
+        students.forEach(s => {
+          const list = Array.isArray(s.skills) ? s.skills : (typeof s.skills === 'string' ? s.skills.split(',') : []);
+          list.forEach(sk => {
+            const clean = sk.trim();
+            if (clean) studentSkillsMap[clean] = (studentSkillsMap[clean] || 0) + 1;
+          });
+        });
+
+        // Tally dynamic company demand
+        const demandSkillsMap = {};
+        companies.forEach(c => {
+          const role = (c.job_role || '').toLowerCase();
+          if (role.includes('software') || role.includes('developer') || role.includes('sde')) {
+            ['Python', 'SQL', 'Java', 'React', 'Data Structures'].forEach(sk => demandSkillsMap[sk] = (demandSkillsMap[sk] || 0) + 1);
+          } else if (role.includes('analyst') || role.includes('finance')) {
+            ['SQL', 'Excel', 'PowerBI', 'Analytics'].forEach(sk => demandSkillsMap[sk] = (demandSkillsMap[sk] || 0) + 1);
+          } else {
+            ['Communication', 'Problem Solving', 'Python'].forEach(sk => demandSkillsMap[sk] = (demandSkillsMap[sk] || 0) + 1);
+          }
+        });
+
+        const studentSkillsList = Object.keys(studentSkillsMap);
+        const demandSkillsList = Object.keys(demandSkillsMap);
+        const covered = demandSkillsList.filter(sk => studentSkillsMap[sk] > 0);
+        const coveragePct = demandSkillsList.length ? Math.round((covered.length / demandSkillsList.length) * 1000) / 10 : 0;
+
+        const gaps = demandSkillsList.map(sk => {
+          const d = demandSkillsMap[sk] || 0;
+          const s = studentSkillsMap[sk] || 0;
+          const gapPct = d > s ? Math.round(((d - s) / d) * 1000) / 10 : 0;
+          const status = gapPct > 70 ? 'critical' : (gapPct > 30 ? 'moderate' : 'covered');
+          return { skill: sk, demand: d, supply: s, gap_percentage: gapPct, status };
+        }).sort((a, b) => b.gap_percentage - a.gap_percentage);
+
         return {
           summary: {
-            total_student_skills: 18,
-            total_demand_skills: 15,
-            coverage_percentage: 78.5,
-            critical_gaps: 2,
+            total_student_skills: studentSkillsList.length,
+            total_demand_skills: demandSkillsList.length,
+            coverage_percentage: coveragePct,
+            critical_gaps: gaps.filter(g => g.status === 'critical').length,
             students_with_skills: studentCount,
             companies_analyzed: companyCount
           },
-          top_demanded_skills: [
-            { skill: 'Python', count: 35 },
-            { skill: 'SQL', count: 40 },
-            { skill: 'Java', count: 30 },
-            { skill: 'React', count: 28 },
-            { skill: 'AWS', count: 22 },
-            { skill: 'Docker', count: 18 }
-          ],
-          top_student_skills: [
-            { skill: 'Python', count: 32 },
-            { skill: 'SQL', count: 38 },
-            { skill: 'Java', count: 28 },
-            { skill: 'React', count: 22 },
-            { skill: 'AWS', count: 12 },
-            { skill: 'Docker', count: 4 }
-          ],
-          skill_gaps: [
-            { skill: 'Docker & Microservices', demand: 18, supply: 4, gap_percentage: 77.8, status: 'critical' },
-            { skill: 'AWS Cloud Infrastructure', demand: 22, supply: 12, gap_percentage: 45.5, status: 'moderate' },
-            { skill: 'React Framework', demand: 28, supply: 22, gap_percentage: 21.4, status: 'covered' },
-            { skill: 'Core Python Development', demand: 35, supply: 32, gap_percentage: 8.6, status: 'covered' },
-            { skill: 'Java & Spring Boot', demand: 30, supply: 28, gap_percentage: 6.7, status: 'covered' },
-            { skill: 'SQL & Relational Databases', demand: 40, supply: 38, gap_percentage: 5.0, status: 'covered' }
-          ],
-          skills_matrix: [
-            { skill: 'Docker & Microservices', demand_count: 18, supply_count: 4, gap: 14, gap_pct: 77.8, status: 'Critical' },
-            { skill: 'AWS Cloud Infrastructure', demand_count: 22, supply_count: 12, gap: 10, gap_pct: 45.5, status: 'Moderate' },
-            { skill: 'React Framework', demand_count: 28, supply_count: 22, gap: 6, gap_pct: 21.4, status: 'Covered' },
-            { skill: 'Core Python Development', demand_count: 35, supply_count: 32, gap: 3, gap_pct: 8.6, status: 'Covered' }
-          ],
+          top_demanded_skills: Object.entries(demandSkillsMap).map(([skill, count]) => ({ skill, count })).sort((a, b) => b.count - a.count).slice(0, 10),
+          top_student_skills: Object.entries(studentSkillsMap).map(([skill, count]) => ({ skill, count })).sort((a, b) => b.count - a.count).slice(0, 10),
+          skill_gaps: gaps,
+          skills_matrix: gaps.map(g => ({ skill: g.skill, demand_count: g.demand, supply_count: g.supply, gap: Math.max(g.demand - g.supply, 0), gap_pct: g.gap_percentage, status: g.status })),
           department_breakdown: [
-            {
-              department: 'BCA',
-              skills: [{ skill: 'Python', count: 25 }, { skill: 'Java', count: 20 }, { skill: 'React', count: 18 }, { skill: 'SQL', count: 30 }]
-            },
-            {
-              department: 'BBA',
-              skills: [{ skill: 'Excel', count: 28 }, { skill: 'PowerBI', count: 15 }, { skill: 'Finance', count: 22 }]
-            },
-            {
-              department: 'B.Com',
-              skills: [{ skill: 'Accounting', count: 26 }, { skill: 'Tally Prime', count: 20 }, { skill: 'Auditing', count: 18 }]
-            },
-            {
-              department: 'B.Sc',
-              skills: [{ skill: 'C++', count: 24 }, { skill: 'Python', count: 18 }, { skill: 'Embedded C', count: 12 }]
-            }
+            { department: 'BCA', skills: [{ skill: 'Python', count: 5 }, { skill: 'Java', count: 4 }] },
+            { department: 'BBA', skills: [{ skill: 'Excel', count: 4 }, { skill: 'PowerBI', count: 3 }] }
           ],
           dept_breakdown: [
-            { department: 'BCA', skills: [{ skill: 'Python', count: 25 }, { skill: 'Java', count: 20 }] },
-            { department: 'BBA', skills: [{ skill: 'Excel', count: 28 }, { skill: 'PowerBI', count: 15 }] },
-            { department: 'B.Com', skills: [{ skill: 'Accounting', count: 26 }, { skill: 'Tally Prime', count: 20 }] },
-            { department: 'B.Sc', skills: [{ skill: 'C++', count: 24 }, { skill: 'Python', count: 18 }] }
+            { department: 'BCA', skills: [{ skill: 'Python', count: 5 }, { skill: 'Java', count: 4 }] },
+            { department: 'BBA', skills: [{ skill: 'Excel', count: 4 }, { skill: 'PowerBI', count: 3 }] }
           ],
-          training_recommendations: [
-            { skill: 'Docker & Microservices', gap_percentage: 77.8, recommendation: 'Conduct intensive 3-day bootcamp on Docker containers and microservices for BCA & B.Sc final year candidates.' },
-            { skill: 'AWS Cloud Architecture', gap_percentage: 45.5, recommendation: 'Host AWS Certified Cloud Practitioner certification drive to bridge cloud infrastructure gap.' },
-            { skill: 'Advanced React & Frontend Frameworks', gap_percentage: 21.4, recommendation: 'Organize full-stack React project lab with hands-on state management workshops.' }
-          ],
+          training_recommendations: gaps.slice(0, 3).map(g => ({
+            skill: g.skill,
+            gap_percentage: g.gap_percentage,
+            recommendation: `Conduct hands-on masterclass in ${g.skill} to bridge campus placement requirements.`
+          })),
           suggested_workshops: [
-            { title: 'Docker & Containerization Masterclass', priority: 'High', target_dept: 'BCA' },
-            { title: 'AWS Cloud Fundamentals', priority: 'Medium', target_dept: 'BCA / B.Sc' }
+            { title: 'Full Stack & Cloud Bootcamp', priority: 'High', target_dept: 'BCA & B.Sc' }
           ],
-          surplus_skills: [
-            { skill: 'C++', count: 38 },
-            { skill: 'HTML/CSS', count: 42 },
-            { skill: 'Photoshop', count: 15 }
-          ]
+          surplus_skills: studentSkillsList.filter(sk => !demandSkillsMap[sk]).map(sk => ({ skill: sk, count: studentSkillsMap[sk] }))
         };
       }
 

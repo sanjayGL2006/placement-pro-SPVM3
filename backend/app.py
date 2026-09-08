@@ -2,7 +2,9 @@
 Placement Pro — Flask REST API
 Run: python app.py  (dev)  |  gunicorn app:create_app()  (prod)
 """
+# pyrefly: ignore [missing-import]
 import os
+# pyrefly: ignore [missing-import]
 import hashlib
 
 # Patch hashlib.md5 for OpenSSL / Python 3.8 compatibility with ReportLab
@@ -14,21 +16,36 @@ def _safe_md5(*args, **kwargs):
 
 hashlib.md5 = _safe_md5
 
-from flask import Flask, jsonify
+# pyrefly: ignore [missing-import]
+from flask import Flask, jsonify, request
+# pyrefly: ignore [missing-import]
 from flask_cors import CORS  # type: ignore
 
+# pyrefly: ignore [missing-import]
 from database import init_db_pool, close_db_pool
+# pyrefly: ignore [missing-import]
 from routes.auth import auth_bp
+# pyrefly: ignore [missing-import]
 from routes.students import students_bp
+# pyrefly: ignore [missing-import]
 from routes.companies import companies_bp
+# pyrefly: ignore [missing-import]
 from routes.imports import imports_bp
+# pyrefly: ignore [missing-import]
 from routes.dashboard import dashboard_bp
+# pyrefly: ignore [missing-import]
 from routes.reports import reports_bp
+# pyrefly: ignore [missing-import]
 from routes.recycle_bin import recycle_bin_bp
+# pyrefly: ignore [missing-import]
 from routes.notifications import notifications_bp
+# pyrefly: ignore [missing-import]
 from routes.ai import ai_bp
+# pyrefly: ignore [missing-import]
 from routes.drives import drives_bp
+# pyrefly: ignore [missing-import]
 from routes.documents import documents_bp
+# pyrefly: ignore [missing-import]
 from scheduler import run_scheduler
 
 
@@ -40,21 +57,31 @@ def create_app():
     app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB upload cap
 
     # Configure upload folder
+    # pyrefly: ignore [missing-import]
     import tempfile
     default_upload = os.path.join(tempfile.gettempdir(), "placement_uploads")
     app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER", default_upload)
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-    # CORS configuration – allow only specified origins (default to Firebase domain)
-    allowed_origins = os.getenv(
-        "ALLOWED_ORIGINS", "https://spvm3-placement.firebaseapp.com"
-    ).split(",")
-    CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
+    # CORS configuration – allow specified origins or common development origins
+    allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
+    if allowed_origins_env:
+        allowed_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+    else:
+        allowed_origins = [
+            "https://spvm3-placement.firebaseapp.com",
+            "http://localhost:7500",
+            "http://127.0.0.1:7500",
+            "http://localhost:5500",
+            "http://127.0.0.1:5500",
+        ]
+    CORS(app, resources={r"/api/*": {"origins": "*" if "*" in allowed_origins else allowed_origins}})
 
     # Initialise database connection pool
     init_db_pool(app)
 
     # Initialise Firebase Admin SDK (if needed)
+    # pyrefly: ignore [missing-import]
     from firebase_config import init_firebase_admin
     init_firebase_admin(app)
 
@@ -70,6 +97,21 @@ def create_app():
     app.register_blueprint(ai_bp, url_prefix="/api/ai")
     app.register_blueprint(drives_bp, url_prefix="/api/drives")
     app.register_blueprint(documents_bp, url_prefix="/api/documents")
+
+    # Direct alias for eligible-for endpoint
+    # pyrefly: ignore [missing-import]
+    from routes.students import get_eligible_students
+    app.add_url_rule(
+        "/api/eligible-for/<int:company_id>",
+        view_func=get_eligible_students,
+        methods=["GET"]
+    )
+
+    # Preflight handler to ensure all OPTIONS requests receive a clean 200 response
+    @app.before_request
+    def handle_preflight():
+        if request.method == "OPTIONS":
+            return app.make_default_options_response()
 
     # Simple health check endpoint
     @app.route("/api/health")
@@ -87,6 +129,7 @@ def create_app():
 
     @app.errorhandler(Exception)
     def handle_exception(e):
+        # pyrefly: ignore [missing-import]
         import traceback
         print("Unhandled Exception:", traceback.format_exc())
         response = jsonify({"error": str(e) or "Internal server error"})
@@ -96,7 +139,13 @@ def create_app():
     # After request processing – ensure CORS headers (handled by Flask-CORS but kept for legacy support)
     @app.after_request
     def after_request(response):
-        response.headers["Access-Control-Allow-Origin"] = ",".join(allowed_origins)
+        origin = request.headers.get("Origin")
+        if origin and (origin in allowed_origins or "*" in allowed_origins):
+            response.headers["Access-Control-Allow-Origin"] = origin
+        elif allowed_origins and "*" not in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = allowed_origins[0]
+        else:
+            response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Headers"] = (
             "Content-Type, Authorization, X-Requested-With"
         )

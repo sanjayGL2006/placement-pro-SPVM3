@@ -214,6 +214,8 @@ def sync_assets():
 
     fav_ico = os.path.join(FRONTEND, "favicon.ico")
     fav_svg = os.path.join(FRONTEND, "favicon.svg")
+    sw_file = os.path.join(FRONTEND, "service-worker.js")
+    manifest_file = os.path.join(FRONTEND, "manifest.json")
     targets = [ROOT, FRONTEND, OUTPUT, root_assets, output_assets, os.path.join(FRONTEND, "assets")]
     for t in targets:
         os.makedirs(t, exist_ok=True)
@@ -224,7 +226,17 @@ def sync_assets():
                     shutil.copy2(src, dest)
                 except PermissionError:
                     pass
-    print("Synchronized all asset and favicon directories.")
+
+    # Ensure service-worker.js and manifest.json are copied to OUTPUT and ROOT
+    for root_or_output in [OUTPUT, ROOT]:
+        for aux_file in [sw_file, manifest_file]:
+            if os.path.exists(aux_file):
+                dest = os.path.join(root_or_output, os.path.basename(aux_file))
+                try:
+                    shutil.copy2(aux_file, dest)
+                except PermissionError:
+                    pass
+    print("Synchronized all asset, favicon, service-worker, and manifest files.")
 
 
 def main():

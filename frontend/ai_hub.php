@@ -687,10 +687,11 @@
               <tbody>
         `;
         
-        if (data.recommendations.length === 0) {
-          tableHtml += `<tr><td colspan="6" class="text-center py-4 text-muted small">No students found.</td></tr>`;
+        const recs = (data && Array.isArray(data.recommendations)) ? data.recommendations : (Array.isArray(data) ? data : []);
+        if (recs.length === 0) {
+          tableHtml += `<tr><td colspan="6" class="text-center py-4 text-muted small">No students found for this drive.</td></tr>`;
         } else {
-          data.recommendations.forEach((r, idx) => {
+          recs.forEach((r, idx) => {
             const eligibilityBadge = r.is_eligible 
               ? '<span class="badge-pill-success"><i class="fa-solid fa-circle-check"></i> Eligible</span>'
               : '<span class="badge-pill-danger"><i class="fa-solid fa-circle-xmark"></i> Ineligible</span>';

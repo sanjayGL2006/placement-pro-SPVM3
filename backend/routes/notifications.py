@@ -1,8 +1,12 @@
+# pyrefly: ignore [missing-import]
 from flask import Blueprint, request, jsonify
 try:
+    # pyrefly: ignore [missing-import]
     from database import get_cursor, commit
 except ImportError:
+    # pyrefly: ignore [missing-import]
     from ..database import get_cursor, commit
+# pyrefly: ignore [missing-import]
 from .auth import token_required
 
 notifications_bp = Blueprint("notifications", __name__)

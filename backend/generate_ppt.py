@@ -3,6 +3,7 @@
 # Creates a simple PowerPoint presentation for the
 # placement‑pro project using python-pptx.
 # -------------------------------------------------
+# pyrefly: ignore [missing-import]
 from pathlib import Path
 # pyrefly: ignore [missing-import]
 from pptx import Presentation

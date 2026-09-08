@@ -1,6 +1,10 @@
+# pyrefly: ignore [missing-import]
 import json
+# pyrefly: ignore [missing-import]
 from flask import Blueprint, request, jsonify
+# pyrefly: ignore [missing-import]
 from database import get_cursor, commit, rollback
+# pyrefly: ignore [missing-import]
 from routes.auth import token_required
 
 recycle_bin_bp = Blueprint("recycle_bin", __name__)

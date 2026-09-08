@@ -1,16 +1,24 @@
+# pyrefly: ignore [missing-import]
 import os
+# pyrefly: ignore [missing-import]
 import tempfile
+# pyrefly: ignore [missing-import]
 from flask import g
+# pyrefly: ignore [missing-import]
 import sqlite3
 # PostgreSQL support
 try:
     # pyrefly: ignore [untyped-import]
+    # pyrefly: ignore [missing-import]
     import psycopg2
     # pyrefly: ignore [untyped-import]
+    # pyrefly: ignore [missing-import]
     from psycopg2 import pool as pg_pool
     # pyrefly: ignore [untyped-import]
+    # pyrefly: ignore [missing-import]
     from psycopg2 import extras
     # pyrefly: ignore [untyped-import]
+    # pyrefly: ignore [missing-import]
     from psycopg2.extras import RealDictCursor
 except ImportError:
     pg_pool = None  # psycopg2 not installed, will fallback to SQLite

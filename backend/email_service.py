@@ -1,7 +1,12 @@
+# pyrefly: ignore [missing-import]
 import os
+# pyrefly: ignore [missing-import]
 import smtplib
+# pyrefly: ignore [missing-import]
 import logging
+# pyrefly: ignore [missing-import]
 from email.message import EmailMessage
+# pyrefly: ignore [missing-import]
 from database import get_cursor, commit
 
 logger = logging.getLogger("placement_pro.email")

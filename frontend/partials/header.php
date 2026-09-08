@@ -1,6 +1,9 @@
 <?php
 $userName = isset($_SESSION['user']['name']) ? $_SESSION['user']['name'] : 'SPVM3 Tech Solution by Sanjay G L';
-$userRole = isset($_SESSION['user']['role']) ? ucfirst($_SESSION['user']['role']) : 'Administrator';
+$rawRole = isset($_SESSION['user']['role']) ? strtolower($_SESSION['user']['role']) : 'coordinator';
+$roleTitle = ($rawRole === 'principal') ? 'Principal' : (($rawRole === 'coordinator' || $rawRole === 'hr' || $rawRole === 'admin') ? 'Placement Coordinator' : 'Department Staff');
+$userDept = isset($_SESSION['user']['department_name']) ? $_SESSION['user']['department_name'] : '';
+$userRole = $userDept ? "{$roleTitle} ({$userDept})" : $roleTitle;
 ?>
 <header id="top-header">
   <div class="d-flex align-items-center gap-2">

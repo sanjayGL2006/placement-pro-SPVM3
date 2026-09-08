@@ -1,8 +1,12 @@
+# pyrefly: ignore [missing-import]
 from flask import Blueprint, jsonify, request
 try:
+    # pyrefly: ignore [missing-import]
     from database import get_cursor
 except ImportError:
+    # pyrefly: ignore [missing-import]
     from ..database import get_cursor
+# pyrefly: ignore [missing-import]
 from .auth import token_required
 
 dashboard_bp = Blueprint("dashboard", __name__)

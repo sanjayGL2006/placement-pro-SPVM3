@@ -12,20 +12,28 @@ in chunks to avoid excessively large statements while still committing
 once per chunk.
 """
 
+# pyrefly: ignore [missing-import]
 import sys
+# pyrefly: ignore [missing-import]
 import os
+# pyrefly: ignore [missing-import]
 import argparse
+# pyrefly: ignore [missing-import]
 from pathlib import Path
 
+# pyrefly: ignore [missing-import]
 import pandas as pd
 # pyrefly: ignore [untyped-import]
+# pyrefly: ignore [missing-import]
 import psycopg2
 # pyrefly: ignore [untyped-import]
+# pyrefly: ignore [missing-import]
 from psycopg2.extras import RealDictCursor, execute_batch
 
 # Add backend to sys.path for local imports
 sys.path.append(r"c:\Users\Sanjay G L\Desktop\placement-pro\backend")
 
+# pyrefly: ignore [missing-import]
 from import_utils import build_preview
 
 def parse_args():

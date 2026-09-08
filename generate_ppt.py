@@ -3,6 +3,9 @@
 # Creates a simple PowerPoint presentation for the
 # placement‑pro project using python-pptx.
 # -------------------------------------------------
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 from pathlib import Path
 # pyrefly: ignore [missing-import]
 from pptx import Presentation
@@ -12,7 +15,7 @@ from pptx.util import Inches, Pt
 # -----------------------------------------------------------------
 # Configuration – update these sections with your own content
 # -----------------------------------------------------------------
-PROJECT_NAME = "Placement‑Pro"
+PROJECT_NAME = "Placement-Pro"
 SLIDES = [
     {
         "title": "Placement‑Pro Overview",
@@ -52,12 +55,24 @@ def add_slide(prs, title, bullets=None, image_path=None):
     slide = prs.slides.add_slide(slide_layout)
     slide.shapes.title.text = title
     if bullets:
-        tf = slide.placeholders[1].text_frame
-        for bullet in bullets:
-            p = tf.add_paragraph()
-            p.text = bullet
-            p.level = 0
-            p.font.size = Pt(18)
+        try:
+            tf = slide.placeholders[1].text_frame
+            tf.clear()
+            for i, bullet in enumerate(bullets):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                p.text = bullet
+                p.level = 0
+                p.font.size = Pt(18)
+        except KeyError:
+            # Layout has no content placeholder – add a text box instead
+            from pptx.util import Emu
+            txBox = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(5))
+            tf = txBox.text_frame
+            tf.word_wrap = True
+            for i, bullet in enumerate(bullets):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                p.text = f"• {bullet}"
+                p.font.size = Pt(18)
     if image_path:
         img_path = Path(image_path)
         if img_path.is_file():
@@ -65,21 +80,24 @@ def add_slide(prs, title, bullets=None, image_path=None):
             top = Inches(2)
             slide.shapes.add_picture(str(img_path), left, top, width=Inches(6))
         else:
-            print(f"⚠️ Image not found: {img_path}")
+            print(f"WARNING: Image not found: {img_path}")
 
 def main():
     prs = Presentation()
     # Title slide
     title_slide_layout = prs.slide_layouts[0]
     slide = prs.slides.add_slide(title_slide_layout)
+    # pyrefly: ignore [missing-attribute]
     slide.shapes.title.text = f"{PROJECT_NAME} Presentation"
+    # pyrefly: ignore [missing-attribute]
     slide.placeholders[1].text = "Generated with python‑pptx"
     # Add slides
     for s in SLIDES:
         add_slide(prs, s["title"], s.get("bullets"), s.get("image_path"))
     out_path = Path(__file__).parent / f"{PROJECT_NAME}.pptx"
+    # pyrefly: ignore [bad-argument-type]
     prs.save(out_path)
-    print(f"✅ Presentation saved to: {out_path}")
+    print(f"SUCCESS: Presentation saved to: {out_path}")
 
 if __name__ == "__main__":
     main()

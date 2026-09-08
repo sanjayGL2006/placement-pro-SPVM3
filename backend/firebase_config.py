@@ -1,4 +1,6 @@
+# pyrefly: ignore [missing-import]
 import os
+# pyrefly: ignore [missing-import]
 import logging
 
 logger = logging.getLogger("placement_pro.firebase")
