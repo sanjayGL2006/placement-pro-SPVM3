@@ -187,6 +187,41 @@ if (strpos($path, '/api/auth/login') === 0) {
         'sections'    => ['A', 'B', 'C'],
     ]);
 
+// ── DASHBOARD SECTIONS ────────────────────────────────────────────────────────
+} elseif (strpos($path, '/api/dashboard/sections') === 0) {
+    $sec = $_GET['section'] ?? 'Section A';
+    $secChar = str_replace('Section ', '', $sec);
+    $secStudents = array_filter($mockStudents, fn($s) => $s['section'] === $secChar || $s['section'] === $sec);
+    $secPlaced = count(array_filter($secStudents, fn($s) => $s['placed']));
+    $total = count($secStudents) ?: 40;
+    $placed = count($secStudents) ? $secPlaced : 32;
+    $pct = round(($placed / $total) * 100, 1);
+    $apt = (int)round($total * 0.78);
+    $tech = (int)round($apt * 0.70);
+    echo json_encode([
+        'section' => $sec,
+        'total_students' => $total,
+        'placed_students' => $placed,
+        'students_selected' => $placed,
+        'placement_rate' => $pct,
+        'placement_percentage' => $pct,
+        'average_package' => 8.2,
+        'highest_package' => 24.0,
+        'company_distribution' => ['Product' => 42, 'Service' => 33, 'Fintech' => 15, 'Others' => 10],
+        'departments' => [
+            ['name' => 'Computer Science', 'percentage' => 92, 'placed' => 368, 'total' => 400],
+            ['name' => 'Electronics & Comm.', 'percentage' => 78, 'placed' => 195, 'total' => 250],
+            ['name' => 'Information Tech', 'percentage' => 72, 'placed' => 108, 'total' => 150]
+        ],
+        'funnel' => [
+            'eligible' => $total,
+            'aptitude' => $apt,
+            'technical' => $tech,
+            'selected' => $placed
+        ]
+    ]);
+
+
 // ── SKILL GAP ANALYSIS ────────────────────────────────────────────────────────
 } elseif (strpos($path, '/api/skill-gap/analysis') === 0) {
     echo json_encode([

@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "pesiamsplacement",
+    "site": "spvm3-placement",
     "public": "frontend/previews",
     "ignore": [
       "firebase.json",

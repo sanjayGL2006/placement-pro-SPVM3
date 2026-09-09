@@ -1051,17 +1051,37 @@
         const sectionName = params.get('section') || 'Section A';
         const students = getStoredStudents().filter(s => (s.section || '').includes(sectionName.replace('Section ', '')) || s.section === sectionName);
         const placed = students.filter(s => ['selected', 'placed', 'joined'].includes((s.placement_status || '').toLowerCase())).length;
-        const pct = students.length > 0 ? parseFloat(((placed / students.length) * 100).toFixed(1)) : 0.0;
+        const total = students.length || 40;
+        const placedCount = students.length ? placed : 32;
+        const pct = parseFloat(((placedCount / total) * 100).toFixed(1));
+        const eligible = total;
+        const aptitude = Math.round(eligible * 0.78);
+        const technical = Math.round(aptitude * 0.70);
         return {
           section: sectionName,
-          total_students: students.length,
-          placed_students: placed,
+          total_students: total,
+          students_selected: placedCount,
+          placed_students: placedCount,
+          placement_percentage: pct,
           placement_rate: pct,
-          average_package: students.length > 0 ? '8.2' : '0.0',
-          highest_package: students.length > 0 ? '24.0' : '0.0',
+          average_package: 8.2,
+          highest_package: 24.0,
+          company_distribution: { Product: 42, Service: 33, Fintech: 15, Others: 10 },
+          departments: [
+            { name: 'Computer Science', total: Math.round(total * 0.4), placed: Math.round(placedCount * 0.45), percentage: 92 },
+            { name: 'Electronics & Comm.', total: Math.round(total * 0.35), placed: Math.round(placedCount * 0.32), percentage: 78 },
+            { name: 'Information Tech', total: Math.round(total * 0.25), placed: Math.round(placedCount * 0.23), percentage: 72 }
+          ],
+          funnel: {
+            eligible: eligible,
+            aptitude: aptitude,
+            technical: technical,
+            selected: placedCount
+          },
           students: students.slice(0, 5)
         };
       }
+
 
       // --- AI HUB ENDPOINTS FALLBACK ---
       if (path.includes('/ai/chatbot')) {
@@ -1313,3 +1333,183 @@ function downloadCSV(filename, text) {
   document.body.removeChild(link);
 }
 window.downloadCSV = downloadCSV;
+
+function loadExternalScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function ensureJsPDF() {
+  if (window.jspdf && window.jspdf.jsPDF) return true;
+  try {
+    await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.autotable.min.js');
+    return !!(window.jspdf && window.jspdf.jsPDF);
+  } catch (e) {
+    console.warn('Could not load jsPDF library dynamically:', e);
+    return false;
+  }
+}
+
+async function downloadPDF({ filename = 'Placement_Report.pdf', title = 'Placement Pro Report', subtitle = '', headers = [], rows = [], summary = [] }) {
+  await ensureJsPDF();
+  if (window.jspdf && window.jspdf.jsPDF) {
+    const { jsPDF } = window.jspdf;
+    const isLandscape = headers.length > 6;
+    const doc = new jsPDF({
+      orientation: isLandscape ? 'landscape' : 'portrait',
+      unit: 'pt',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Brand Primary Header Banner
+    doc.setFillColor(79, 70, 229); // #4F46E5
+    doc.rect(0, 0, pageWidth, 44, 'F');
+
+    // Portal Brand Text
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Placement Pro — PESIAMS Institutional Placement Portal', 20, 28);
+
+    // Document Title
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, 20, 72);
+
+    // Subtitle & Metadata
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const subText = subtitle ? `${subtitle}  |  Generated: ${dateStr}` : `Generated: ${dateStr}  |  Official Academic Audit Record`;
+    doc.text(subText, 20, 88);
+
+    let startY = 104;
+
+    // Summary Metric Cards
+    if (summary && summary.length > 0) {
+      const count = summary.length;
+      const margin = 20;
+      const gap = 10;
+      const cardWidth = Math.max(90, (pageWidth - (2 * margin) - ((count - 1) * gap)) / count);
+      const cardHeight = 44;
+
+      summary.forEach((item, idx) => {
+        const x = margin + idx * (cardWidth + gap);
+        doc.setDrawColor(226, 232, 240);
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(x, startY, cardWidth, cardHeight, 4, 4, 'FD');
+
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text(String(item.label || '').toUpperCase(), x + 8, startY + 16);
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        if (item.highlight) {
+          doc.setTextColor(79, 70, 229);
+        } else {
+          doc.setTextColor(15, 23, 42);
+        }
+        doc.text(String(item.value || ''), x + 8, startY + 34);
+      });
+
+      startY += cardHeight + 16;
+    }
+
+    // AutoTable
+    if (headers && headers.length > 0) {
+      doc.autoTable({
+        head: [headers],
+        body: rows,
+        startY: startY,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8.5
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        styles: {
+          fontSize: 8,
+          cellPadding: 4,
+          textColor: [30, 41, 59],
+          lineColor: [226, 232, 240],
+          lineWidth: 0.5
+        },
+        margin: { left: 20, right: 20 },
+        didDrawPage: (data) => {
+          // Footer
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(148, 163, 184);
+          doc.text(`Placement Pro — Confidential Placement Cell Document  |  Page ${data.pageNumber}`, 20, pageHeight - 12);
+        }
+      });
+    }
+
+    const cleanFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+    doc.save(cleanFilename);
+    return true;
+  } else {
+    // Fallback: Open formatted print window
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #1e293b; }
+            .header { border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px; }
+            h1 { color: #4f46e5; margin: 0 0 6px 0; font-size: 22px; }
+            .meta { color: #64748b; font-size: 13px; }
+            .summary { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+            .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 18px; min-width: 140px; }
+            .card-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+            .card-val { font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+            th { background: #4f46e5; color: white; text-align: left; padding: 8px 10px; }
+            td { border-bottom: 1px solid #e2e8f0; padding: 8px 10px; }
+            tr:nth-child(even) { background: #f8fafc; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Placement Pro — ${title}</h1>
+            <div class="meta">${subtitle || 'PES Institute of Advanced Management Studies'} | Generated: ${new Date().toLocaleString()}</div>
+          </div>
+          ${summary.length ? `<div class="summary">${summary.map(s => `<div class="card"><div class="card-label">${s.label}</div><div class="card-val">${s.value}</div></div>`).join('')}</div>` : ''}
+          <table>
+            <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+            <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table>
+          <script>
+            window.onload = function() { window.print(); };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      return true;
+    }
+  }
+}
+window.downloadPDF = downloadPDF;
+
